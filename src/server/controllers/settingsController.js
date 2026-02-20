@@ -4,7 +4,7 @@ const { body } = require('express-validator');
 const { db } = require('../config/database');
 const emailService = require('../services/emailService');
 const reminderService = require('../services/reminderService');
-const { success, notFound } = require('../utils/response');
+const { success } = require('../utils/response');
 
 const smtpValidation = [
   body('host').notEmpty().withMessage('SMTP host is required.'),

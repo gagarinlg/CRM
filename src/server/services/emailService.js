@@ -5,8 +5,6 @@ const { db } = require('../config/database');
 const EmailLog = require('../models/EmailLog');
 const logger = require('../config/logger');
 
-let _transporter = null;
-
 async function getSmtpSettings() {
   return db('smtp_settings').where({ is_active: true }).first();
 }
@@ -59,7 +57,7 @@ function renderTemplate(template, variables) {
 }
 
 const emailService = {
-  async sendEmail({ to, subject, html, text, logId } = {}) {
+  async sendEmail({ to, subject, html, text, logId: _logId } = {}) {
     let log;
     try {
       log = await EmailLog.create({ to_address: to, subject, html_body: html, status: 'pending' });

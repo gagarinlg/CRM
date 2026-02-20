@@ -1,6 +1,6 @@
 'use strict';
 
-const { body, query } = require('express-validator');
+const { body } = require('express-validator');
 const Note = require('../models/Note');
 const { success, error, notFound } = require('../utils/response');
 

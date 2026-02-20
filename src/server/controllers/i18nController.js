@@ -2,7 +2,7 @@
 
 const { body } = require('express-validator');
 const Translation = require('../models/Translation');
-const { success, error, notFound } = require('../utils/response');
+const { success, notFound } = require('../utils/response');
 
 const createValidation = [
   body('language_code').notEmpty().withMessage('language_code is required.'),

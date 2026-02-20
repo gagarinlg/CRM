@@ -1,4 +1,5 @@
 'use strict';
+/* eslint-disable no-console */
 
 const bcrypt = require('bcryptjs');
 const { v4: uuidv4 } = require('uuid');

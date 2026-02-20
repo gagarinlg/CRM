@@ -7,7 +7,7 @@ const { generateAccessToken, generateRefreshToken, verifyRefreshToken, verifyAcc
 const { comparePassword, hashPassword, validatePasswordStrength } = require('../utils/password');
 const { v4: uuidv4 } = require('uuid');
 const logger = require('../config/logger');
-const { generateSecret, generate: generateTotp, verify: verifyTotp, generateURI } = require('otplib');
+const { generateSecret, verify: verifyTotp, generateURI } = require('otplib');
 const qrcode = require('qrcode');
 
 const authService = {

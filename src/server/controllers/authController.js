@@ -4,7 +4,6 @@ const { body } = require('express-validator');
 const authService = require('../services/authService');
 const User = require('../models/User');
 const { success, error } = require('../utils/response');
-const { validate } = require('../middleware/validate');
 
 const loginValidation = [
   body('identifier').notEmpty().withMessage('Email or username is required.'),
@@ -79,7 +78,6 @@ const authController = {
     const roles = await User.getUserRoles(req.user.id);
     const permissions = await User.getUserPermissions(req.user.id);
     // Never expose the TOTP secret or password hash in /me
-    // eslint-disable-next-line no-unused-vars
     const { totp_secret: _s, totp_backup_codes: _b, password_hash: _p, ...safeUser } = user || {};
     return success(res, { ...safeUser, roles, permissions });
   },

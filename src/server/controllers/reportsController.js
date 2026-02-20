@@ -1,7 +1,7 @@
 'use strict';
 
 const reportService = require('../services/reportService');
-const { success, error } = require('../utils/response');
+const { success } = require('../utils/response');
 
 const reportsController = {
   async salesReport(req, res, next) {

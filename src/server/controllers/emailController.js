@@ -4,7 +4,7 @@ const { body } = require('express-validator');
 const { db } = require('../config/database');
 const emailService = require('../services/emailService');
 const EmailLog = require('../models/EmailLog');
-const { success, error, paginated, notFound } = require('../utils/response');
+const { success, paginated, notFound } = require('../utils/response');
 
 const sendValidation = [
   body('to').isEmail().withMessage('Valid recipient email is required.'),
