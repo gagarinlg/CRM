@@ -1,0 +1,13 @@
+{
+  "name": "@crm/server",
+  "version": "1.0.0",
+  "description": "CRM Server",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "nodemon app.js",
+    "test": "jest --runInBand",
+    "migrate": "knex --knexfile config/knexfile.js migrate:latest",
+    "seed": "knex --knexfile config/knexfile.js seed:run"
+  }
+}
