@@ -108,7 +108,7 @@ export default function LeadForm() {
           </Grid>
           <Grid item xs={12} sm={6}>
             <Controller
-              name="companyId"
+              name="company_id"
               control={control}
               render={({ field }) => (
                 <FormControl fullWidth>
@@ -123,14 +123,14 @@ export default function LeadForm() {
           </Grid>
           <Grid item xs={12} sm={6}>
             <Controller
-              name="contactId"
+              name="contact_id"
               control={control}
               render={({ field }) => (
                 <FormControl fullWidth>
                   <InputLabel>{t('leads.contact')}</InputLabel>
                   <Select {...field} value={field.value || ''} label={t('leads.contact')}>
                     <MenuItem value="">{t('common.none')}</MenuItem>
-                    {contacts.map(c => <MenuItem key={c.id} value={c.id}>{c.firstName} {c.lastName}</MenuItem>)}
+                    {contacts.map(c => <MenuItem key={c.id} value={c.id}>{c.first_name} {c.last_name}</MenuItem>)}
                   </Select>
                 </FormControl>
               )}

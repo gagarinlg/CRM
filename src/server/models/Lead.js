@@ -4,12 +4,26 @@ const { db } = require('../config/database');
 
 const Lead = {
   async findById(id) {
-    return db('leads').where({ id }).whereNull('deleted_at').first();
+    return db('leads')
+      .leftJoin('companies', 'leads.company_id', 'companies.id')
+      .leftJoin('contacts', 'leads.contact_id', 'contacts.id')
+      .leftJoin('users as assigned_user', 'leads.assigned_to', 'assigned_user.id')
+      .where('leads.id', id)
+      .whereNull('leads.deleted_at')
+      .select(
+        'leads.*',
+        'companies.name as company_name',
+        db.raw("CONCAT(contacts.first_name, ' ', contacts.last_name) as contact_name"),
+        db.raw("CONCAT(assigned_user.first_name, ' ', assigned_user.last_name) as assigned_to_name"),
+      )
+      .first();
   },
 
   async create(data, createdBy) {
+    const allowed = ['title', 'value', 'probability', 'stage', 'source', 'status', 'company_id', 'contact_id', 'assigned_to', 'notes'];
+    const fields = Object.fromEntries(Object.entries(data).filter(([k]) => allowed.includes(k)));
     const [lead] = await db('leads')
-      .insert({ ...data, created_by: createdBy })
+      .insert({ ...fields, created_by: createdBy })
       .returning('*');
     return lead;
   },

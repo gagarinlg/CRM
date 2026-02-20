@@ -114,31 +114,31 @@ export default function LeadDetail() {
             <Card>
               <CardContent>
                 <Typography variant="subtitle2" mb={2}>{t('common.relatedTo')}</Typography>
-                {lead.companyName && (
+                {lead.company_name && (
                   <Box mb={1}>
                     <Typography variant="caption" color="text.secondary">{t('leads.company')}</Typography>
                     <Typography
                       variant="body2"
                       sx={{ cursor: 'pointer', color: 'primary.main' }}
-                      onClick={() => lead.companyId && navigate(`/companies/${lead.companyId}`)}
+                      onClick={() => lead.company_id && navigate(`/companies/${lead.company_id}`)}
                     >
-                      {lead.companyName}
+                      {lead.company_name}
                     </Typography>
                   </Box>
                 )}
-                {(lead.contactName || lead.contact) && (
+                {lead.contact_name && (
                   <Box mb={1}>
                     <Typography variant="caption" color="text.secondary">{t('leads.contact')}</Typography>
                     <Typography
                       variant="body2"
                       sx={{ cursor: 'pointer', color: 'primary.main' }}
-                      onClick={() => lead.contactId && navigate(`/contacts/${lead.contactId}`)}
+                      onClick={() => lead.contact_id && navigate(`/contacts/${lead.contact_id}`)}
                     >
-                      {lead.contactName || `${lead.contact?.firstName} ${lead.contact?.lastName}`}
+                      {lead.contact_name}
                     </Typography>
                   </Box>
                 )}
-                <InfoRow label={t('leads.assignedTo')} value={lead.assignedToName || lead.assignedTo?.email} />
+                <InfoRow label={t('leads.assignedTo')} value={lead.assigned_to_name} />
                 <InfoRow label={t('common.notes')} value={lead.notes} />
               </CardContent>
             </Card>

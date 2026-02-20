@@ -88,7 +88,7 @@ export default function CompanyForm() {
             <TextField {...register('website')} label={t('companies.website')} fullWidth error={!!errors.website} helperText={errors.website?.message} />
           </Grid>
           <Grid item xs={12} sm={6}>
-            <TextField {...register('vatNumber')} label={t('companies.vatNumber')} fullWidth />
+            <TextField {...register('vat_number')} label={t('companies.vatNumber')} fullWidth />
           </Grid>
           <Grid item xs={12}>
             <TextField {...register('address')} label={t('companies.address')} fullWidth />
@@ -97,7 +97,7 @@ export default function CompanyForm() {
             <TextField {...register('city')} label={t('companies.city')} fullWidth />
           </Grid>
           <Grid item xs={12} sm={4}>
-            <TextField {...register('postalCode')} label={t('companies.postalCode')} fullWidth />
+            <TextField {...register('postal_code')} label={t('companies.postalCode')} fullWidth />
           </Grid>
           <Grid item xs={12} sm={4}>
             <TextField {...register('country')} label={t('companies.country')} fullWidth />

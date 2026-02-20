@@ -86,8 +86,8 @@ export default function ProjectDetail() {
                   <Typography variant="body2" color="text.secondary">{t('projects.progress')}: {progress}%</Typography>
                 </Box>
                 <LinearProgress variant="determinate" value={progress} sx={{ mb: 2, height: 6, borderRadius: 3 }} />
-                <InfoRow label={t('projects.startDate')} value={project.startDate ? dayjs(project.startDate).format('DD MMM YYYY') : null} />
-                <InfoRow label={t('projects.endDate')} value={project.endDate ? dayjs(project.endDate).format('DD MMM YYYY') : null} />
+                <InfoRow label={t('projects.startDate')} value={project.start_date ? dayjs(project.start_date).format('DD MMM YYYY') : null} />
+                <InfoRow label={t('projects.endDate')} value={project.end_date ? dayjs(project.end_date).format('DD MMM YYYY') : null} />
                 <InfoRow label={t('projects.budget')} value={project.budget != null ? `€${Number(project.budget).toLocaleString()}` : null} />
               </CardContent>
             </Card>
@@ -109,7 +109,7 @@ export default function ProjectDetail() {
         ) : contacts.map(c => (
           <Card key={c.id} sx={{ mb: 1, cursor: 'pointer' }} onClick={() => navigate(`/contacts/${c.id}`)}>
             <CardContent sx={{ py: 1.5 }}>
-              <Typography variant="body1" fontWeight={500}>{c.firstName} {c.lastName}</Typography>
+              <Typography variant="body1" fontWeight={500}>{c.first_name} {c.last_name}</Typography>
               <Typography variant="body2" color="text.secondary">{c.email}</Typography>
             </CardContent>
           </Card>
@@ -124,10 +124,10 @@ export default function ProjectDetail() {
             <CardContent sx={{ py: 1.5 }}>
               <Box display="flex" alignItems="center" gap={1.5}>
                 <Avatar sx={{ width: 28, height: 28, fontSize: 12 }}>
-                  {m.firstName?.[0]}{m.lastName?.[0]}
+                  {m.first_name?.[0]}{m.last_name?.[0]}
                 </Avatar>
                 <Box>
-                  <Typography variant="body2" fontWeight={500}>{m.firstName} {m.lastName}</Typography>
+                  <Typography variant="body2" fontWeight={500}>{m.first_name} {m.last_name}</Typography>
                   <Typography variant="caption" color="text.secondary">{m.email}</Typography>
                 </Box>
                 {m.role && <Chip label={m.role} size="small" sx={{ ml: 'auto' }} />}

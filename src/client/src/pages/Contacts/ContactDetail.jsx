@@ -58,13 +58,13 @@ export default function ContactDetail() {
   if (loading) return <LoadingSpinner />;
   if (!contact) return <Alert severity="error">{error || t('errors.notFound')}</Alert>;
 
-  const initials = `${contact.firstName?.[0] || ''}${contact.lastName?.[0] || ''}`.toUpperCase();
+  const initials = `${contact.first_name?.[0] || ''}${contact.last_name?.[0] || ''}`.toUpperCase();
 
   return (
     <Box>
       <PageHeader
-        title={`${contact.firstName} ${contact.lastName}`}
-        subtitle={contact.jobTitle}
+        title={`${contact.first_name} ${contact.last_name}`}
+        subtitle={contact.position}
         actions={
           <Stack direction="row" spacing={1}>
             <Button startIcon={<ArrowBackIcon />} onClick={() => navigate('/contacts')}>{t('common.back')}</Button>
@@ -90,14 +90,14 @@ export default function ContactDetail() {
                 <Avatar sx={{ width: 80, height: 80, mx: 'auto', mb: 2, bgcolor: 'primary.main', fontSize: 28 }}>
                   {initials}
                 </Avatar>
-                <Typography variant="h6">{contact.firstName} {contact.lastName}</Typography>
-                {contact.jobTitle && <Typography variant="body2" color="text.secondary">{contact.jobTitle}</Typography>}
-                {contact.companyName && (
+                <Typography variant="h6">{contact.first_name} {contact.last_name}</Typography>
+                {contact.position && <Typography variant="body2" color="text.secondary">{contact.position}</Typography>}
+                {contact.company_name && (
                   <Chip
-                    label={contact.companyName}
+                    label={contact.company_name}
                     size="small"
                     sx={{ mt: 1, cursor: 'pointer' }}
-                    onClick={() => contact.companyId && navigate(`/companies/${contact.companyId}`)}
+                    onClick={() => contact.company_id && navigate(`/companies/${contact.company_id}`)}
                   />
                 )}
               </CardContent>
@@ -132,7 +132,7 @@ export default function ContactDetail() {
                 <Divider sx={{ my: 2 }} />
                 <InfoRow
                   label={t('contacts.lastContact')}
-                  value={contact.lastContactDate ? dayjs(contact.lastContactDate).format('DD MMM YYYY') : null}
+                  value={contact.last_contact_date ? dayjs(contact.last_contact_date).format('DD MMM YYYY') : null}
                 />
                 <InfoRow label={t('contacts.notes')} value={contact.notes} />
               </CardContent>

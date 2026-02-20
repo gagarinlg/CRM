@@ -100,7 +100,9 @@ export default function CompanyDetail() {
                 <InfoRow label={t('companies.website')} value={company.website} />
                 <InfoRow label={t('companies.address')} value={company.address} />
                 <InfoRow label={t('companies.city')} value={company.city} />
+                <InfoRow label={t('companies.postalCode')} value={company.postal_code} />
                 <InfoRow label={t('companies.country')} value={company.country} />
+                <InfoRow label={t('companies.vatNumber')} value={company.vat_number} />
               </CardContent>
             </Card>
           </Grid>
@@ -121,8 +123,8 @@ export default function CompanyDetail() {
         ) : contacts.map(c => (
           <Card key={c.id} sx={{ mb: 1, cursor: 'pointer' }} onClick={() => navigate(`/contacts/${c.id}`)}>
             <CardContent sx={{ py: 1.5 }}>
-              <Typography variant="body1" fontWeight={500}>{c.firstName} {c.lastName}</Typography>
-              <Typography variant="body2" color="text.secondary">{c.jobTitle} • {c.email}</Typography>
+              <Typography variant="body1" fontWeight={500}>{c.first_name} {c.last_name}</Typography>
+              <Typography variant="body2" color="text.secondary">{c.position} • {c.email}</Typography>
             </CardContent>
           </Card>
         ))}

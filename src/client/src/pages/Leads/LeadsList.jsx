@@ -129,8 +129,8 @@ export default function LeadsList() {
                       <Chip label={l.stage} size="small" color={STAGE_COLORS[l.stage] || 'default'} />
                     </TableCell>
                     <TableCell>{l.value != null ? `€${Number(l.value).toLocaleString()}` : '—'}</TableCell>
-                    <TableCell>{l.companyName || l.company?.name}</TableCell>
-                    <TableCell>{l.contactName || (l.contact ? `${l.contact.firstName} ${l.contact.lastName}` : '')}</TableCell>
+                    <TableCell>{l.company_name || '—'}</TableCell>
+                    <TableCell>{l.contact_name || '—'}</TableCell>
                     <TableCell align="right">
                       <Tooltip title={t('common.view')}>
                         <IconButton size="small" onClick={() => navigate(`/leads/${l.id}`)}><VisibilityIcon fontSize="small" /></IconButton>

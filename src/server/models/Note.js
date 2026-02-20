@@ -7,17 +7,20 @@ const Note = {
     return db('notes').where({ id }).first();
   },
 
-  async create({ content, entity_type, entity_id, created_by }) {
+  async create({ content, type, entity_type, entity_id, created_by }) {
     const [note] = await db('notes')
-      .insert({ content, entity_type, entity_id, created_by })
+      .insert({ content, type: type || 'general', entity_type, entity_id, created_by })
       .returning('*');
     return note;
   },
 
-  async update(id, { content }) {
+  async update(id, { content, type }) {
+    const fields = { updated_at: db.fn.now() };
+    if (content !== undefined) fields.content = content;
+    if (type !== undefined) fields.type = type;
     const [note] = await db('notes')
       .where({ id })
-      .update({ content, updated_at: db.fn.now() })
+      .update(fields)
       .returning('*');
     return note;
   },

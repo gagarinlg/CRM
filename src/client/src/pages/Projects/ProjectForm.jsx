@@ -92,10 +92,10 @@ export default function ProjectForm() {
             <TextField {...register('description')} label={t('common.description')} fullWidth multiline rows={2} />
           </Grid>
           <Grid item xs={12} sm={6}>
-            <TextField {...register('startDate')} label={t('projects.startDate')} type="date" fullWidth InputLabelProps={{ shrink: true }} />
+            <TextField {...register('start_date')} label={t('projects.startDate')} type="date" fullWidth InputLabelProps={{ shrink: true }} />
           </Grid>
           <Grid item xs={12} sm={6}>
-            <TextField {...register('endDate')} label={t('projects.endDate')} type="date" fullWidth InputLabelProps={{ shrink: true }} />
+            <TextField {...register('end_date')} label={t('projects.endDate')} type="date" fullWidth InputLabelProps={{ shrink: true }} />
           </Grid>
           <Grid item xs={12} sm={6}>
             <TextField {...register('budget')} label={t('projects.budget')} type="number" fullWidth inputProps={{ min: 0, step: 0.01 }} />

@@ -8,14 +8,16 @@ const Project = {
   },
 
   async create(data, createdBy) {
+    const allowed = ['name', 'description', 'status', 'start_date', 'end_date', 'budget', 'company_id', 'progress'];
+    const fields = Object.fromEntries(Object.entries(data).filter(([k]) => allowed.includes(k)));
     const [project] = await db('projects')
-      .insert({ ...data, created_by: createdBy })
+      .insert({ ...fields, created_by: createdBy })
       .returning('*');
     return project;
   },
 
   async update(id, data) {
-    const allowed = ['name', 'description', 'status', 'start_date', 'end_date', 'budget', 'company_id'];
+    const allowed = ['name', 'description', 'status', 'start_date', 'end_date', 'budget', 'company_id', 'progress'];
     const fields = Object.fromEntries(Object.entries(data).filter(([k]) => allowed.includes(k)));
     fields.updated_at = db.fn.now();
     const [project] = await db('projects').where({ id, deleted_at: null }).update(fields).returning('*');

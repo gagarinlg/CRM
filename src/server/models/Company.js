@@ -8,14 +8,16 @@ const Company = {
   },
 
   async create(data, createdBy) {
+    const allowed = ['name', 'address', 'city', 'country', 'postal_code', 'vat_number', 'phone', 'email', 'website', 'industry', 'size', 'notes'];
+    const fields = Object.fromEntries(Object.entries(data).filter(([k]) => allowed.includes(k)));
     const [company] = await db('companies')
-      .insert({ ...data, created_by: createdBy })
+      .insert({ ...fields, created_by: createdBy })
       .returning('*');
     return company;
   },
 
   async update(id, data) {
-    const allowed = ['name', 'address', 'phone', 'email', 'website', 'industry', 'size', 'notes'];
+    const allowed = ['name', 'address', 'city', 'country', 'postal_code', 'vat_number', 'phone', 'email', 'website', 'industry', 'size', 'notes'];
     const fields = Object.fromEntries(Object.entries(data).filter(([k]) => allowed.includes(k)));
     fields.updated_at = db.fn.now();
     const [company] = await db('companies').where({ id, deleted_at: null }).update(fields).returning('*');

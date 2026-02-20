@@ -117,8 +117,8 @@ export default function ProjectsList() {
                   <TableCell>
                     <Chip label={p.status} size="small" color={STATUS_COLORS[p.status] || 'default'} />
                   </TableCell>
-                  <TableCell>{p.startDate ? dayjs(p.startDate).format('DD MMM YYYY') : '—'}</TableCell>
-                  <TableCell>{p.endDate ? dayjs(p.endDate).format('DD MMM YYYY') : '—'}</TableCell>
+                  <TableCell>{p.start_date ? dayjs(p.start_date).format('DD MMM YYYY') : '—'}</TableCell>
+                  <TableCell>{p.end_date ? dayjs(p.end_date).format('DD MMM YYYY') : '—'}</TableCell>
                   <TableCell>{p.budget != null ? `€${Number(p.budget).toLocaleString()}` : '—'}</TableCell>
                   <TableCell align="right">
                     <Tooltip title={t('common.view')}>

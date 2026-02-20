@@ -4,7 +4,12 @@ const { db } = require('../config/database');
 
 const Contact = {
   async findById(id) {
-    const contact = await db('contacts').where({ id }).whereNull('deleted_at').first();
+    const contact = await db('contacts')
+      .leftJoin('companies', 'contacts.company_id', 'companies.id')
+      .where('contacts.id', id)
+      .whereNull('contacts.deleted_at')
+      .select('contacts.*', 'companies.name as company_name')
+      .first();
     if (!contact) return null;
     contact.phones = await db('contact_phones')
       .where({ contact_id: id })
