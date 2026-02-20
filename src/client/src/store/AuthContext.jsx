@@ -70,8 +70,8 @@ export const AuthProvider = ({ children }) => {
     await loadUser();
   };
 
-  const isAdmin = () => user?.roles?.some(r => r.name === 'admin') || user?.role === 'admin';
-  const isManager = () => user?.roles?.some(r => ['admin', 'manager'].includes(r.name)) || ['admin', 'manager'].includes(user?.role);
+  const isAdmin = () => user?.roles?.some(r => (r.name || r).toLowerCase() === 'admin');
+  const isManager = () => user?.roles?.some(r => ['admin', 'manager'].includes((r.name || r).toLowerCase()));
 
   return (
     <AuthContext.Provider value={{ user, loading, login, logout, verifyTotp, changePassword, isAdmin, isManager, loadUser }}>

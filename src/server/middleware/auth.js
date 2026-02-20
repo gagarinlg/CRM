@@ -68,7 +68,8 @@ function requireRole(...roles) {
     if (!req.user) {
       return unauthorized(res, 'Authentication required.');
     }
-    const hasRole = roles.some((role) => req.user.roles.includes(role));
+    const userRolesLower = req.user.roles.map((r) => r.toLowerCase());
+    const hasRole = roles.some((role) => userRolesLower.includes(role.toLowerCase()));
     if (!hasRole) {
       return forbidden(res, 'Insufficient role.');
     }

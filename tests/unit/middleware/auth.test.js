@@ -126,6 +126,14 @@ describe('requireRole middleware', () => {
     expect(next).toHaveBeenCalled();
   });
 
+  test('calls next() when user role has different case (Admin vs admin)', () => {
+    const req = { user: { roles: ['Admin', 'Manager'] } };
+    const res = mockRes();
+    const next = jest.fn();
+    requireRole('admin')(req, res, next);
+    expect(next).toHaveBeenCalled();
+  });
+
   test('returns 403 when user lacks the required role', () => {
     const req = { user: { roles: ['user'] } };
     const res = mockRes();
