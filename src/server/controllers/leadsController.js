@@ -7,9 +7,9 @@ const { success, error, paginated, notFound } = require('../utils/response');
 
 const createValidation = [
   body('title').notEmpty().withMessage('Lead title is required.'),
-  body('value').optional().isFloat({ min: 0 }),
-  body('probability').optional().isInt({ min: 0, max: 100 }),
-  body('status').optional().isIn(['open', 'won', 'lost']),
+  body('value').optional({ checkFalsy: true }).isFloat({ min: 0 }),
+  body('probability').optional({ checkFalsy: true }).isInt({ min: 0, max: 100 }),
+  body('status').optional({ checkFalsy: true }).isIn(['open', 'won', 'lost']),
 ];
 
 const leadsController = {

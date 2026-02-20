@@ -8,14 +8,16 @@ const Event = {
   },
 
   async create(data, createdBy) {
+    const allowed = ['title', 'type', 'description', 'location', 'start_datetime', 'end_datetime', 'is_all_day', 'recurrence_rule', 'entity_type', 'entity_id'];
+    const fields = Object.fromEntries(Object.entries(data).filter(([k]) => allowed.includes(k)));
     const [event] = await db('events')
-      .insert({ ...data, created_by: createdBy })
+      .insert({ ...fields, created_by: createdBy })
       .returning('*');
     return event;
   },
 
   async update(id, data) {
-    const allowed = ['title', 'description', 'start_datetime', 'end_datetime', 'is_all_day', 'recurrence_rule', 'entity_type', 'entity_id'];
+    const allowed = ['title', 'type', 'description', 'location', 'start_datetime', 'end_datetime', 'is_all_day', 'recurrence_rule', 'entity_type', 'entity_id'];
     const fields = Object.fromEntries(Object.entries(data).filter(([k]) => allowed.includes(k)));
     fields.updated_at = db.fn.now();
     const [event] = await db('events').where({ id }).update(fields).returning('*');
@@ -27,7 +29,9 @@ const Event = {
   },
 
   async listByDateRange(start, end, userId) {
-    let query = db('events').where('start_datetime', '>=', start).where('end_datetime', '<=', end);
+    let query = db('events');
+    if (start) query = query.where('start_datetime', '>=', start);
+    if (end) query = query.where('end_datetime', '<=', end);
     if (userId) query = query.where('created_by', userId);
     return query.orderBy('start_datetime');
   },

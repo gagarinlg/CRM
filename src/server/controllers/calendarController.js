@@ -16,8 +16,7 @@ const calendarController = {
   async list(req, res, next) {
     try {
       const { start, end } = req.query;
-      if (!start || !end) return error(res, 'start and end query params are required.', 400);
-      const events = await Event.listByDateRange(start, end, req.query.user_id);
+      const events = await Event.listByDateRange(start || null, end || null, req.query.user_id);
       return success(res, events);
     } catch (err) {
       return next(err);

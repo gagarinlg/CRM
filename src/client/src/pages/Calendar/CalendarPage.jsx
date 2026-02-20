@@ -39,8 +39,8 @@ export default function CalendarPage() {
       setEvents(evts.map(e => ({
         id: e.id,
         title: e.title,
-        start: e.startDate,
-        end: e.endDate,
+        start: e.start_datetime,
+        end: e.end_datetime,
         backgroundColor: TYPE_COLORS[e.type] || '#1976d2',
         borderColor: TYPE_COLORS[e.type] || '#1976d2',
         extendedProps: { description: e.description, location: e.location, type: e.type },

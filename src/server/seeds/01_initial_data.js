@@ -142,6 +142,7 @@ const TRANSLATIONS = {
     },
     leads: {
       title: 'Leads', new: 'New Lead', edit: 'Edit Lead',
+      title_field: 'Title',
       value: 'Value', probability: 'Probability', stage: 'Stage',
       source: 'Source', assignedTo: 'Assigned To',
       company: 'Company', contact: 'Contact', details: 'Lead Details',
@@ -297,6 +298,7 @@ const TRANSLATIONS = {
     },
     leads: {
       title: 'Leads', new: 'Neuer Lead', edit: 'Lead bearbeiten',
+      title_field: 'Titel',
       value: 'Wert', probability: 'Wahrscheinlichkeit', stage: 'Phase',
       source: 'Quelle', assignedTo: 'Zugewiesen an',
       company: 'Unternehmen', contact: 'Kontakt', details: 'Lead-Details',
@@ -453,6 +455,7 @@ const TRANSLATIONS = {
     },
     leads: {
       title: 'Leady', new: 'Nový lead', edit: 'Upravit lead',
+      title_field: 'Název',
       value: 'Hodnota', probability: 'Pravděpodobnost', stage: 'Fáze',
       source: 'Zdroj', assignedTo: 'Přiřazeno',
       company: 'Společnost', contact: 'Kontakt', details: 'Detail leadu',

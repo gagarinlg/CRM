@@ -7,8 +7,8 @@ const { success, error, paginated, notFound } = require('../utils/response');
 
 const createValidation = [
   body('name').notEmpty().withMessage('Project name is required.'),
-  body('status').optional().isIn(['active', 'on_hold', 'completed', 'cancelled']),
-  body('budget').optional().isFloat({ min: 0 }),
+  body('status').optional({ checkFalsy: true }).isIn(['active', 'on_hold', 'completed', 'cancelled']),
+  body('budget').optional({ checkFalsy: true }).isFloat({ min: 0 }),
 ];
 
 const projectsController = {
