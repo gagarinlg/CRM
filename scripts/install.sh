@@ -9,9 +9,25 @@ INSTALL_DIR="${INSTALL_DIR:-/opt/crm}"
 CRM_USER="${CRM_USER:-crm}"
 DB_NAME="${DB_NAME:-crm_db}"
 DB_USER="${DB_USER:-crm_user}"
-DB_PASSWORD="${DB_PASSWORD:-$(openssl rand -hex 24)}"
 PORT="${PORT:-3000}"
 APP_VERSION="${APP_VERSION:-1.0.0}"
+
+# ── Resolve DB_PASSWORD BEFORE touching PostgreSQL ───────────────────────────
+# Priority: existing installation .env > source-tree .env > generated random.
+# This ensures the password used to create/alter the DB role always matches
+# the password that migrations (and the running app) will use.
+_resolve_password() {
+  local file="$1"
+  [ -f "$file" ] || return
+  grep -E '^DB_PASSWORD=' "$file" | head -1 | cut -d= -f2- | tr -d '"' | tr -d "'"
+}
+DB_PASSWORD=""
+# 1. Re-run: honour the password from an existing installation
+[ -z "$DB_PASSWORD" ] && DB_PASSWORD="$(_resolve_password "${INSTALL_DIR}/.env")"
+# 2. User pre-configured .env (e.g. copied from .env.example and edited)
+[ -z "$DB_PASSWORD" ] && DB_PASSWORD="$(_resolve_password ".env")"
+# 3. Nothing found – generate a fresh random password
+DB_PASSWORD="${DB_PASSWORD:-$(openssl rand -hex 24)}"
 
 echo "╔══════════════════════════════════════════╗"
 echo "║       CRM System Installer               ║"
@@ -92,11 +108,6 @@ ENV
   echo "Created ${INSTALL_DIR}/.env — review and customise it."
 else
   echo "Existing ${INSTALL_DIR}/.env found — keeping it."
-  # Re-read DB_PASSWORD from the existing .env so migrations use the correct password.
-  _existing_pw="$(grep -E '^DB_PASSWORD=' "${INSTALL_DIR}/.env" | head -1 | cut -d= -f2- | tr -d '"' | tr -d "'")"
-  if [ -n "${_existing_pw}" ]; then
-    DB_PASSWORD="${_existing_pw}"
-  fi
 fi
 
 chown -R "${CRM_USER}:${CRM_USER}" "${INSTALL_DIR}"
