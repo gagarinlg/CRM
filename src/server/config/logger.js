@@ -47,6 +47,7 @@ const transports = [
 
 const logger = winston.createLogger({
   level: logLevel,
+  silent: process.env.NODE_ENV === 'test',
   transports,
   exitOnError: false,
 });
