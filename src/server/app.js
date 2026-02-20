@@ -14,11 +14,41 @@ const errorHandler = require('./middleware/errorHandler');
 const app = express();
 
 // ── Security & performance middleware ────────────────────────────────────────
-app.use(helmet());
+// Disable HSTS when not actually serving HTTPS: sending Strict-Transport-Security
+// over a plain-HTTP connection causes browsers to cache "use HTTPS for this host"
+// and then auto-upgrade all sub-resource requests (assets, API) to https://, which
+// fails with a null-status "CORS" error because the server only speaks HTTP.
+app.use(helmet({
+  strictTransportSecurity: process.env.SSL_CERT_PATH ? {
+    maxAge: 31536000,
+    includeSubDomains: true,
+  } : false,
+}));
 app.use(compression());
 
+// Build the set of allowed CORS origins.
+// Requests that carry no Origin header (same-origin browser requests, curl, etc.)
+// are always passed through. Configured origins:
+//   1. CORS_ORIGINS env var – comma-separated list for multi-domain setups
+//   2. FRONTEND_URL – the canonical front-end URL (may differ from the API host)
+//   3. http/https localhost variants – always allowed for dev/health-checks
+const _corsPort = parseInt(process.env.PORT || '3000', 10);
+const _corsAllowed = new Set(
+  [
+    ...(process.env.CORS_ORIGINS ? process.env.CORS_ORIGINS.split(',') : []),
+    process.env.FRONTEND_URL,
+    `http://localhost:${_corsPort}`,
+    `https://localhost:${_corsPort}`,
+    'http://localhost:5173',
+  ].filter(Boolean).map(o => o.trim()),
+);
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  origin: (origin, cb) => {
+    // Allow same-origin requests (browser doesn't send Origin) and listed origins
+    if (!origin || _corsAllowed.has(origin)) return cb(null, true);
+    cb(null, false);
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],

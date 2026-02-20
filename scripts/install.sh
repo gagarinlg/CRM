@@ -90,6 +90,9 @@ npm run build
 # ── Write .env ────────────────────────────────────────────────────────────────
 JWT_SECRET="$(openssl rand -hex 48)"
 JWT_REFRESH_SECRET="$(openssl rand -hex 48)"
+# Detect the primary outbound IP so FRONTEND_URL and CORS work out of the box
+# when the server is accessed by its real IP instead of "localhost".
+SERVER_IP="$(hostname -I | awk '{print $1}')"
 
 if [ ! -f "${INSTALL_DIR}/.env" ]; then
   cat > "${INSTALL_DIR}/.env" <<ENV
@@ -105,7 +108,14 @@ JWT_SECRET="${JWT_SECRET}"
 JWT_REFRESH_SECRET="${JWT_REFRESH_SECRET}"
 JWT_EXPIRES_IN=15m
 JWT_REFRESH_EXPIRES_IN=7d
-FRONTEND_URL=http://localhost:${PORT}
+# FRONTEND_URL is the canonical URL used in emails and as the primary CORS origin.
+# When the frontend is served by this same Express server (default), use the
+# server's own address. Change to your domain name once DNS is configured.
+FRONTEND_URL=http://${SERVER_IP}:${PORT}
+# CORS_ORIGINS: comma-separated extra origins allowed to call the API.
+# Add your domain here if you put the app behind a reverse proxy, e.g.:
+# CORS_ORIGINS=https://crm.example.com,http://crm.example.com
+CORS_ORIGINS=
 APP_VERSION=${APP_VERSION}
 ENV
   chmod 600 "${INSTALL_DIR}/.env"
