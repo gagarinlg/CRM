@@ -81,7 +81,11 @@ mkdir -p "${INSTALL_DIR}"
 cp -r . "${INSTALL_DIR}/"
 cd "${INSTALL_DIR}"
 
-npm install --production --ignore-scripts
+echo "Installing dependencies..."
+npm install --ignore-scripts
+
+echo "Building frontend..."
+npm run build
 
 # ── Write .env ────────────────────────────────────────────────────────────────
 JWT_SECRET="$(openssl rand -hex 48)"

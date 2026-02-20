@@ -29,8 +29,7 @@ WORKDIR /app
 
 # Copy backend package files and install production dependencies only
 COPY package.json ./
-COPY src/server/package*.json ./src/server/
-RUN npm install --workspace=src/server --production --ignore-scripts
+RUN npm install --production --ignore-scripts
 
 # Copy server source code
 COPY src/server/ ./src/server/
