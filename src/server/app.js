@@ -68,6 +68,7 @@ app.get('/health', (_req, res) => {
 app.use('/api/v1/auth', authLimiter, require('./routes/auth'));
 app.use('/api/v1/users', require('./routes/users'));
 app.use('/api/v1/roles', require('./routes/roles'));
+app.use('/api/v1/groups', require('./routes/groups'));
 app.use('/api/v1/companies', require('./routes/companies'));
 app.use('/api/v1/contacts', require('./routes/contacts'));
 app.use('/api/v1/projects', require('./routes/projects'));
@@ -77,6 +78,7 @@ app.use('/api/v1/calendar', require('./routes/calendar'));
 app.use('/api/v1/dashboard', require('./routes/dashboard'));
 app.use('/api/v1/reports', require('./routes/reports'));
 app.use('/api/v1/settings', require('./routes/settings'));
+app.use('/api/v1/email', require('./routes/email'));
 app.use('/api/v1/i18n', require('./routes/i18n'));
 
 // ── 404 handler ───────────────────────────────────────────────────────────────
@@ -86,13 +88,5 @@ app.use((_req, res) => {
 
 // ── Centralized error handler ─────────────────────────────────────────────────
 app.use(errorHandler);
-
-// ── Start server ──────────────────────────────────────────────────────────────
-if (require.main === module) {
-  const PORT = parseInt(process.env.PORT || '3000', 10);
-  app.listen(PORT, () => {
-    logger.info(`CRM server listening on port ${PORT} [${process.env.NODE_ENV || 'development'}]`);
-  });
-}
 
 module.exports = app;
