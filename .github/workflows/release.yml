@@ -1,0 +1,164 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build & Publish Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Extract version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Install root dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Install client dependencies
+        working-directory: src/client
+        run: npm ci --ignore-scripts
+
+      - name: Build frontend
+        working-directory: src/client
+        run: npm run build
+
+      # ── Create tar.gz distributable ─────────────────────────────────────
+      - name: Create release archive
+        run: |
+          RELEASE_DIR="crm-${{ steps.version.outputs.VERSION }}"
+          mkdir -p "$RELEASE_DIR"
+
+          # Copy server source (exclude dev files)
+          cp -r src/server "$RELEASE_DIR/"
+
+          # Copy built frontend
+          cp -r src/client/dist "$RELEASE_DIR/public"
+
+          # Copy config & scripts
+          cp package.json "$RELEASE_DIR/"
+          cp .env.example "$RELEASE_DIR/.env.example"
+          cp -r scripts "$RELEASE_DIR/"
+
+          # Production package.json (only prod deps)
+          cat package.json | \
+            node -e "const d=JSON.parse(require('fs').readFileSync('/dev/stdin','utf8')); \
+                     delete d.devDependencies; \
+                     d.scripts={start:'node src/server/index.js', migrate:'knex --knexfile src/server/config/knexfile.js migrate:latest', seed:'knex --knexfile src/server/config/knexfile.js seed:run'}; \
+                     process.stdout.write(JSON.stringify(d,null,2));" \
+            > "$RELEASE_DIR/package.json"
+
+          # Create archive
+          tar -czf "crm-${{ steps.version.outputs.VERSION }}.tar.gz" "$RELEASE_DIR"
+
+      # ── Create .deb package ───────────────────────────────────────────────
+      - name: Create .deb package
+        run: |
+          VERSION="${{ steps.version.outputs.VERSION }}"
+          PACKAGE_DIR="crm-deb"
+          INSTALL_DIR="$PACKAGE_DIR/opt/crm"
+          DEBIAN_DIR="$PACKAGE_DIR/DEBIAN"
+
+          mkdir -p "$INSTALL_DIR" "$DEBIAN_DIR" \
+                   "$PACKAGE_DIR/etc/systemd/system" \
+                   "$PACKAGE_DIR/usr/local/bin"
+
+          # Copy application files
+          cp -r "crm-$VERSION/." "$INSTALL_DIR/"
+
+          # Debian control file
+          cat > "$DEBIAN_DIR/control" <<EOF
+          Package: crm
+          Version: $VERSION
+          Section: web
+          Priority: optional
+          Architecture: all
+          Depends: nodejs (>= 20), postgresql-client
+          Maintainer: CRM System <admin@example.com>
+          Description: CRM System
+           A production-ready Customer Relationship Management system
+           built with Node.js and PostgreSQL.
+          EOF
+
+          # Systemd service file
+          cat > "$PACKAGE_DIR/etc/systemd/system/crm.service" <<'SYSTEMD'
+          [Unit]
+          Description=CRM System
+          After=network.target postgresql.service
+          Wants=postgresql.service
+
+          [Service]
+          Type=simple
+          User=crm
+          WorkingDirectory=/opt/crm
+          ExecStart=/usr/bin/node src/server/index.js
+          Restart=on-failure
+          RestartSec=10
+          EnvironmentFile=/opt/crm/.env
+          StandardOutput=journal
+          StandardError=journal
+
+          [Install]
+          WantedBy=multi-user.target
+          SYSTEMD
+
+          # Post-install script
+          cat > "$DEBIAN_DIR/postinst" <<'POSTINST'
+          #!/bin/sh
+          set -e
+          # Create system user if not exists
+          id crm &>/dev/null || useradd --system --home /opt/crm --shell /sbin/nologin crm
+          chown -R crm:crm /opt/crm
+          # Install dependencies
+          cd /opt/crm && npm install --production --ignore-scripts
+          # Enable and start service
+          systemctl daemon-reload
+          systemctl enable crm.service || true
+          echo "CRM installed. Configure /opt/crm/.env then: systemctl start crm"
+          POSTINST
+          chmod 755 "$DEBIAN_DIR/postinst"
+
+          # Symlink for CLI
+          cat > "$PACKAGE_DIR/usr/local/bin/crm-update" <<'SCRIPT'
+          #!/bin/sh
+          echo "Updating CRM..."
+          cd /opt/crm && npm install --production --ignore-scripts && npm run migrate
+          systemctl restart crm
+          echo "CRM updated successfully."
+          SCRIPT
+          chmod 755 "$PACKAGE_DIR/usr/local/bin/crm-update"
+
+          dpkg-deb --build "$PACKAGE_DIR" "crm_${VERSION}_all.deb" || {
+            echo "Note: dpkg-deb not available; packaging as tar.gz fallback."
+            tar -czf "crm_${VERSION}_deb.tar.gz" "$PACKAGE_DIR"
+          }
+
+      # ── Publish GitHub Release ────────────────────────────────────────────
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: CRM ${{ github.ref_name }}
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-') }}
+          generate_release_notes: true
+          files: |
+            crm-${{ steps.version.outputs.VERSION }}.tar.gz
+            crm_${{ steps.version.outputs.VERSION }}_all.deb
+            scripts/install.sh
+            scripts/update.sh
+          fail_on_unmatched_files: false

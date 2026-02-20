@@ -78,8 +78,9 @@ const authController = {
     const user = await User.findById(req.user.id);
     const roles = await User.getUserRoles(req.user.id);
     const permissions = await User.getUserPermissions(req.user.id);
-    // Never expose the TOTP secret in /me
-    const { totp_secret, totp_backup_codes, password_hash, ...safeUser } = user;
+    // Never expose the TOTP secret or password hash in /me
+    // eslint-disable-next-line no-unused-vars
+    const { totp_secret: _s, totp_backup_codes: _b, password_hash: _p, ...safeUser } = user || {};
     return success(res, { ...safeUser, roles, permissions });
   },
 
