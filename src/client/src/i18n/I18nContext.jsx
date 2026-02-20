@@ -13,7 +13,17 @@ const lookup = (translations, key) => {
 export const I18nProvider = ({ children }) => {
   const [locale, setLocale] = useState(() => localStorage.getItem('locale') || DEFAULT_LANGUAGE);
   const [translations, setTranslations] = useState({});
+  const [languages, setLanguages] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Fetch active languages from the database on mount so the language
+  // selector only shows languages that actually have translations.
+  useEffect(() => {
+    api.get('/i18n/languages').then(res => {
+      const data = res.data.data || res.data;
+      if (Array.isArray(data) && data.length > 0) setLanguages(data);
+    }).catch(() => {});
+  }, []);
 
   const loadTranslations = useCallback(async (lang) => {
     try {
@@ -57,7 +67,7 @@ export const I18nProvider = ({ children }) => {
   };
 
   return (
-    <I18nContext.Provider value={{ t, locale, changeLocale, loading, translations }}>
+    <I18nContext.Provider value={{ t, locale, changeLocale, loading, translations, languages }}>
       {children}
     </I18nContext.Provider>
   );

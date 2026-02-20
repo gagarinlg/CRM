@@ -10,11 +10,11 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import SettingsIcon from '@mui/icons-material/Settings';
 import { useAuth } from '../../store/AuthContext.jsx';
 import { useTranslation } from '../../i18n/I18nContext.jsx';
-import { LANGUAGES } from '../../i18n/languages.js';
+import { LANGUAGE_FLAGS } from '../../i18n/languages.js';
 
 export default function TopBar({ drawerWidth, onMenuClick }) {
   const { user, logout } = useAuth();
-  const { t, locale, changeLocale } = useTranslation();
+  const { t, locale, changeLocale, languages } = useTranslation();
   const navigate = useNavigate();
   const [anchorEl, setAnchorEl] = useState(null);
 
@@ -60,9 +60,9 @@ export default function TopBar({ drawerWidth, onMenuClick }) {
           disableUnderline
           sx={{ mr: 2, fontSize: 14 }}
         >
-          {LANGUAGES.map(lang => (
+          {languages.map(lang => (
             <MenuItem key={lang.code} value={lang.code}>
-              {lang.flag} {lang.code.toUpperCase()}
+              {LANGUAGE_FLAGS[lang.code] || ''} {lang.code.toUpperCase()}
             </MenuItem>
           ))}
         </Select>
