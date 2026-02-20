@@ -1,5 +1,15 @@
 'use strict';
 
+// database.js now throws at module-load time when DB_PASSWORD is not set.
+// Mock it before any module that requires it (app.js → routes → controllers → services → database).
+jest.mock('../../../src/server/config/database', () => {
+  const mockDb = jest.fn().mockReturnValue({
+    raw: jest.fn().mockResolvedValue([{ '?column?': 1 }]),
+    destroy: jest.fn().mockResolvedValue(undefined),
+  });
+  return { db: mockDb, connectDB: jest.fn().mockResolvedValue(undefined), disconnectDB: jest.fn().mockResolvedValue(undefined) };
+});
+
 // The /health endpoint doesn't use the database at all
 const request = require('supertest');
 const app = require('../../../src/server/app');

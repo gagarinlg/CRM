@@ -51,7 +51,13 @@ npm install --production --ignore-scripts
 
 # ── Run migrations ────────────────────────────────────────────────────────────
 echo "Running database migrations..."
-sudo -u "${CRM_USER}" bash -c "cd '${INSTALL_DIR}' && npm run migrate"
+sudo -u "${CRM_USER}" bash -c "
+  set -o allexport
+  source '${INSTALL_DIR}/.env'
+  set +o allexport
+  cd '${INSTALL_DIR}'
+  npm run migrate
+"
 
 # ── Restart service ───────────────────────────────────────────────────────────
 echo "Starting CRM service..."

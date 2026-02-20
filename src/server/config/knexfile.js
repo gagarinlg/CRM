@@ -16,6 +16,11 @@ const base = {
   },
 };
 
+// pg treats '' the same as undefined and falls back to defaults.password = null.
+// Use the raw env var without a falsy-string fallback so a missing password
+// causes an obvious error rather than a silent SASL authentication failure.
+const _pgPassword = () => process.env.DB_PASSWORD;
+
 module.exports = {
   development: {
     ...base,
@@ -24,7 +29,7 @@ module.exports = {
       port: parseInt(process.env.DB_PORT || '5432', 10),
       database: process.env.DB_NAME || 'crm_db',
       user: process.env.DB_USER || 'crm_user',
-      password: process.env.DB_PASSWORD || '',
+      password: _pgPassword(),
     },
     pool: { min: 2, max: 10 },
   },
@@ -36,22 +41,21 @@ module.exports = {
       port: parseInt(process.env.DB_PORT || '5432', 10),
       database: process.env.DB_NAME || 'crm_test',
       user: process.env.DB_USER || 'crm_user',
-      password: process.env.DB_PASSWORD || '',
+      password: _pgPassword(),
     },
     pool: { min: 1, max: 5 },
   },
 
   production: {
     ...base,
-    connection: process.env.DATABASE_URL
-      ? { connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } }
-      : {
-          host: process.env.DB_HOST || 'localhost',
-          port: parseInt(process.env.DB_PORT || '5432', 10),
-          database: process.env.DB_NAME || 'crm_db',
-          user: process.env.DB_USER || 'crm_user',
-          password: process.env.DB_PASSWORD || '',
-        },
+    connection: {
+      host: process.env.DB_HOST || 'localhost',
+      port: parseInt(process.env.DB_PORT || '5432', 10),
+      database: process.env.DB_NAME || 'crm_db',
+      user: process.env.DB_USER || 'crm_user',
+      password: _pgPassword(),
+      ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
+    },
     pool: { min: 2, max: 10 },
   },
 };

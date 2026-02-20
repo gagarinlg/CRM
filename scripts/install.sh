@@ -42,9 +42,13 @@ echo "Configuring PostgreSQL..."
 systemctl enable --now postgresql
 
 sudo -u postgres psql <<SQL
+  -- Create user if it does not exist, then always sync the password so that
+  -- it matches whatever is in .env (handles re-runs and fresh installs alike).
   DO \$\$ BEGIN
     IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = '${DB_USER}') THEN
       CREATE USER ${DB_USER} WITH PASSWORD '${DB_PASSWORD}';
+    ELSE
+      ALTER USER ${DB_USER} WITH PASSWORD '${DB_PASSWORD}';
     END IF;
   END \$\$;
   SELECT 'CREATE DATABASE ${DB_NAME} OWNER ${DB_USER}'
@@ -76,7 +80,7 @@ DB_PORT=5432
 DB_NAME=${DB_NAME}
 DB_USER=${DB_USER}
 DB_PASSWORD="${DB_PASSWORD}"
-DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@localhost:5432/${DB_NAME}
+DB_SSL=false
 JWT_SECRET="${JWT_SECRET}"
 JWT_REFRESH_SECRET="${JWT_REFRESH_SECRET}"
 JWT_EXPIRES_IN=15m
@@ -86,15 +90,36 @@ APP_VERSION=${APP_VERSION}
 ENV
   chmod 600 "${INSTALL_DIR}/.env"
   echo "Created ${INSTALL_DIR}/.env — review and customise it."
+else
+  echo "Existing ${INSTALL_DIR}/.env found — keeping it."
+  # Re-read DB_PASSWORD from the existing .env so migrations use the correct password.
+  _existing_pw="$(grep -E '^DB_PASSWORD=' "${INSTALL_DIR}/.env" | head -1 | cut -d= -f2- | tr -d '"' | tr -d "'")"
+  if [ -n "${_existing_pw}" ]; then
+    DB_PASSWORD="${_existing_pw}"
+  fi
 fi
 
 chown -R "${CRM_USER}:${CRM_USER}" "${INSTALL_DIR}"
 
 # ── Run migrations ────────────────────────────────────────────────────────────
 echo "Running database migrations..."
-sudo -u "${CRM_USER}" bash -c "cd '${INSTALL_DIR}' && npm run migrate"
+# Source .env inside the subshell so DB_PASSWORD is available to dotenv/pg
+# even though sudo strips environment variables by default.
+sudo -u "${CRM_USER}" bash -c "
+  set -o allexport
+  source '${INSTALL_DIR}/.env'
+  set +o allexport
+  cd '${INSTALL_DIR}'
+  npm run migrate
+"
 echo "Running database seed (initial data)..."
-sudo -u "${CRM_USER}" bash -c "cd '${INSTALL_DIR}' && npm run seed" || true
+sudo -u "${CRM_USER}" bash -c "
+  set -o allexport
+  source '${INSTALL_DIR}/.env'
+  set +o allexport
+  cd '${INSTALL_DIR}'
+  npm run seed
+" || true
 
 # ── Install systemd service ───────────────────────────────────────────────────
 cat > /etc/systemd/system/crm.service <<SYSTEMD
