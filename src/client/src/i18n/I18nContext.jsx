@@ -25,6 +25,24 @@ export const I18nProvider = ({ children }) => {
     }).catch(() => {});
   }, []);
 
+  // When the user's preferred_language is available (after login), apply it
+  // only if the user has never explicitly chosen a language in this browser.
+  useEffect(() => {
+    const syncUserLang = async () => {
+      try {
+        const hasExplicitChoice = localStorage.getItem('locale_explicit');
+        if (hasExplicitChoice) return;
+        const res = await api.get('/auth/me');
+        const userData = res.data.data || res.data;
+        if (userData?.preferred_language) {
+          setLocale(userData.preferred_language);
+          localStorage.setItem('locale', userData.preferred_language);
+        }
+      } catch { /* not logged in */ }
+    };
+    syncUserLang();
+  }, []);
+
   const loadTranslations = useCallback(async (lang) => {
     try {
       const res = await api.get(`/i18n/${lang}`);
@@ -53,6 +71,7 @@ export const I18nProvider = ({ children }) => {
 
   const changeLocale = (lang) => {
     localStorage.setItem('locale', lang);
+    localStorage.setItem('locale_explicit', '1');
     setLocale(lang);
   };
 

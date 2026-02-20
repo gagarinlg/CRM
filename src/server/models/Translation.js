@@ -59,6 +59,33 @@ const Translation = {
     }
     return this.create({ language_code, key, value, module: mod });
   },
+
+  // ── Language management ─────────────────────────────────────────────────────
+
+  async createLanguage({ code, name, is_active = true, is_default = false }) {
+    const [lang] = await db('languages')
+      .insert({ code: code.toLowerCase(), name, is_active, is_default })
+      .returning('*');
+    return lang;
+  },
+
+  async updateLanguage(id, { name, is_active, is_default }) {
+    const data = {};
+    if (name !== undefined) data.name = name;
+    if (is_active !== undefined) data.is_active = is_active;
+    if (is_default !== undefined) data.is_default = is_default;
+    const [lang] = await db('languages').where({ id }).update(data).returning('*');
+    return lang;
+  },
+
+  async deleteLanguage(id) {
+    // Guard: ensure at least one language remains
+    const count = await db('languages').count('id as n').first();
+    if (parseInt(count.n, 10) <= 1) {
+      throw Object.assign(new Error('Cannot delete the last language.'), { status: 400 });
+    }
+    return db('languages').where({ id }).delete();
+  },
 };
 
 module.exports = Translation;

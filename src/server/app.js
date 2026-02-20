@@ -111,6 +111,10 @@ app.use('/api/v1/settings', require('./routes/settings'));
 app.use('/api/v1/email', require('./routes/email'));
 app.use('/api/v1/i18n', require('./routes/i18n'));
 
+// ── CalDAV / CardDAV sync endpoints ───────────────────────────────────────
+app.use('/caldav', require('./caldav/index'));
+app.use('/carddav', require('./carddav/index'));
+
 // ── Serve built React frontend (production / Docker) ─────────────────────────
 // The Dockerfile copies the Vite build output to src/client/dist.
 // In development the Vite dev-server runs separately; skip static serving when

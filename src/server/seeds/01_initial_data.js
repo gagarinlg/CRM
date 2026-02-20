@@ -212,6 +212,7 @@ const TRANSLATIONS = {
       changePassword: 'Change Password', currentPassword: 'Current Password',
       newPassword: 'New Password', confirmPassword: 'Confirm New Password',
       passwordChanged: 'Password changed successfully.', saved: 'Profile saved.',
+      language: 'Interface Language', languageHint: 'This language will be used by default when you log in.',
     },
     translations: {
       title: 'Translations', new: 'New Translation', edit: 'Edit Translation',
@@ -219,6 +220,11 @@ const TRANSLATIONS = {
       searchKeys: 'Search keys…',
       deleteTitle: 'Delete Translation',
       deleteMessage: 'Are you sure you want to delete this translation?',
+      keys: 'Translation Keys', languages: 'Languages',
+      newLanguage: 'New Language', editLanguage: 'Edit Language',
+      langCode: 'Code', langName: 'Name', default: 'Default',
+      deleteLanguageTitle: 'Delete Language',
+      deleteLanguageMessage: 'Are you sure you want to delete this language? All its translations will also be deleted.',
     },
   },
 
@@ -362,6 +368,7 @@ const TRANSLATIONS = {
       changePassword: 'Passwort ändern', currentPassword: 'Aktuelles Passwort',
       newPassword: 'Neues Passwort', confirmPassword: 'Neues Passwort bestätigen',
       passwordChanged: 'Passwort erfolgreich geändert.', saved: 'Profil gespeichert.',
+      language: 'Oberflächensprache', languageHint: 'Diese Sprache wird nach dem Einloggen automatisch verwendet.',
     },
     translations: {
       title: 'Übersetzungen', new: 'Neue Übersetzung', edit: 'Übersetzung bearbeiten',
@@ -369,6 +376,11 @@ const TRANSLATIONS = {
       searchKeys: 'Schlüssel suchen…',
       deleteTitle: 'Übersetzung löschen',
       deleteMessage: 'Sind Sie sicher, dass Sie diese Übersetzung löschen möchten?',
+      keys: 'Übersetzungsschlüssel', languages: 'Sprachen',
+      newLanguage: 'Neue Sprache', editLanguage: 'Sprache bearbeiten',
+      langCode: 'Code', langName: 'Name', default: 'Standard',
+      deleteLanguageTitle: 'Sprache löschen',
+      deleteLanguageMessage: 'Sind Sie sicher, dass Sie diese Sprache löschen möchten? Alle zugehörigen Übersetzungen werden ebenfalls gelöscht.',
     },
   },
 
@@ -512,6 +524,7 @@ const TRANSLATIONS = {
       changePassword: 'Změnit heslo', currentPassword: 'Současné heslo',
       newPassword: 'Nové heslo', confirmPassword: 'Potvrdit nové heslo',
       passwordChanged: 'Heslo úspěšně změněno.', saved: 'Profil uložen.',
+      language: 'Jazyk rozhraní', languageHint: 'Tento jazyk bude použit automaticky po přihlášení.',
     },
     translations: {
       title: 'Překlady', new: 'Nový překlad', edit: 'Upravit překlad',
@@ -519,6 +532,11 @@ const TRANSLATIONS = {
       searchKeys: 'Hledat klíče…',
       deleteTitle: 'Smazat překlad',
       deleteMessage: 'Opravdu chcete tento překlad smazat?',
+      keys: 'Překladové klíče', languages: 'Jazyky',
+      newLanguage: 'Nový jazyk', editLanguage: 'Upravit jazyk',
+      langCode: 'Kód', langName: 'Název', default: 'Výchozí',
+      deleteLanguageTitle: 'Smazat jazyk',
+      deleteLanguageMessage: 'Opravdu chcete tento jazyk smazat? Všechny jeho překlady budou také smazány.',
     },
   },
 };

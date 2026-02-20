@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import {
   Box, Card, CardContent, TextField, Button, Alert, CircularProgress,
   Grid, Typography, Divider, Avatar, Stack, Chip,
+  MenuItem, Select, FormControl, InputLabel,
 } from '@mui/material';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -9,6 +10,7 @@ import * as yup from 'yup';
 import SecurityIcon from '@mui/icons-material/Security';
 import { useAuth } from '../store/AuthContext.jsx';
 import { useTranslation } from '../i18n/I18nContext.jsx';
+import { LANGUAGE_FLAGS } from '../i18n/languages.js';
 import PageHeader from '../components/common/PageHeader.jsx';
 import api from '../services/api.js';
 
@@ -20,14 +22,14 @@ const passwordSchema = yup.object({
 
 export default function Profile() {
   const { user, loadUser } = useAuth();
-  const { t } = useTranslation();
+  const { t, languages, changeLocale, locale } = useTranslation();
   const [profileSaving, setProfileSaving] = useState(false);
   const [profileError, setProfileError] = useState('');
   const [profileSuccess, setProfileSuccess] = useState('');
   const [pwdSaving, setPwdSaving] = useState(false);
   const [pwdError, setPwdError] = useState('');
   const [pwdSuccess, setPwdSuccess] = useState('');
-
+  const [langSaving, setLangSaving] = useState(false);
   // 2FA state
   const [totpStep, setTotpStep] = useState('idle'); // idle | setup | verify | done | disable
   const [totpData, setTotpData] = useState(null);   // { secret, qr_image, qr_url }
@@ -72,6 +74,17 @@ export default function Profile() {
       setPwdError(err.response?.data?.message || t('errors.saveFailed'));
     } finally {
       setPwdSaving(false);
+    }
+  };
+
+  const handleLanguageChange = async (lang) => {
+    setLangSaving(true);
+    changeLocale(lang);
+    try {
+      await api.put(`/users/${user.id}`, { preferred_language: lang });
+      await loadUser();
+    } catch { /* non-fatal */ } finally {
+      setLangSaving(false);
     }
   };
 
@@ -196,6 +209,31 @@ export default function Profile() {
                   {pwdSaving ? <CircularProgress size={18} color="inherit" /> : t('profile.changePassword')}
                 </Button>
               </Box>
+            </CardContent>
+          </Card>
+
+          {/* ── Language Preference ── */}
+          <Card sx={{ mb: 3 }}>
+            <CardContent>
+              <Typography variant="subtitle2" mb={2}>{t('profile.language')}</Typography>
+              <FormControl size="small" sx={{ minWidth: 200 }}>
+                <InputLabel>{t('profile.language')}</InputLabel>
+                <Select
+                  value={locale}
+                  label={t('profile.language')}
+                  onChange={e => handleLanguageChange(e.target.value)}
+                  disabled={langSaving}
+                >
+                  {languages.map(l => (
+                    <MenuItem key={l.code} value={l.code}>
+                      {LANGUAGE_FLAGS[l.code] || '🌐'} {l.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <Typography variant="caption" display="block" color="text.secondary" mt={1}>
+                {t('profile.languageHint')}
+              </Typography>
             </CardContent>
           </Card>
 

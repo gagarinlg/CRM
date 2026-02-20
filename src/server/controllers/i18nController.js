@@ -97,6 +97,38 @@ const i18nController = {
       return next(err);
     }
   },
+
+  // ── Language management ────────────────────────────────────────────────────
+
+  async createLanguage(req, res, next) {
+    try {
+      const { code, name, is_active, is_default } = req.body;
+      if (!code || !name) return next(Object.assign(new Error('code and name are required.'), { status: 400 }));
+      const lang = await Translation.createLanguage({ code, name, is_active, is_default });
+      return success(res, lang, 'Language created.', 201);
+    } catch (err) {
+      return next(err);
+    }
+  },
+
+  async updateLanguage(req, res, next) {
+    try {
+      const lang = await Translation.updateLanguage(req.params.id, req.body);
+      if (!lang) return notFound(res, 'Language not found.');
+      return success(res, lang, 'Language updated.');
+    } catch (err) {
+      return next(err);
+    }
+  },
+
+  async deleteLanguage(req, res, next) {
+    try {
+      await Translation.deleteLanguage(req.params.id);
+      return success(res, null, 'Language deleted.');
+    } catch (err) {
+      return next(err);
+    }
+  },
 };
 
 module.exports = i18nController;

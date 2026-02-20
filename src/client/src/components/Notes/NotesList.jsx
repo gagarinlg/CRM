@@ -109,7 +109,7 @@ export default function NotesList({ entityType, entityId }) {
                       <Box display="flex" alignItems="center" gap={1} mb={0.5}>
                         <Chip label={note.type || 'general'} size="small" color={NOTE_COLORS[note.type] || 'default'} />
                         <Typography variant="caption" color="text.secondary">
-                          {note.authorName || note.author?.firstName} • {dayjs(note.createdAt).format('DD MMM YYYY HH:mm')}
+                          {note.created_by_name || note.authorName || note.author?.firstName} • {dayjs(note.created_at || note.createdAt).format('DD MMM YYYY HH:mm')}
                         </Typography>
                       </Box>
                       <Box>

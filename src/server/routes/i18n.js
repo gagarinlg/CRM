@@ -20,4 +20,9 @@ router.put('/upsert', requireRole('admin'), i18nController.upsert);
 router.put('/:id', requireRole('admin'), i18nController.update);
 router.delete('/:id', requireRole('admin'), i18nController.delete);
 
+// Language management
+router.post('/admin/languages', requireRole('admin'), i18nController.createLanguage);
+router.put('/admin/languages/:id', requireRole('admin'), i18nController.updateLanguage);
+router.delete('/admin/languages/:id', requireRole('admin'), i18nController.deleteLanguage);
+
 module.exports = router;
