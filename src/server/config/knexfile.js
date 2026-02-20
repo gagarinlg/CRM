@@ -43,10 +43,15 @@ module.exports = {
 
   production: {
     ...base,
-    connection: {
-      connectionString: process.env.DATABASE_URL,
-      ssl: { rejectUnauthorized: false },
-    },
+    connection: process.env.DATABASE_URL
+      ? { connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } }
+      : {
+          host: process.env.DB_HOST || 'localhost',
+          port: parseInt(process.env.DB_PORT || '5432', 10),
+          database: process.env.DB_NAME || 'crm_db',
+          user: process.env.DB_USER || 'crm_user',
+          password: process.env.DB_PASSWORD || '',
+        },
     pool: { min: 2, max: 10 },
   },
 };

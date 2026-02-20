@@ -9,7 +9,7 @@ INSTALL_DIR="${INSTALL_DIR:-/opt/crm}"
 CRM_USER="${CRM_USER:-crm}"
 DB_NAME="${DB_NAME:-crm_db}"
 DB_USER="${DB_USER:-crm_user}"
-DB_PASSWORD="${DB_PASSWORD:-$(openssl rand -base64 24)}"
+DB_PASSWORD="${DB_PASSWORD:-$(openssl rand -hex 24)}"
 PORT="${PORT:-3000}"
 APP_VERSION="${APP_VERSION:-1.0.0}"
 
@@ -64,8 +64,8 @@ cd "${INSTALL_DIR}"
 npm install --production --ignore-scripts
 
 # ── Write .env ────────────────────────────────────────────────────────────────
-JWT_SECRET="$(openssl rand -base64 48)"
-JWT_REFRESH_SECRET="$(openssl rand -base64 48)"
+JWT_SECRET="$(openssl rand -hex 48)"
+JWT_REFRESH_SECRET="$(openssl rand -hex 48)"
 
 if [ ! -f "${INSTALL_DIR}/.env" ]; then
   cat > "${INSTALL_DIR}/.env" <<ENV
@@ -75,9 +75,10 @@ DB_HOST=localhost
 DB_PORT=5432
 DB_NAME=${DB_NAME}
 DB_USER=${DB_USER}
-DB_PASSWORD=${DB_PASSWORD}
-JWT_SECRET=${JWT_SECRET}
-JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
+DB_PASSWORD="${DB_PASSWORD}"
+DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@localhost:5432/${DB_NAME}
+JWT_SECRET="${JWT_SECRET}"
+JWT_REFRESH_SECRET="${JWT_REFRESH_SECRET}"
 JWT_EXPIRES_IN=15m
 JWT_REFRESH_EXPIRES_IN=7d
 FRONTEND_URL=http://localhost:${PORT}
