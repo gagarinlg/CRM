@@ -81,7 +81,22 @@ app.use('/api/v1/settings', require('./routes/settings'));
 app.use('/api/v1/email', require('./routes/email'));
 app.use('/api/v1/i18n', require('./routes/i18n'));
 
-// ── 404 handler ───────────────────────────────────────────────────────────────
+// ── Serve built React frontend (production / Docker) ─────────────────────────
+// The Dockerfile copies the Vite build output to src/client/dist.
+// In development the Vite dev-server runs separately; skip static serving when
+// the dist directory does not exist so the server still starts cleanly.
+const path = require('path');
+const fs = require('fs');
+const clientDist = path.join(__dirname, '../../src/client/dist');
+if (fs.existsSync(clientDist)) {
+  app.use(express.static(clientDist));
+  // SPA fallback – serve index.html for any non-API route
+  app.get('*', (_req, res) => {
+    res.sendFile(path.join(clientDist, 'index.html'));
+  });
+}
+
+// ── 404 handler (API routes only when frontend is not built) ─────────────────
 app.use((_req, res) => {
   res.status(404).json({ status: 'error', message: 'Route not found.' });
 });
