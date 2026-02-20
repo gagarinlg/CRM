@@ -1,6 +1,10 @@
 import axios from 'axios';
 
-const BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3000') + '/api/v1';
+// Use a relative base URL when VITE_API_URL is not explicitly set at build time.
+// This ensures the built frontend always calls the same server that served it,
+// regardless of the hostname/IP (no hardcoded localhost that breaks remote access).
+// In development Vite's proxy (/api → http://localhost:3000) handles the forwarding.
+const BASE_URL = (import.meta.env.VITE_API_URL || '') + '/api/v1';
 
 const api = axios.create({
   baseURL: BASE_URL,

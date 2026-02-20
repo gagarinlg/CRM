@@ -1,10 +1,13 @@
-export const LANGUAGES = [
-  { code: 'en', name: 'English', flag: '🇬🇧' },
-  { code: 'de', name: 'Deutsch', flag: '🇩🇪' },
-  { code: 'fr', name: 'Français', flag: '🇫🇷' },
-  { code: 'es', name: 'Español', flag: '🇪🇸' },
-  { code: 'it', name: 'Italiano', flag: '🇮🇹' },
-  { code: 'pl', name: 'Polski', flag: '🇵🇱' },
-];
+// Map of language code → flag emoji for display purposes.
+// The actual list of available languages is fetched from the database at runtime.
+export const LANGUAGE_FLAGS = {
+  en: '🇬🇧',
+  de: '🇩🇪',
+  cs: '🇨🇿',
+  fr: '🇫🇷',
+  es: '🇪🇸',
+  it: '🇮🇹',
+  pl: '🇵🇱',
+};
 
 export const DEFAULT_LANGUAGE = 'en';
