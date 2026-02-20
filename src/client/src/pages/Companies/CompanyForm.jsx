@@ -14,7 +14,7 @@ import LoadingSpinner from '../../components/common/LoadingSpinner.jsx';
 const schema = yup.object({
   name: yup.string().required('Name is required'),
   email: yup.string().email('Invalid email').nullable(),
-  website: yup.string().url('Invalid URL').nullable().or(yup.string().length(0)),
+  website: yup.string().nullable().transform(v => v === '' ? null : v).url('Invalid URL'),
 });
 
 export default function CompanyForm() {
