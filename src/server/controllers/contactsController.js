@@ -8,7 +8,10 @@ const { success, paginated, notFound } = require('../utils/response');
 const createValidation = [
   body('first_name').notEmpty().withMessage('First name is required.'),
   body('last_name').notEmpty().withMessage('Last name is required.'),
-  body('email').optional().isEmail().normalizeEmail(),
+  body('email').isEmail().normalizeEmail().withMessage('A valid email address is required.'),
+  body('phones').optional().isArray().withMessage('phones must be an array.'),
+  body('phones.*.phone_number').if(body('phones').exists()).notEmpty().withMessage('Each phone entry must have a phone_number.'),
+  body('phones.*.label').optional().isIn(['mobile', 'work', 'home', 'fax', 'other']).withMessage('Phone label must be mobile, work, home, fax, or other.'),
 ];
 
 const contactsController = {

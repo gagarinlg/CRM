@@ -23,9 +23,35 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => { loadUser(); }, [loadUser]);
 
-  const login = async (email, password) => {
-    const res = await api.post('/auth/login', { identifier: email, password });
-    const { accessToken, refreshToken, user: userData } = res.data.data || res.data;
+  /**
+   * Step 1 of login. Returns:
+   *  - { mustChangePassword: true }           → redirect to /change-password
+   *  - { requiresTotp: true, preAuthToken }   → show TOTP screen
+   *  - user object                            → fully logged in
+   */
+  const login = async (identifier, password) => {
+    const res = await api.post('/auth/login', { identifier, password });
+    const data = res.data.data || res.data;
+
+    if (data.requires_totp) {
+      // Return sentinel so Login page can render the TOTP step
+      return { requiresTotp: true, preAuthToken: data.pre_auth_token, user: data.user };
+    }
+
+    const { access_token: accessToken, refresh_token: refreshToken, user: userData } = data;
+    localStorage.setItem('accessToken', accessToken);
+    if (refreshToken) localStorage.setItem('refreshToken', refreshToken);
+    setUser(userData);
+    return userData;
+  };
+
+  /**
+   * Step 2 of login when TOTP is required.
+   */
+  const verifyTotp = async (preAuthToken, totpToken) => {
+    const res = await api.post('/auth/2fa/verify', { pre_auth_token: preAuthToken, totp_token: totpToken });
+    const data = res.data.data || res.data;
+    const { access_token: accessToken, refresh_token: refreshToken, user: userData } = data;
     localStorage.setItem('accessToken', accessToken);
     if (refreshToken) localStorage.setItem('refreshToken', refreshToken);
     setUser(userData);
@@ -48,7 +74,7 @@ export const AuthProvider = ({ children }) => {
   const isManager = () => user?.roles?.some(r => ['admin', 'manager'].includes(r.name)) || ['admin', 'manager'].includes(user?.role);
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, changePassword, isAdmin, isManager, loadUser }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, verifyTotp, changePassword, isAdmin, isManager, loadUser }}>
       {children}
     </AuthContext.Provider>
   );

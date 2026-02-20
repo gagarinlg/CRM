@@ -10,11 +10,12 @@ const REFRESH_EXPIRES = process.env.JWT_REFRESH_EXPIRES_IN || '7d';
 /**
  * Generate a short-lived access token.
  * @param {object} payload - Data to encode (do NOT include sensitive fields).
+ * @param {string} [expiresIn] - Custom expiry (defaults to env JWT_EXPIRES_IN).
  * @returns {string}
  */
-function generateAccessToken(payload) {
+function generateAccessToken(payload, expiresIn) {
   return jwt.sign(payload, ACCESS_SECRET, {
-    expiresIn: ACCESS_EXPIRES,
+    expiresIn: expiresIn || ACCESS_EXPIRES,
     issuer: 'crm-api',
   });
 }

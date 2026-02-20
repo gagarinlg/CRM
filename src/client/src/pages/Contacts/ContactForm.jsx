@@ -1,9 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
-  Box, Button, TextField, Grid, Alert, CircularProgress, Stack, MenuItem, Select, FormControl, InputLabel,
+  Box, Button, TextField, Grid, Alert, CircularProgress, Stack, MenuItem,
+  Select, FormControl, InputLabel, IconButton, Typography, Divider,
 } from '@mui/material';
-import { useForm, Controller } from 'react-hook-form';
+import AddIcon from '@mui/icons-material/Add';
+import DeleteIcon from '@mui/icons-material/Delete';
+import { useForm, Controller, useFieldArray } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import api from '../../services/api.js';
@@ -11,10 +14,18 @@ import { useTranslation } from '../../i18n/I18nContext.jsx';
 import PageHeader from '../../components/common/PageHeader.jsx';
 import LoadingSpinner from '../../components/common/LoadingSpinner.jsx';
 
+const PHONE_LABELS = ['mobile', 'work', 'home', 'fax', 'other'];
+
 const schema = yup.object({
-  firstName: yup.string().required('First name is required'),
-  lastName: yup.string().required('Last name is required'),
-  email: yup.string().email('Invalid email').nullable(),
+  first_name: yup.string().required('First name is required'),
+  last_name: yup.string().required('Last name is required'),
+  email: yup.string().email('Invalid email address').required('Email address is required'),
+  phones: yup.array().of(
+    yup.object({
+      phone_number: yup.string().required('Phone number is required'),
+      label: yup.string().oneOf(PHONE_LABELS).default('work'),
+    }),
+  ),
 });
 
 export default function ContactForm() {
@@ -29,6 +40,12 @@ export default function ContactForm() {
 
   const { register, handleSubmit, reset, control, formState: { errors } } = useForm({
     resolver: yupResolver(schema),
+    defaultValues: { phones: [{ phone_number: '', label: 'work' }] },
+  });
+
+  const { fields: phoneFields, append: appendPhone, remove: removePhone } = useFieldArray({
+    control,
+    name: 'phones',
   });
 
   useEffect(() => {
@@ -41,7 +58,15 @@ export default function ContactForm() {
 
     if (!isEdit) return;
     api.get(`/contacts/${id}`)
-      .then(res => reset(res.data.data || res.data))
+      .then(res => {
+        const contact = res.data.data || res.data;
+        reset({
+          ...contact,
+          phones: (contact.phones && contact.phones.length > 0)
+            ? contact.phones
+            : [{ phone_number: '', label: 'work' }],
+        });
+      })
       .catch(() => setError(t('errors.fetchFailed')))
       .finally(() => setLoading(false));
   }, [id]);
@@ -50,7 +75,9 @@ export default function ContactForm() {
     setSaving(true);
     setError('');
     try {
-      const payload = Object.fromEntries(Object.entries(data).map(([k, v]) => [k, v === '' ? null : v]));
+      // Remove empty phone entries
+      const phones = (data.phones || []).filter(p => p.phone_number.trim() !== '');
+      const payload = { ...data, phones };
       if (isEdit) await api.put(`/contacts/${id}`, payload);
       else await api.post('/contacts', payload);
       navigate('/contacts');
@@ -73,27 +100,47 @@ export default function ContactForm() {
 
       <Box component="form" onSubmit={handleSubmit(onSubmit)}>
         <Grid container spacing={2}>
+          {/* Name */}
           <Grid item xs={12} sm={6}>
-            <TextField {...register('firstName')} label={t('contacts.firstName')} fullWidth required error={!!errors.firstName} helperText={errors.firstName?.message} />
+            <TextField
+              {...register('first_name')}
+              label={t('contacts.firstName')}
+              fullWidth required
+              error={!!errors.first_name}
+              helperText={errors.first_name?.message}
+            />
           </Grid>
           <Grid item xs={12} sm={6}>
-            <TextField {...register('lastName')} label={t('contacts.lastName')} fullWidth required error={!!errors.lastName} helperText={errors.lastName?.message} />
+            <TextField
+              {...register('last_name')}
+              label={t('contacts.lastName')}
+              fullWidth required
+              error={!!errors.last_name}
+              helperText={errors.last_name?.message}
+            />
           </Grid>
+
+          {/* Required email */}
           <Grid item xs={12} sm={6}>
-            <TextField {...register('email')} label={t('contacts.email')} type="email" fullWidth error={!!errors.email} helperText={errors.email?.message} />
+            <TextField
+              {...register('email')}
+              label={`${t('contacts.email')} *`}
+              type="email"
+              fullWidth required
+              error={!!errors.email}
+              helperText={errors.email?.message}
+            />
           </Grid>
+
+          {/* Job title */}
           <Grid item xs={12} sm={6}>
-            <TextField {...register('phone')} label={t('contacts.phone')} fullWidth />
+            <TextField {...register('position')} label={t('contacts.jobTitle')} fullWidth />
           </Grid>
-          <Grid item xs={12} sm={6}>
-            <TextField {...register('mobile')} label={t('contacts.mobile')} fullWidth />
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <TextField {...register('jobTitle')} label={t('contacts.jobTitle')} fullWidth />
-          </Grid>
+
+          {/* Company */}
           <Grid item xs={12} sm={6}>
             <Controller
-              name="companyId"
+              name="company_id"
               control={control}
               render={({ field }) => (
                 <FormControl fullWidth>
@@ -106,22 +153,67 @@ export default function ContactForm() {
               )}
             />
           </Grid>
-          <Grid item xs={12} sm={6}>
-            <TextField {...register('address')} label={t('contacts.address')} fullWidth />
-          </Grid>
-          <Grid item xs={12} sm={4}>
-            <TextField {...register('city')} label={t('companies.city')} fullWidth />
-          </Grid>
-          <Grid item xs={12} sm={4}>
-            <TextField {...register('postalCode')} label={t('companies.postalCode')} fullWidth />
-          </Grid>
-          <Grid item xs={12} sm={4}>
-            <TextField {...register('country')} label={t('companies.country')} fullWidth />
-          </Grid>
+
+          {/* Phone numbers — dynamic list */}
           <Grid item xs={12}>
+            <Divider sx={{ my: 1 }} />
+            <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
+              <Typography variant="subtitle2">Phone numbers</Typography>
+              <Button
+                size="small"
+                startIcon={<AddIcon />}
+                onClick={() => appendPhone({ phone_number: '', label: 'mobile' })}
+              >
+                Add phone
+              </Button>
+            </Box>
+
+            {phoneFields.map((field, index) => (
+              <Stack key={field.id} direction="row" spacing={1} alignItems="flex-start" mb={1}>
+                <Controller
+                  name={`phones.${index}.label`}
+                  control={control}
+                  render={({ field: f }) => (
+                    <FormControl size="small" sx={{ minWidth: 110 }}>
+                      <Select {...f} value={f.value || 'work'}>
+                        {PHONE_LABELS.map(l => (
+                          <MenuItem key={l} value={l}>
+                            {l.charAt(0).toUpperCase() + l.slice(1)}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  )}
+                />
+                <TextField
+                  {...register(`phones.${index}.phone_number`)}
+                  label="Phone number"
+                  size="small"
+                  sx={{ flex: 1 }}
+                  error={!!errors.phones?.[index]?.phone_number}
+                  helperText={errors.phones?.[index]?.phone_number?.message}
+                  inputProps={{ type: 'tel' }}
+                />
+                <IconButton
+                  onClick={() => removePhone(index)}
+                  disabled={phoneFields.length === 1}
+                  size="small"
+                  color="error"
+                  title="Remove phone"
+                >
+                  <DeleteIcon fontSize="small" />
+                </IconButton>
+              </Stack>
+            ))}
+          </Grid>
+
+          {/* Notes */}
+          <Grid item xs={12}>
+            <Divider sx={{ my: 1 }} />
             <TextField {...register('notes')} label={t('common.notes')} fullWidth multiline rows={3} />
           </Grid>
         </Grid>
+
         <Stack direction="row" spacing={2} justifyContent="flex-end" mt={3}>
           <Button onClick={() => navigate(isEdit ? `/contacts/${id}` : '/contacts')}>{t('common.cancel')}</Button>
           <Button type="submit" variant="contained" disabled={saving}>

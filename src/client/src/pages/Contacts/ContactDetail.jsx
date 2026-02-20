@@ -110,8 +110,18 @@ export default function ContactDetail() {
                 <Grid container spacing={2}>
                   <Grid item xs={12} sm={6}>
                     <InfoRow label={t('contacts.email')} value={contact.email} />
-                    <InfoRow label={t('contacts.phone')} value={contact.phone} />
-                    <InfoRow label={t('contacts.mobile')} value={contact.mobile} />
+                    {/* Multiple phone numbers */}
+                    {contact.phones && contact.phones.length > 0 ? (
+                      contact.phones.map((p, i) => (
+                        <InfoRow
+                          key={p.id || i}
+                          label={p.label ? p.label.charAt(0).toUpperCase() + p.label.slice(1) : t('contacts.phone')}
+                          value={p.phone_number}
+                        />
+                      ))
+                    ) : (
+                      contact.phone && <InfoRow label={t('contacts.phone')} value={contact.phone} />
+                    )}
                   </Grid>
                   <Grid item xs={12} sm={6}>
                     <InfoRow label={t('contacts.address')} value={contact.address} />

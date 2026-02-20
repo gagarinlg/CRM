@@ -116,7 +116,7 @@ export default function ContactsList() {
                   <TableCell>{c.companyName || c.company?.name}</TableCell>
                   <TableCell>{c.jobTitle}</TableCell>
                   <TableCell>{c.email}</TableCell>
-                  <TableCell>{c.phone}</TableCell>
+                  <TableCell>{c.primary_phone || c.phone || '—'}</TableCell>
                   <TableCell align="right">
                     <Tooltip title={t('common.view')}>
                       <IconButton size="small" onClick={() => navigate(`/contacts/${c.id}`)}><VisibilityIcon fontSize="small" /></IconButton>
