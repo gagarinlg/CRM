@@ -1,0 +1,181 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master, develop, 'copilot/**']
+  pull_request:
+    branches: [main, master, develop, 'copilot/**']
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ── 1. Lint ────────────────────────────────────────────────────────────────
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Run ESLint
+        run: npm run lint
+
+  # ── 2. Unit Tests ──────────────────────────────────────────────────────────
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Run unit tests with coverage
+        run: npm run test:coverage
+        env:
+          NODE_ENV: test
+          JWT_SECRET: ci-test-secret-access-32chars!!!!
+          JWT_REFRESH_SECRET: ci-test-secret-refresh-32chars!!!
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-report
+          path: coverage/
+          retention-days: 7
+
+  # ── 3. UI / E2E Tests ─────────────────────────────────────────────────────
+  e2e-tests:
+    name: E2E Tests (Playwright)
+    runs-on: ubuntu-latest
+    needs: unit-tests
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: crm_user
+          POSTGRES_PASSWORD: crm_password
+          POSTGRES_DB: crm_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Install Playwright browsers
+        run: npx playwright install chromium --with-deps
+
+      - name: Run migrations and seed
+        run: |
+          npm run migrate
+          npm run seed
+        env:
+          NODE_ENV: development
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_NAME: crm_db
+          DB_USER: crm_user
+          DB_PASSWORD: crm_password
+          # Use a known password with no force-change so Playwright tests can login directly
+          SEED_ADMIN_PASSWORD: Admin1234!
+          SEED_FORCE_PASSWORD_CHANGE: "false"
+
+      - name: Build frontend
+        working-directory: src/client
+        run: npm run build
+
+      - name: Start backend server
+        # Express serves the built frontend at / (SPA catch-all in app.js)
+        # nohup keeps the process alive after the step's shell exits; logs go
+        # to /tmp/crm-server.log for upload on failure.
+        run: |
+          nohup node src/server/index.js > /tmp/crm-server.log 2>&1 &
+          echo $! > /tmp/crm-server.pid
+        env:
+          NODE_ENV: production
+          PORT: 3000
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_NAME: crm_db
+          DB_USER: crm_user
+          DB_PASSWORD: crm_password
+          JWT_SECRET: ci-e2e-secret-access-key-32chars!!
+          JWT_REFRESH_SECRET: ci-e2e-secret-refresh-key-32chars!
+          # Origin the browser will send when loading from port 3000
+          FRONTEND_URL: http://localhost:3000
+          DB_SSL: "false"
+
+      - name: Wait for backend to be ready
+        run: |
+          echo "Waiting for CRM server on http://localhost:3000/api/v1/i18n/en ..."
+          for i in $(seq 1 60); do
+            if curl -sf http://localhost:3000/api/v1/i18n/en > /dev/null 2>&1; then
+              echo "✓ Server + DB ready after ~$((i * 2 - 2))s"
+              exit 0
+            fi
+            echo "  attempt $i/60 – not ready yet, sleeping 2s"
+            sleep 2
+          done
+          echo "✗ Server did not become ready within 120s"
+          echo "=== Server log (last 50 lines) ==="
+          tail -50 /tmp/crm-server.log || true
+          exit 1
+
+      - name: Run Playwright tests
+        # Do NOT pass --reporter here: playwright.config.js already uses
+        # [['github'], ['html']] in CI so the HTML report is always generated.
+        run: npm run test:e2e
+        env:
+          # Point Playwright directly at Express (which also serves the frontend)
+          PLAYWRIGHT_BASE_URL: http://localhost:3000
+          SKIP_SERVER_START: "true"
+          CI: "true"
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+
+      - name: Upload server log on failure
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: crm-server-log
+          path: /tmp/crm-server.log
+          retention-days: 7

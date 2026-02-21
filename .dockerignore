@@ -1,0 +1,50 @@
+# Dependencies
+node_modules/
+npm-debug.log*
+
+# Build output (will be rebuilt inside Docker)
+dist/
+build/
+src/client/dist/
+
+# Git
+.git/
+.gitignore
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Logs
+logs/
+*.log
+
+# Test artifacts
+coverage/
+.nyc_output/
+test-results/
+junit.xml
+
+# Editor / OS artefacts
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+*.bak
+*.tmp
+
+# Docker files (not needed inside the image)
+.dockerignore
+docker-compose*.yml
+
+# Documentation
+docs/
+
+# Scripts (only needed outside the container)
+scripts/
+
+# Temporary files
+tmp/
+temp/
