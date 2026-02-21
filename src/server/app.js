@@ -63,6 +63,9 @@ const globalLimiter = rateLimit({
 });
 app.use(globalLimiter);
 
+// Strict rate-limiter for authentication *attempt* endpoints only (login, 2FA,
+// token refresh). Read-only endpoints like GET /auth/me are not covered here –
+// they fall under the global 500 req/15min limiter.
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 20,
@@ -95,7 +98,13 @@ app.get('/health', (_req, res) => {
 });
 
 // ── API routes ────────────────────────────────────────────────────────────────
-app.use('/api/v1/auth', authLimiter, require('./routes/auth'));
+// Apply authLimiter only to the endpoints that are targets for brute-force
+// attacks (login, token refresh, 2FA completion).  GET /auth/me and
+// POST /auth/logout are read/session operations covered by globalLimiter.
+app.use('/api/v1/auth/login', authLimiter);
+app.use('/api/v1/auth/refresh', authLimiter);
+app.use('/api/v1/auth/2fa/verify', authLimiter);
+app.use('/api/v1/auth', require('./routes/auth'));
 app.use('/api/v1/users', require('./routes/users'));
 app.use('/api/v1/roles', require('./routes/roles'));
 app.use('/api/v1/groups', require('./routes/groups'));
