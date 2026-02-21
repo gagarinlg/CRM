@@ -28,7 +28,17 @@ function UserDialog({ open, onClose, user, roles, onSaved }) {
   });
 
   useEffect(() => {
-    if (open) reset(user || { firstName: '', lastName: '', email: '', password: '', role: 'user' });
+    if (open) {
+      // Normalize API snake_case fields to camelCase for the form
+      const normalized = user ? {
+        firstName: user.firstName || user.first_name || '',
+        lastName:  user.lastName  || user.last_name  || '',
+        email:     user.email     || '',
+        password:  '',
+        role:      (user.roles?.[0]?.name || user.roles?.[0] || 'user'),
+      } : { firstName: '', lastName: '', email: '', password: '', role: 'user' };
+      reset(normalized);
+    }
   }, [open, user]);
 
   const onSubmit = async (data) => {
@@ -131,7 +141,7 @@ export default function UsersAdmin() {
   useEffect(() => { fetchData(); }, [fetchData]);
 
   const filtered = users.filter(u =>
-    !debouncedSearch || `${u.firstName} ${u.lastName} ${u.email}`.toLowerCase().includes(debouncedSearch.toLowerCase())
+    !debouncedSearch || `${u.first_name || u.firstName} ${u.last_name || u.lastName} ${u.email}`.toLowerCase().includes(debouncedSearch.toLowerCase())
   );
 
   const handleDelete = async () => {
@@ -180,7 +190,7 @@ export default function UsersAdmin() {
                 <TableRow><TableCell colSpan={5} align="center">{t('common.noResults')}</TableCell></TableRow>
               ) : filtered.map(u => (
                 <TableRow key={u.id} hover>
-                  <TableCell>{u.firstName} {u.lastName}</TableCell>
+                  <TableCell>{u.first_name || u.firstName} {u.last_name || u.lastName}</TableCell>
                   <TableCell>{u.email}</TableCell>
                   <TableCell>
                     {(u.roles || []).map(r => (

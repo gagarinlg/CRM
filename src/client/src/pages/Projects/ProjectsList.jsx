@@ -112,7 +112,7 @@ export default function ProjectsList() {
               ) : projects.length === 0 ? (
                 <TableRow><TableCell colSpan={6} align="center">{t('common.noResults')}</TableCell></TableRow>
               ) : projects.map(p => (
-                <TableRow key={p.id} hover>
+                <TableRow key={p.id} hover onClick={() => navigate(`/projects/${p.id}`)} sx={{ cursor: 'pointer' }}>
                   <TableCell sx={{ fontWeight: 500 }}>{p.name}</TableCell>
                   <TableCell>
                     <Chip label={p.status} size="small" color={STATUS_COLORS[p.status] || 'default'} />
@@ -122,13 +122,13 @@ export default function ProjectsList() {
                   <TableCell>{p.budget != null ? `€${Number(p.budget).toLocaleString()}` : '—'}</TableCell>
                   <TableCell align="right">
                     <Tooltip title={t('common.view')}>
-                      <IconButton size="small" onClick={() => navigate(`/projects/${p.id}`)}><VisibilityIcon fontSize="small" /></IconButton>
+                      <IconButton size="small" onClick={e => { e.stopPropagation(); navigate(`/projects/${p.id}`); }}><VisibilityIcon fontSize="small" /></IconButton>
                     </Tooltip>
                     <Tooltip title={t('common.edit')}>
-                      <IconButton size="small" onClick={() => navigate(`/projects/${p.id}/edit`)}><EditIcon fontSize="small" /></IconButton>
+                      <IconButton size="small" onClick={e => { e.stopPropagation(); navigate(`/projects/${p.id}/edit`); }}><EditIcon fontSize="small" /></IconButton>
                     </Tooltip>
                     <Tooltip title={t('common.delete')}>
-                      <IconButton size="small" color="error" onClick={() => setDeleteId(p.id)}><DeleteIcon fontSize="small" /></IconButton>
+                      <IconButton size="small" color="error" onClick={e => { e.stopPropagation(); setDeleteId(p.id); }}><DeleteIcon fontSize="small" /></IconButton>
                     </Tooltip>
                   </TableCell>
                 </TableRow>

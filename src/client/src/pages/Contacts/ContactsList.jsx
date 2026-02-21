@@ -106,11 +106,11 @@ export default function ContactsList() {
               ) : contacts.length === 0 ? (
                 <TableRow><TableCell colSpan={6} align="center">{t('common.noResults')}</TableCell></TableRow>
               ) : contacts.map(c => (
-                <TableRow key={c.id} hover>
+                <TableRow key={c.id} hover onClick={() => navigate(`/contacts/${c.id}`)} sx={{ cursor: 'pointer' }}>
                   <TableCell>
                     <Box display="flex" alignItems="center" gap={1.5}>
                       <Avatar sx={{ width: 28, height: 28, fontSize: 12, bgcolor: 'primary.light' }}>{initials(c)}</Avatar>
-                      {c.firstName} {c.lastName}
+                      {c.first_name || c.firstName} {c.last_name || c.lastName}
                     </Box>
                   </TableCell>
                   <TableCell>{c.companyName || c.company?.name}</TableCell>
@@ -119,13 +119,13 @@ export default function ContactsList() {
                   <TableCell>{c.primary_phone || c.phone || '—'}</TableCell>
                   <TableCell align="right">
                     <Tooltip title={t('common.view')}>
-                      <IconButton size="small" onClick={() => navigate(`/contacts/${c.id}`)}><VisibilityIcon fontSize="small" /></IconButton>
+                      <IconButton size="small" onClick={e => { e.stopPropagation(); navigate(`/contacts/${c.id}`); }}><VisibilityIcon fontSize="small" /></IconButton>
                     </Tooltip>
                     <Tooltip title={t('common.edit')}>
-                      <IconButton size="small" onClick={() => navigate(`/contacts/${c.id}/edit`)}><EditIcon fontSize="small" /></IconButton>
+                      <IconButton size="small" onClick={e => { e.stopPropagation(); navigate(`/contacts/${c.id}/edit`); }}><EditIcon fontSize="small" /></IconButton>
                     </Tooltip>
                     <Tooltip title={t('common.delete')}>
-                      <IconButton size="small" color="error" onClick={() => setDeleteId(c.id)}><DeleteIcon fontSize="small" /></IconButton>
+                      <IconButton size="small" color="error" onClick={e => { e.stopPropagation(); setDeleteId(c.id); }}><DeleteIcon fontSize="small" /></IconButton>
                     </Tooltip>
                   </TableCell>
                 </TableRow>

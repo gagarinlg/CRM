@@ -108,7 +108,7 @@ export default function CompaniesList() {
               ) : companies.length === 0 ? (
                 <TableRow><TableCell colSpan={6} align="center">{t('common.noResults')}</TableCell></TableRow>
               ) : companies.map(c => (
-                <TableRow key={c.id} hover>
+                <TableRow key={c.id} hover onClick={() => navigate(`/companies/${c.id}`)} sx={{ cursor: 'pointer' }}>
                   <TableCell sx={{ fontWeight: 500 }}>{c.name}</TableCell>
                   <TableCell>
                     {c.industry && <Chip label={c.industry} size="small" variant="outlined" />}
@@ -124,13 +124,13 @@ export default function CompaniesList() {
                   </TableCell>
                   <TableCell align="right">
                     <Tooltip title={t('common.view')}>
-                      <IconButton size="small" onClick={() => navigate(`/companies/${c.id}`)}><VisibilityIcon fontSize="small" /></IconButton>
+                      <IconButton size="small" onClick={e => { e.stopPropagation(); navigate(`/companies/${c.id}`); }}><VisibilityIcon fontSize="small" /></IconButton>
                     </Tooltip>
                     <Tooltip title={t('common.edit')}>
-                      <IconButton size="small" onClick={() => navigate(`/companies/${c.id}/edit`)}><EditIcon fontSize="small" /></IconButton>
+                      <IconButton size="small" onClick={e => { e.stopPropagation(); navigate(`/companies/${c.id}/edit`); }}><EditIcon fontSize="small" /></IconButton>
                     </Tooltip>
                     <Tooltip title={t('common.delete')}>
-                      <IconButton size="small" color="error" onClick={() => setDeleteId(c.id)}><DeleteIcon fontSize="small" /></IconButton>
+                      <IconButton size="small" color="error" onClick={e => { e.stopPropagation(); setDeleteId(c.id); }}><DeleteIcon fontSize="small" /></IconButton>
                     </Tooltip>
                   </TableCell>
                 </TableRow>

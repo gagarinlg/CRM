@@ -123,7 +123,7 @@ export default function LeadsList() {
                 ) : leads.length === 0 ? (
                   <TableRow><TableCell colSpan={6} align="center">{t('common.noResults')}</TableCell></TableRow>
                 ) : leads.map(l => (
-                  <TableRow key={l.id} hover>
+                  <TableRow key={l.id} hover onClick={() => navigate(`/leads/${l.id}`)} sx={{ cursor: 'pointer' }}>
                     <TableCell sx={{ fontWeight: 500 }}>{l.title}</TableCell>
                     <TableCell>
                       <Chip label={l.stage} size="small" color={STAGE_COLORS[l.stage] || 'default'} />
@@ -133,13 +133,13 @@ export default function LeadsList() {
                     <TableCell>{l.contact_name || '—'}</TableCell>
                     <TableCell align="right">
                       <Tooltip title={t('common.view')}>
-                        <IconButton size="small" onClick={() => navigate(`/leads/${l.id}`)}><VisibilityIcon fontSize="small" /></IconButton>
+                        <IconButton size="small" onClick={e => { e.stopPropagation(); navigate(`/leads/${l.id}`); }}><VisibilityIcon fontSize="small" /></IconButton>
                       </Tooltip>
                       <Tooltip title={t('common.edit')}>
-                        <IconButton size="small" onClick={() => navigate(`/leads/${l.id}/edit`)}><EditIcon fontSize="small" /></IconButton>
+                        <IconButton size="small" onClick={e => { e.stopPropagation(); navigate(`/leads/${l.id}/edit`); }}><EditIcon fontSize="small" /></IconButton>
                       </Tooltip>
                       <Tooltip title={t('common.delete')}>
-                        <IconButton size="small" color="error" onClick={() => setDeleteId(l.id)}><DeleteIcon fontSize="small" /></IconButton>
+                        <IconButton size="small" color="error" onClick={e => { e.stopPropagation(); setDeleteId(l.id); }}><DeleteIcon fontSize="small" /></IconButton>
                       </Tooltip>
                     </TableCell>
                   </TableRow>
