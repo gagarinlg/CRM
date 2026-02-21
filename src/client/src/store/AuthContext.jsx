@@ -3,23 +3,39 @@ import api from '../services/api.js';
 
 const AuthContext = createContext(null);
 
+/** Read cached user synchronously so the first render already has role info. */
+function readCachedUser() {
+  try { return JSON.parse(localStorage.getItem('_crm_user')) || null; } catch { return null; }
+}
+
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
+  // Initialise from cache so isAdminUser is correct on the very first render.
+  // This prevents the false→true transition that causes Firefox's compositor
+  // to miss the repaint of the permanent Drawer's children.
+  const [user, setUserState] = useState(readCachedUser);
   const [loading, setLoading] = useState(true);
+
+  /** Persist user in localStorage so subsequent renders start correctly. */
+  const setUser = useCallback((u) => {
+    if (u) { try { localStorage.setItem('_crm_user', JSON.stringify(u)); } catch { /* quota */ } }
+    else { localStorage.removeItem('_crm_user'); }
+    setUserState(u);
+  }, []);
 
   const loadUser = useCallback(async () => {
     const token = localStorage.getItem('accessToken');
-    if (!token) { setLoading(false); return; }
+    if (!token) { setUser(null); setLoading(false); return; }
     try {
       const res = await api.get('/auth/me');
       setUser(res.data.data || res.data);
     } catch {
       localStorage.removeItem('accessToken');
       localStorage.removeItem('refreshToken');
+      setUser(null);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [setUser]);
 
   useEffect(() => { loadUser(); }, [loadUser]);
 
