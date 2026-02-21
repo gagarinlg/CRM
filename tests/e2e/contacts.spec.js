@@ -3,7 +3,7 @@ const { test, expect } = require('@playwright/test');
 
 test.describe('Contacts page', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/contacts', { waitUntil: 'networkidle' });
+    await page.goto('/contacts', { waitUntil: 'load' });
     await expect(page).not.toHaveURL(/login/);
   });
 
@@ -21,13 +21,13 @@ test.describe('Contacts page', () => {
   });
 
   test('contact form requires fields', async ({ page }) => {
-    await page.goto('/contacts/new', { waitUntil: 'networkidle' });
+    await page.goto('/contacts/new', { waitUntil: 'load' });
     await page.getByRole('button', { name: /save/i }).click();
     await expect(page.getByText(/required/i)).toBeVisible({ timeout: 8000 });
   });
 
   test('contact form has add phone number button', async ({ page }) => {
-    await page.goto('/contacts/new', { waitUntil: 'networkidle' });
+    await page.goto('/contacts/new', { waitUntil: 'load' });
     await expect(page.getByRole('button', { name: /add phone/i })).toBeVisible({ timeout: 8000 });
   });
 });

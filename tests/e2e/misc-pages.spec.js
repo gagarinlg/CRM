@@ -3,7 +3,7 @@ const { test, expect } = require('@playwright/test');
 
 test.describe('Calendar page', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/calendar', { waitUntil: 'networkidle' });
+    await page.goto('/calendar', { waitUntil: 'load' });
     await expect(page).not.toHaveURL(/login/);
   });
 
@@ -23,7 +23,7 @@ test.describe('Calendar page', () => {
 
 test.describe('Reports page', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/reports', { waitUntil: 'networkidle' });
+    await page.goto('/reports', { waitUntil: 'load' });
     await expect(page).not.toHaveURL(/login/);
   });
 
@@ -34,7 +34,7 @@ test.describe('Reports page', () => {
 
 test.describe('Profile page', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/profile', { waitUntil: 'networkidle' });
+    await page.goto('/profile', { waitUntil: 'load' });
     await expect(page).not.toHaveURL(/login/);
   });
 

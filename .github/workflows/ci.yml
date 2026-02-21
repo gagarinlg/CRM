@@ -139,10 +139,10 @@ jobs:
 
       - name: Wait for backend to be ready
         run: |
-          echo "Waiting for CRM server on http://localhost:3000/health ..."
+          echo "Waiting for CRM server on http://localhost:3000/api/v1/i18n/en ..."
           for i in $(seq 1 60); do
-            if curl -sf http://localhost:3000/health > /dev/null 2>&1; then
-              echo "✓ Server ready after ~$((i * 2 - 2))s"
+            if curl -sf http://localhost:3000/api/v1/i18n/en > /dev/null 2>&1; then
+              echo "✓ Server + DB ready after ~$((i * 2 - 2))s"
               exit 0
             fi
             echo "  attempt $i/60 – not ready yet, sleeping 2s"

@@ -4,7 +4,7 @@ const { test, expect } = require('@playwright/test');
 
 test.describe('Companies page', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/companies', { waitUntil: 'networkidle' });
+    await page.goto('/companies', { waitUntil: 'load' });
     await expect(page).not.toHaveURL(/login/);
   });
 
@@ -22,7 +22,7 @@ test.describe('Companies page', () => {
   });
 
   test('shows validation error when submitting empty form', async ({ page }) => {
-    await page.goto('/companies/new', { waitUntil: 'networkidle' });
+    await page.goto('/companies/new', { waitUntil: 'load' });
     await page.getByRole('button', { name: /save/i }).click();
     await expect(page.getByText(/required/i)).toBeVisible({ timeout: 8000 });
   });

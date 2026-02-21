@@ -15,8 +15,9 @@ module.exports = defineConfig({
   retries: 0,
   /* One worker to avoid port / DB race conditions */
   workers: 1,
-  /* Cap the whole test suite at 5 minutes so CI never hangs indefinitely */
-  globalTimeout: 5 * 60 * 1000,
+  /* Cap the whole test suite at 10 minutes so CI never hangs indefinitely.
+   * 51 tests × ~5 s per test = ~255 s; 10 min gives generous headroom. */
+  globalTimeout: 10 * 60 * 1000,
   /* Per-test timeout */
   timeout: 30 * 1000,
   /* Reporter */

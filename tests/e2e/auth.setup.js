@@ -38,10 +38,14 @@ setup('authenticate as admin', async ({ page, request }) => {
     { at: accessToken, rt: refreshToken },
   );
 
-  // ── Step 4: navigate to the app root and wait until React has finished
-  //            bootstrapping (networkidle = all API calls resolved, user set,
-  //            ProtectedRoute rendered the real dashboard not the spinner).
-  await page.goto('/', { waitUntil: 'networkidle' });
+  // ── Step 4: navigate to the app root and wait until the document is loaded.
+  //            We use 'load' instead of 'networkidle' because React makes
+  //            multiple API calls after mount (i18n, auth/me, dashboard data)
+  //            that keep the network busy indefinitely in CI, causing a timeout.
+  await page.goto('/', { waitUntil: 'load' });
+  // Wait for the main content area – proves React hydrated and ProtectedRoute
+  // rendered the real shell (not a spinner or redirect).
+  await page.waitForSelector('main, [role="main"], #root > *', { timeout: 15000 });
 
   // Guard: must not have been redirected to /login
   await expect(page).not.toHaveURL(/login/, { timeout: 15000 });

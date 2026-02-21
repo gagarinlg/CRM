@@ -3,7 +3,7 @@ const { test, expect } = require('@playwright/test');
 
 test.describe('Admin - Users', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/admin/users', { waitUntil: 'networkidle' });
+    await page.goto('/admin/users', { waitUntil: 'load' });
     await expect(page).not.toHaveURL(/login/);
   });
 
@@ -24,7 +24,7 @@ test.describe('Admin - Users', () => {
 
 test.describe('Admin - Roles', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/admin/roles', { waitUntil: 'networkidle' });
+    await page.goto('/admin/roles', { waitUntil: 'load' });
     await expect(page).not.toHaveURL(/login/);
   });
 
@@ -39,7 +39,7 @@ test.describe('Admin - Roles', () => {
 
 test.describe('Admin - Groups', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/admin/groups', { waitUntil: 'networkidle' });
+    await page.goto('/admin/groups', { waitUntil: 'load' });
     await expect(page).not.toHaveURL(/login/);
   });
 
@@ -54,7 +54,7 @@ test.describe('Admin - Groups', () => {
 
 test.describe('Admin - Translations', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/admin/translations', { waitUntil: 'networkidle' });
+    await page.goto('/admin/translations', { waitUntil: 'load' });
     await expect(page).not.toHaveURL(/login/);
   });
 
@@ -78,7 +78,7 @@ test.describe('Admin - Translations', () => {
 
 test.describe('Admin - Settings', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/admin/settings', { waitUntil: 'networkidle' });
+    await page.goto('/admin/settings', { waitUntil: 'load' });
     await expect(page).not.toHaveURL(/login/);
   });
 

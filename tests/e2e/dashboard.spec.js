@@ -4,7 +4,7 @@ const { test, expect } = require('@playwright/test');
 
 test.describe('Dashboard page', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/', { waitUntil: 'networkidle' });
+    await page.goto('/', { waitUntil: 'load' });
     // Guard: must not be redirected to login (React is fully loaded at this point)
     await expect(page).not.toHaveURL(/login/);
   });
@@ -23,19 +23,19 @@ test.describe('Dashboard page', () => {
   });
 
   test('navigates to Companies page', async ({ page }) => {
-    await page.goto('/companies', { waitUntil: 'networkidle' });
+    await page.goto('/companies', { waitUntil: 'load' });
     await expect(page).toHaveURL(/companies/);
     await expect(page).not.toHaveURL(/login/);
   });
 
   test('navigates to Contacts page', async ({ page }) => {
-    await page.goto('/contacts', { waitUntil: 'networkidle' });
+    await page.goto('/contacts', { waitUntil: 'load' });
     await expect(page).toHaveURL(/contacts/);
     await expect(page).not.toHaveURL(/login/);
   });
 
   test('navigates to Projects page', async ({ page }) => {
-    await page.goto('/projects', { waitUntil: 'networkidle' });
+    await page.goto('/projects', { waitUntil: 'load' });
     await expect(page).toHaveURL(/projects/);
     await expect(page).not.toHaveURL(/login/);
   });
