@@ -448,18 +448,27 @@ const leadsController = {
         }).catch(() => {});
       }
 
-      // Create an informational note with the lead's pipeline details
+      // Create an informational note with the lead's pipeline details,
+      // labelled in the converting user's preferred language.
+      const convertingUser = await db('users').where({ id: req.user.id }).first();
+      const lang = convertingUser?.preferred_language || 'en';
+      const NOTE_LABELS = {
+        en: { convertedFrom: 'Converted from lead. Lead details', stage: 'Stage', source: 'Source', probability: 'Probability', value: 'Lead value' },
+        de: { convertedFrom: 'Aus Lead konvertiert. Lead-Details', stage: 'Phase', source: 'Quelle', probability: 'Wahrscheinlichkeit', value: 'Lead-Wert' },
+        cs: { convertedFrom: 'Převedeno z leadu. Detaily leadu', stage: 'Fáze', source: 'Zdroj', probability: 'Pravděpodobnost', value: 'Hodnota leadu' },
+      };
+      const lbl = NOTE_LABELS[lang] || NOTE_LABELS.en;
       const leadInfo = [
-        lead.stage ? `Stage: ${lead.stage}` : null,
-        lead.source ? `Source: ${lead.source}` : null,
-        lead.probability != null ? `Probability: ${lead.probability}%` : null,
-        lead.value != null ? `Lead value: ${lead.value}` : null,
+        lead.stage ? `${lbl.stage}: ${lead.stage}` : null,
+        lead.source ? `${lbl.source}: ${lead.source}` : null,
+        lead.probability != null ? `${lbl.probability}: ${lead.probability}%` : null,
+        lead.value != null ? `${lbl.value}: ${lead.value}` : null,
       ].filter(Boolean).join('\n');
       if (leadInfo) {
         await db('notes').insert({
           entity_type: 'project',
           entity_id: project.id,
-          content: `Converted from lead. Lead details:\n${leadInfo}`,
+          content: `${lbl.convertedFrom}:\n${leadInfo}`,
           type: 'general',
           created_by: req.user.id,
         }).catch(() => {});
