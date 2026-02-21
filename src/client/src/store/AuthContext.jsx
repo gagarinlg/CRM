@@ -92,7 +92,7 @@ export const AuthProvider = ({ children }) => {
   // the functions in render because React tracks state reads for re-render scheduling.
   const isAdminUser = Boolean(user?.roles?.some(r => (r.name || r).toLowerCase() === 'admin'));
   const isManagerUser = Boolean(user?.roles?.some(r => ['admin', 'manager'].includes((r.name || r).toLowerCase())));
-  const hasPermission = useCallback((perm) => Boolean(user?.permissions?.includes(perm)), [user]);
+  const hasPermission = useCallback((perm) => Boolean(user?.permissions?.some(p => (p.name || p) === perm)), [user]);
 
   return (
     <AuthContext.Provider value={{ user, loading, login, logout, verifyTotp, changePassword, isAdmin, isManager, isAdminUser, isManagerUser, hasPermission, loadUser }}>
