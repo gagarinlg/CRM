@@ -32,10 +32,10 @@ const demoDataService = {
       // Contacts
       const [john, sarah, michael, emma] = await trx('contacts')
         .insert([
-          { first_name: 'John', last_name: 'Smith', email: 'john.smith@acme.example.com', job_title: 'CEO', company_id: acme.id, created_by: userId },
-          { first_name: 'Sarah', last_name: 'Johnson', email: 'sarah.johnson@acme.example.com', job_title: 'Sales Manager', company_id: acme.id, created_by: userId },
-          { first_name: 'Michael', last_name: 'Chen', email: 'michael.chen@sunrise.example.com', job_title: 'Partner', company_id: sunrise.id, created_by: userId },
-          { first_name: 'Emma', last_name: 'Wilson', email: 'emma.wilson@bluesky.example.com', job_title: 'Procurement Manager', company_id: bluesky.id, created_by: userId },
+          { first_name: 'John', last_name: 'Smith', email: 'john.smith@acme.example.com', position: 'CEO', company_id: acme.id, created_by: userId },
+          { first_name: 'Sarah', last_name: 'Johnson', email: 'sarah.johnson@acme.example.com', position: 'Sales Manager', company_id: acme.id, created_by: userId },
+          { first_name: 'Michael', last_name: 'Chen', email: 'michael.chen@sunrise.example.com', position: 'Partner', company_id: sunrise.id, created_by: userId },
+          { first_name: 'Emma', last_name: 'Wilson', email: 'emma.wilson@bluesky.example.com', position: 'Procurement Manager', company_id: bluesky.id, created_by: userId },
         ])
         .returning('*');
 
