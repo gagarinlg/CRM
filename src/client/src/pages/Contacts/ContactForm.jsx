@@ -22,7 +22,7 @@ const schema = yup.object({
   email: yup.string().email('Invalid email address').required('Email address is required'),
   phones: yup.array().of(
     yup.object({
-      phone_number: yup.string().required('Phone number is required'),
+      phone_number: yup.string(),
       label: yup.string().oneOf(PHONE_LABELS).default('work'),
     }),
   ),

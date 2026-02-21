@@ -14,7 +14,12 @@ export default function EntityPickerDialog({ open, onClose, onSelect, title, fet
     if (!open) return;
     setLoading(true);
     fetchItems(search)
-      .then(data => setItems(Array.isArray(data) ? data : (data.data || [])))
+      .then(data => {
+        if (Array.isArray(data)) { setItems(data); return; }
+        // Handle paginated wrapper { items: [...] } or { data: { items: [...] } }
+        const inner = data?.items || data?.data?.items || data?.data || [];
+        setItems(Array.isArray(inner) ? inner : []);
+      })
       .catch(() => setItems([]))
       .finally(() => setLoading(false));
   }, [open, search]); // eslint-disable-line react-hooks/exhaustive-deps

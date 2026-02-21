@@ -291,9 +291,20 @@ const leadsController = {
       };
       const project = await Project.create(projectData, req.user.id);
 
-      // If the lead had a contact, link it to the project
-      if (lead.contact_id) {
+      // Copy lead contacts (junction table) to project
+      const leadContacts = await Lead.getContacts(lead.id);
+      for (const c of leadContacts) {
+        await Project.addContact(project.id, c.id).catch(() => {});
+      }
+      // Also copy single contact_id FK if not already in junction table
+      if (lead.contact_id && !leadContacts.find(c => c.id === lead.contact_id)) {
         await Project.addContact(project.id, lead.contact_id).catch(() => {});
+      }
+
+      // Copy lead members to project
+      const leadMembers = await Lead.getMembers(lead.id);
+      for (const m of leadMembers) {
+        await Project.addMember(project.id, m.id, m.role).catch(() => {});
       }
 
       // Copy lead groups to project
