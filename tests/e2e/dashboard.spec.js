@@ -12,7 +12,7 @@ test.describe('Dashboard page', () => {
   test('dashboard page loads without error', async ({ page }) => {
     // Verify dashboard rendered content — not stuck in error/loading state
     await expect(page.locator('.MuiGrid-root, .MuiCard-root').first()).toBeVisible({ timeout: 10000 });
-    await expect(page.locator('main, [role="main"], #root')).toBeVisible();
+    await expect(page.locator('main').first()).toBeVisible();
   });
 
   test('sidebar navigation is present', async ({ page }) => {
