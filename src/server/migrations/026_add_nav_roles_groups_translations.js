@@ -11,7 +11,7 @@ exports.up = async (knex) => {
   ];
   for (const row of translations) {
     await knex('translations')
-      .insert({ ...row, is_active: true })
+      .insert(row)
       .onConflict(['language_code', 'key'])
       .ignore();
   }
