@@ -50,6 +50,34 @@ test.describe('Leads page', () => {
     await expect(page).toHaveURL(/\/leads/, { timeout: 10000 });
   });
 
+  test('can delete a lead', async ({ page }) => {
+    // Create a lead to delete
+    await page.goto('/leads/new', { waitUntil: 'load' });
+    await expect(page.locator('main')).toBeVisible({ timeout: 20000 });
+    await page.locator('input[name="title"]').fill('E2E Delete Me Lead');
+    await page.getByRole('button', { name: /save/i }).click();
+    await expect(page).toHaveURL(/\/leads$/, { timeout: 10000 });
+    await expect(page.locator('table, [role="table"]')).toBeVisible({ timeout: 10000 });
+    // Click the delete button for this specific row
+    const row = page.locator('tr').filter({ hasText: 'E2E Delete Me Lead' });
+    await expect(row).toBeVisible({ timeout: 10000 });
+    await row.getByRole('button', { name: /delete/i }).click();
+    // Confirm dialog
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toBeVisible({ timeout: 8000 });
+    await dialog.getByRole('button', { name: /confirm/i }).click();
+    // Row should be gone
+    await expect(page.locator('tr').filter({ hasText: 'E2E Delete Me Lead' })).not.toBeVisible({ timeout: 8000 });
+  });
+
+  test('search filters the lead list', async ({ page }) => {
+    await expect(page.locator('table, [role="table"]')).toBeVisible({ timeout: 10000 });
+    const searchBox = page.locator('input[placeholder]').first();
+    await searchBox.fill('zzz_no_match_xyz_99999');
+    await page.waitForTimeout(600);
+    await expect(page.getByText(/no results|no leads|0/i).first()).toBeVisible({ timeout: 8000 });
+  });
+
   test('can convert a lead to a project', async ({ page }) => {
     // Create a lead first
     await page.goto('/leads/new', { waitUntil: 'load' });
@@ -75,6 +103,57 @@ test.describe('Leads page', () => {
     await dialog.getByRole('button', { name: /convert/i }).click();
     // Should navigate to the new project
     await expect(page).toHaveURL(/\/projects\/[^/]+$/, { timeout: 15000 });
+  });
+});
+
+test.describe('Lead detail page', () => {
+  test.beforeEach(async ({ page }) => {
+    // Create a fresh lead and navigate to its detail
+    await page.goto('/leads/new', { waitUntil: 'load' });
+    await expect(page.locator('main')).toBeVisible({ timeout: 20000 });
+    await page.locator('input[name="title"]').fill('E2E Lead Detail Test');
+    await page.getByRole('button', { name: /save/i }).click();
+    await expect(page).toHaveURL(/\/leads$/, { timeout: 10000 });
+    await expect(page.locator('table, [role="table"]')).toBeVisible({ timeout: 10000 });
+    await page.getByText('E2E Lead Detail Test').first().click();
+    await expect(page).toHaveURL(/\/leads\/[^/]+$/, { timeout: 10000 });
+  });
+
+  test('lead detail shows info, contacts, members, notes tabs', async ({ page }) => {
+    await expect(page.getByRole('tab', { name: /info/i })).toBeVisible({ timeout: 8000 });
+    await expect(page.getByRole('tab', { name: /contacts/i })).toBeVisible({ timeout: 8000 });
+    await expect(page.getByRole('tab', { name: /members/i })).toBeVisible({ timeout: 8000 });
+    await expect(page.getByRole('tab', { name: /notes/i })).toBeVisible({ timeout: 8000 });
+  });
+
+  test('lead detail shows stage selector on info tab', async ({ page }) => {
+    // The stage selector (Select) is on the Info tab
+    await expect(page.getByRole('combobox')).toBeVisible({ timeout: 8000 });
+  });
+
+  test('lead detail stage can be changed', async ({ page }) => {
+    // Open the stage dropdown and pick a different stage
+    const stageSelect = page.getByRole('combobox').first();
+    await stageSelect.click();
+    await page.getByRole('option', { name: /contacted/i }).click();
+    // The chip/select value should update
+    await expect(page.getByText(/contacted/i).first()).toBeVisible({ timeout: 8000 });
+  });
+
+  test('lead detail contacts tab is navigable', async ({ page }) => {
+    await page.getByRole('tab', { name: /contacts/i }).click();
+    await expect(page.locator('main')).toBeVisible({ timeout: 8000 });
+  });
+
+  test('lead detail back button returns to list', async ({ page }) => {
+    await page.getByRole('button', { name: /back/i }).click();
+    await expect(page).toHaveURL(/\/leads$/, { timeout: 8000 });
+  });
+
+  test('lead detail edit button navigates to edit form', async ({ page }) => {
+    await page.getByRole('button', { name: /edit/i }).first().click();
+    await expect(page).toHaveURL(/\/leads\/[^/]+\/edit/, { timeout: 8000 });
+    await expect(page.locator('input[name="title"]')).toHaveValue('E2E Lead Detail Test', { timeout: 8000 });
   });
 });
 

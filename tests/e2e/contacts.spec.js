@@ -60,5 +60,76 @@ test.describe('Contacts page', () => {
     await page.getByRole('button', { name: /save/i }).click();
     await expect(page).toHaveURL(/\/contacts/, { timeout: 10000 });
   });
+
+  test('can delete a contact', async ({ page }) => {
+    // Create a contact to delete
+    await page.goto('/contacts/new', { waitUntil: 'load' });
+    await expect(page.locator('main')).toBeVisible({ timeout: 20000 });
+    await page.locator('input[name="first_name"]').fill('E2E');
+    await page.locator('input[name="last_name"]').fill('DeleteMeContact');
+    await page.locator('input[name="email"]').fill('e2edelete@example.com');
+    await page.getByRole('button', { name: /save/i }).click();
+    await expect(page).toHaveURL(/\/contacts$/, { timeout: 10000 });
+    await expect(page.locator('table, [role="table"]')).toBeVisible({ timeout: 10000 });
+    // Find the row and click delete
+    const row = page.locator('tr').filter({ hasText: 'DeleteMeContact' });
+    await expect(row).toBeVisible({ timeout: 10000 });
+    await row.getByRole('button', { name: /delete/i }).click();
+    // Confirm dialog
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toBeVisible({ timeout: 8000 });
+    await dialog.getByRole('button', { name: /confirm/i }).click();
+    await expect(page.locator('tr').filter({ hasText: 'DeleteMeContact' })).not.toBeVisible({ timeout: 8000 });
+  });
+
+  test('search filters the contact list', async ({ page }) => {
+    await expect(page.locator('table, [role="table"]')).toBeVisible({ timeout: 10000 });
+    const searchBox = page.locator('input[placeholder]').first();
+    await searchBox.fill('zzz_no_match_xyz_99999');
+    await page.waitForTimeout(600);
+    await expect(page.getByText(/no results|no contacts|0/i).first()).toBeVisible({ timeout: 8000 });
+  });
+});
+
+test.describe('Contact detail page', () => {
+  test.beforeEach(async ({ page }) => {
+    // Create a contact and navigate to its detail
+    await page.goto('/contacts/new', { waitUntil: 'load' });
+    await expect(page.locator('main')).toBeVisible({ timeout: 20000 });
+    await page.locator('input[name="first_name"]').fill('E2E');
+    await page.locator('input[name="last_name"]').fill('DetailViewContact');
+    await page.locator('input[name="email"]').fill('e2edetailview@example.com');
+    await page.getByRole('button', { name: /save/i }).click();
+    await expect(page).toHaveURL(/\/contacts$/, { timeout: 10000 });
+    await expect(page.locator('table, [role="table"]')).toBeVisible({ timeout: 10000 });
+    await page.getByText('DetailViewContact').first().click();
+    await expect(page).toHaveURL(/\/contacts\/[^/]+$/, { timeout: 10000 });
+  });
+
+  test('contact detail shows info, projects, notes tabs', async ({ page }) => {
+    await expect(page.getByRole('tab', { name: /info/i })).toBeVisible({ timeout: 8000 });
+    await expect(page.getByRole('tab', { name: /projects/i })).toBeVisible({ timeout: 8000 });
+    await expect(page.getByRole('tab', { name: /notes/i })).toBeVisible({ timeout: 8000 });
+  });
+
+  test('contact detail shows avatar with initials', async ({ page }) => {
+    // Avatar with initials should appear on the info tab
+    await expect(page.locator('.MuiAvatar-root').first()).toBeVisible({ timeout: 8000 });
+  });
+
+  test('contact detail projects tab is navigable', async ({ page }) => {
+    await page.getByRole('tab', { name: /projects/i }).click();
+    await expect(page.locator('main')).toBeVisible({ timeout: 8000 });
+  });
+
+  test('contact detail notes tab is navigable', async ({ page }) => {
+    await page.getByRole('tab', { name: /notes/i }).click();
+    await expect(page.locator('main')).toBeVisible({ timeout: 8000 });
+  });
+
+  test('contact detail back button returns to list', async ({ page }) => {
+    await page.getByRole('button', { name: /back/i }).click();
+    await expect(page).toHaveURL(/\/contacts$/, { timeout: 8000 });
+  });
 });
 
