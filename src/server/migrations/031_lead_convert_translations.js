@@ -35,7 +35,7 @@ exports.up = async function (knex) {
   ];
 
   for (const row of keys) {
-    await knex('translations').insert(row).onConflict(['language_code', 'module', 'key']).ignore();
+    await knex('translations').insert(row).onConflict(['language_code', 'key']).ignore();
   }
 };
 
