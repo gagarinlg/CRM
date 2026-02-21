@@ -89,6 +89,20 @@ const User = {
       .select('roles.id', 'roles.name', 'roles.description');
   },
 
+  async getUserRolesBatch(userIds) {
+    if (!userIds.length) return {};
+    const rows = await db('user_roles')
+      .join('roles', 'user_roles.role_id', 'roles.id')
+      .whereIn('user_roles.user_id', userIds)
+      .select('user_roles.user_id', 'roles.id', 'roles.name', 'roles.description');
+    const map = {};
+    for (const row of rows) {
+      if (!map[row.user_id]) map[row.user_id] = [];
+      map[row.user_id].push({ id: row.id, name: row.name, description: row.description });
+    }
+    return map;
+  },
+
   async getUserPermissions(userId) {
     return db('user_roles')
       .join('role_permissions', 'user_roles.role_id', 'role_permissions.role_id')

@@ -38,11 +38,13 @@ const SAMPLE_USER = {
 beforeEach(() => jest.clearAllMocks());
 
 describe('GET /api/v1/users', () => {
-  test('returns paginated user list', async () => {
+  test('returns paginated user list with roles', async () => {
     User.list.mockResolvedValue({ data: [SAMPLE_USER], total: 1 });
+    User.getUserRolesBatch.mockResolvedValue({ 'user-uuid-1': [{ id: 'role-1', name: 'Admin' }] });
     const res = await request(app).get('/api/v1/users');
     expect(res.status).toBe(200);
     expect(res.body.data[0].username).toBe('john');
+    expect(res.body.data[0].roles[0].name).toBe('Admin');
   });
 });
 

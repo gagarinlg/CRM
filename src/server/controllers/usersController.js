@@ -30,7 +30,10 @@ const usersController = {
         is_active: is_active !== undefined ? is_active === 'true' : undefined,
         role,
       });
-      return paginated(res, result.data, result.total, parseInt(page, 10), parseInt(limit, 10));
+      const userIds = result.data.map((u) => u.id);
+      const rolesMap = await User.getUserRolesBatch(userIds);
+      const data = result.data.map((u) => ({ ...u, roles: rolesMap[u.id] || [] }));
+      return paginated(res, data, result.total, parseInt(page, 10), parseInt(limit, 10));
     } catch (err) {
       return next(err);
     }

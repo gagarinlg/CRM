@@ -64,8 +64,14 @@ function UserDialog({ open, onClose, user, roles, onSaved }) {
     setError('');
     setFieldErrors([]);
     try {
-      const payload = { ...data };
-      if (isEdit && !payload.password) delete payload.password;
+      const payload = {
+        first_name: data.firstName,
+        last_name:  data.lastName,
+        email:      data.email,
+        username:   data.username,
+        role:       data.role,
+      };
+      if (data.password) payload.password = data.password;
       if (isEdit) await api.put(`/users/${user.id}`, payload);
       else await api.post('/users', payload);
       onSaved();
