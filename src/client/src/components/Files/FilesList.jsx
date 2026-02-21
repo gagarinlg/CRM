@@ -130,7 +130,7 @@ export default function FilesList({ entityType, entityId }) {
                       {formatBytes(file.size)}
                     </Typography>
                     {file.mime_type && (
-                      <Chip label={file.mime_type.split('/')[1]} size="small" sx={{ height: 16, fontSize: 10 }} />
+                      <Chip label={file.mime_type.includes('/') ? file.mime_type.split('/')[1] : file.mime_type} size="small" sx={{ height: 16, fontSize: 10 }} />
                     )}
                     <Typography variant="caption" color="text.secondary">
                       {file.uploaded_by_name}

@@ -102,7 +102,8 @@ const attachmentsController = {
       const attachment = await Attachment.findById(req.params.id);
       if (!attachment) return notFound(res, 'File not found.');
       // Only uploader or admin can delete
-      if (attachment.uploaded_by !== req.user.id && !req.user.roles?.some(r => r.toLowerCase() === 'admin')) {
+      const userRoles = (req.user.roles || []).map(r => (typeof r === 'string' ? r : r.name || '').toLowerCase());
+      if (attachment.uploaded_by !== req.user.id && !userRoles.includes('admin')) {
         return error(res, 'Not authorized to delete this file.', 403);
       }
       const filePath = path.join(UPLOAD_DIR, attachment.filename);
