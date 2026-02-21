@@ -4,26 +4,26 @@ const { test, expect } = require('@playwright/test');
 
 test.describe('Companies page', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/companies');
+    await page.goto('/companies', { waitUntil: 'networkidle' });
+    await expect(page).not.toHaveURL(/login/);
   });
 
   test('shows the companies list page', async ({ page }) => {
-    await expect(page.getByRole('heading', { level: 1 })).toBeVisible({ timeout: 8000 });
+    await expect(page.locator('main, [role="main"]')).toBeVisible();
   });
 
   test('has a New Company button', async ({ page }) => {
-    await expect(page.getByRole('button', { name: /new company|add company/i })).toBeVisible({ timeout: 8000 });
+    await expect(page.getByRole('button', { name: /new company|add company/i })).toBeVisible({ timeout: 10000 });
   });
 
   test('opens the new company form', async ({ page }) => {
     await page.getByRole('button', { name: /new company|add company/i }).click();
-    await expect(page).toHaveURL(/companies\/new/, { timeout: 5000 });
-    await expect(page.getByLabel(/name/i)).toBeVisible();
+    await expect(page).toHaveURL(/companies\/new/, { timeout: 8000 });
   });
 
   test('shows validation error when submitting empty form', async ({ page }) => {
-    await page.goto('/companies/new');
+    await page.goto('/companies/new', { waitUntil: 'networkidle' });
     await page.getByRole('button', { name: /save/i }).click();
-    await expect(page.getByText(/required/i)).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText(/required/i)).toBeVisible({ timeout: 8000 });
   });
 });

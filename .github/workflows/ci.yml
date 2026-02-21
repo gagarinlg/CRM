@@ -118,8 +118,11 @@ jobs:
 
       - name: Start backend server
         # Express serves the built frontend at / (SPA catch-all in app.js)
-        # so we do NOT need a separate static-file server.
-        run: node src/server/index.js &
+        # nohup keeps the process alive after the step's shell exits; logs go
+        # to /tmp/crm-server.log for upload on failure.
+        run: |
+          nohup node src/server/index.js > /tmp/crm-server.log 2>&1 &
+          echo $! > /tmp/crm-server.pid
         env:
           NODE_ENV: production
           PORT: 3000
@@ -132,16 +135,28 @@ jobs:
           JWT_REFRESH_SECRET: ci-e2e-secret-refresh-key-32chars!
           # Origin the browser will send when loading from port 3000
           FRONTEND_URL: http://localhost:3000
+          DB_SSL: "false"
 
       - name: Wait for backend to be ready
         run: |
-          for i in {1..30}; do
-            curl -sf http://localhost:3000/health && break
+          echo "Waiting for CRM server on http://localhost:3000/health ..."
+          for i in $(seq 1 60); do
+            if curl -sf http://localhost:3000/health > /dev/null 2>&1; then
+              echo "✓ Server ready after ~$((i * 2 - 2))s"
+              exit 0
+            fi
+            echo "  attempt $i/60 – not ready yet, sleeping 2s"
             sleep 2
           done
+          echo "✗ Server did not become ready within 120s"
+          echo "=== Server log (last 50 lines) ==="
+          tail -50 /tmp/crm-server.log || true
+          exit 1
 
       - name: Run Playwright tests
-        run: npm run test:e2e -- --reporter=github
+        # Do NOT pass --reporter here: playwright.config.js already uses
+        # [['github'], ['html']] in CI so the HTML report is always generated.
+        run: npm run test:e2e
         env:
           # Point Playwright directly at Express (which also serves the frontend)
           PLAYWRIGHT_BASE_URL: http://localhost:3000
@@ -154,4 +169,12 @@ jobs:
         with:
           name: playwright-report
           path: playwright-report/
+          retention-days: 7
+
+      - name: Upload server log on failure
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: crm-server-log
+          path: /tmp/crm-server.log
           retention-days: 7

@@ -4,9 +4,9 @@ const { test, expect } = require('@playwright/test');
 
 test.describe('Dashboard page', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/');
-    // Guard: must not be redirected to login
-    await expect(page).not.toHaveURL(/login/, { timeout: 8000 });
+    await page.goto('/', { waitUntil: 'networkidle' });
+    // Guard: must not be redirected to login (React is fully loaded at this point)
+    await expect(page).not.toHaveURL(/login/);
   });
 
   test('dashboard page loads without error', async ({ page }) => {
@@ -19,23 +19,23 @@ test.describe('Dashboard page', () => {
       page.getByRole('link', { name: /companies/i })
         .or(page.getByRole('button', { name: /companies/i }))
         .or(page.getByText(/companies/i).first()),
-    ).toBeVisible({ timeout: 8000 });
+    ).toBeVisible({ timeout: 10000 });
   });
 
   test('navigates to Companies page', async ({ page }) => {
-    await page.goto('/companies');
+    await page.goto('/companies', { waitUntil: 'networkidle' });
     await expect(page).toHaveURL(/companies/);
     await expect(page).not.toHaveURL(/login/);
   });
 
   test('navigates to Contacts page', async ({ page }) => {
-    await page.goto('/contacts');
+    await page.goto('/contacts', { waitUntil: 'networkidle' });
     await expect(page).toHaveURL(/contacts/);
     await expect(page).not.toHaveURL(/login/);
   });
 
   test('navigates to Projects page', async ({ page }) => {
-    await page.goto('/projects');
+    await page.goto('/projects', { waitUntil: 'networkidle' });
     await expect(page).toHaveURL(/projects/);
     await expect(page).not.toHaveURL(/login/);
   });
