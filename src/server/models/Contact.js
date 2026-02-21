@@ -19,6 +19,9 @@ const Contact = {
 
   async create(data, createdBy) {
     const { phones, ...contactData } = data;
+    // Normalize empty string UUID fields to null so PostgreSQL doesn't reject them
+    const UUID_FIELDS = ['company_id'];
+    UUID_FIELDS.forEach((f) => { if (contactData[f] === '') contactData[f] = null; });
 
     const [contact] = await db('contacts')
       .insert({ ...contactData, created_by: createdBy })
@@ -43,6 +46,8 @@ const Contact = {
     const { phones, ...contactData } = data;
     const allowed = ['first_name', 'last_name', 'email', 'position', 'notes', 'company_id', 'last_contact_date'];
     const fields = Object.fromEntries(Object.entries(contactData).filter(([k]) => allowed.includes(k)));
+    // Normalize empty string UUID fields to null
+    if (fields.company_id === '') fields.company_id = null;
     fields.updated_at = db.fn.now();
 
     const [contact] = await db('contacts').where({ id }).whereNull('deleted_at').update(fields).returning('*');

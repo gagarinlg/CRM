@@ -52,9 +52,13 @@ const Company = {
 
   async getContacts(companyId) {
     return db('contacts')
+      .leftJoin(
+        db('contact_phones').where({ is_primary: true }).select('contact_id', 'phone_number').as('cp'),
+        'contacts.id', 'cp.contact_id',
+      )
       .where({ company_id: companyId })
       .whereNull('deleted_at')
-      .select('id', 'first_name', 'last_name', 'email', 'phone', 'position');
+      .select('contacts.id', 'contacts.first_name', 'contacts.last_name', 'contacts.email', 'cp.phone_number as phone', 'contacts.position');
   },
 
   async getProjects(companyId) {

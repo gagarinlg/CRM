@@ -32,7 +32,8 @@ test.describe('Leads page', () => {
     await expect(page.locator('main')).toBeVisible({ timeout: 20000 });
     await page.locator('input[name="title"]').fill('E2E Test Lead');
     await page.getByRole('button', { name: /save/i }).click();
-    await expect(page).toHaveURL(/\/leads/, { timeout: 10000 });
+    await expect(page).toHaveURL(/\/leads$/, { timeout: 10000 });
+    await expect(page.locator('table, [role="table"]')).toBeVisible({ timeout: 10000 });
     // Find and navigate to lead
     const row = page.getByText('E2E Test Lead').first();
     await expect(row).toBeVisible({ timeout: 10000 });
@@ -55,7 +56,8 @@ test.describe('Leads page', () => {
     await expect(page.locator('main')).toBeVisible({ timeout: 20000 });
     await page.locator('input[name="title"]').fill('Lead to Convert');
     await page.getByRole('button', { name: /save/i }).click();
-    await expect(page).toHaveURL(/\/leads/, { timeout: 10000 });
+    await expect(page).toHaveURL(/\/leads$/, { timeout: 10000 });
+    await expect(page.locator('table, [role="table"]')).toBeVisible({ timeout: 10000 });
     // Navigate to the lead detail
     const row = page.getByText('Lead to Convert').first();
     await expect(row).toBeVisible({ timeout: 10000 });

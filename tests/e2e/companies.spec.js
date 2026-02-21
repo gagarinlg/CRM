@@ -34,8 +34,9 @@ test.describe('Companies page', () => {
     await expect(page.locator('main')).toBeVisible({ timeout: 20000 });
     await page.locator('input[name="name"]').fill('E2E Test Corp');
     await page.getByRole('button', { name: /save/i }).click();
-    // After save, should redirect to list
-    await expect(page).toHaveURL(/\/companies/, { timeout: 10000 });
+    // After save, should redirect to list (not /new, not /uuid)
+    await expect(page).toHaveURL(/\/companies$/, { timeout: 10000 });
+    await expect(page.locator('table, [role="table"]')).toBeVisible({ timeout: 10000 });
     // Find the created company and click edit
     const row = page.getByText('E2E Test Corp').first();
     await expect(row).toBeVisible({ timeout: 10000 });

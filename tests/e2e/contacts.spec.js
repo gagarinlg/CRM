@@ -40,7 +40,10 @@ test.describe('Contacts page', () => {
     await page.locator('input[name="last_name"]').fill('TestContact');
     await page.locator('input[name="email"]').fill('e2econtact@example.com');
     await page.getByRole('button', { name: /save/i }).click();
-    await expect(page).toHaveURL(/\/contacts/, { timeout: 10000 });
+    // Wait for navigation away from /contacts/new (not just any /contacts URL)
+    await expect(page).toHaveURL(/\/contacts$/, { timeout: 10000 });
+    // Wait for the table to appear before looking for the row
+    await expect(page.locator('table, [role="table"]')).toBeVisible({ timeout: 10000 });
     // Find and navigate to the created contact
     const row = page.getByText('TestContact').first();
     await expect(row).toBeVisible({ timeout: 10000 });

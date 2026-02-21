@@ -22,6 +22,8 @@ const Lead = {
   async create(data, createdBy) {
     const allowed = ['title', 'value', 'probability', 'stage', 'source', 'status', 'visibility', 'company_id', 'contact_id', 'assigned_to', 'notes'];
     const fields = Object.fromEntries(Object.entries(data).filter(([k]) => allowed.includes(k)));
+    // Normalize empty string UUID fields to null
+    ['company_id', 'contact_id', 'assigned_to'].forEach((f) => { if (fields[f] === '') fields[f] = null; });
     const [lead] = await db('leads')
       .insert({ ...fields, created_by: createdBy })
       .returning('*');
@@ -31,6 +33,8 @@ const Lead = {
   async update(id, data) {
     const allowed = ['title', 'value', 'probability', 'stage', 'source', 'status', 'visibility', 'company_id', 'contact_id', 'assigned_to'];
     const fields = Object.fromEntries(Object.entries(data).filter(([k]) => allowed.includes(k)));
+    // Normalize empty string UUID fields to null
+    ['company_id', 'contact_id', 'assigned_to'].forEach((f) => { if (fields[f] === '') fields[f] = null; });
     fields.updated_at = db.fn.now();
     const [lead] = await db('leads').where({ id, deleted_at: null }).update(fields).returning('*');
     return lead;

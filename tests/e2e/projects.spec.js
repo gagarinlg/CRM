@@ -39,7 +39,8 @@ test.describe('Projects page', () => {
     await expect(page.locator('main')).toBeVisible({ timeout: 20000 });
     await page.locator('input[name="name"]').fill('E2E Test Project');
     await page.getByRole('button', { name: /save/i }).click();
-    await expect(page).toHaveURL(/\/projects/, { timeout: 10000 });
+    await expect(page).toHaveURL(/\/projects$/, { timeout: 10000 });
+    await expect(page.locator('table, [role="table"]')).toBeVisible({ timeout: 10000 });
     // Find and navigate to the created project
     const row = page.getByText('E2E Test Project').first();
     await expect(row).toBeVisible({ timeout: 10000 });

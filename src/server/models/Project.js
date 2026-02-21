@@ -10,6 +10,8 @@ const Project = {
   async create(data, createdBy) {
     const allowed = ['name', 'description', 'status', 'start_date', 'end_date', 'budget', 'company_id', 'progress', 'visibility'];
     const fields = Object.fromEntries(Object.entries(data).filter(([k]) => allowed.includes(k)));
+    // Normalize empty string UUID/date fields to null
+    ['company_id', 'start_date', 'end_date'].forEach((f) => { if (fields[f] === '') fields[f] = null; });
     const [project] = await db('projects')
       .insert({ ...fields, created_by: createdBy })
       .returning('*');
@@ -19,6 +21,8 @@ const Project = {
   async update(id, data) {
     const allowed = ['name', 'description', 'status', 'start_date', 'end_date', 'budget', 'company_id', 'progress', 'visibility'];
     const fields = Object.fromEntries(Object.entries(data).filter(([k]) => allowed.includes(k)));
+    // Normalize empty string UUID/date fields to null
+    ['company_id', 'start_date', 'end_date'].forEach((f) => { if (fields[f] === '') fields[f] = null; });
     fields.updated_at = db.fn.now();
     const [project] = await db('projects').where({ id, deleted_at: null }).update(fields).returning('*');
     return project;
