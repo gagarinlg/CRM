@@ -101,10 +101,11 @@ app.get('/health', (_req, res) => {
 // Apply authLimiter only to the endpoints that are targets for brute-force
 // attacks (login, token refresh, 2FA completion).  GET /auth/me and
 // POST /auth/logout are read/session operations covered by globalLimiter.
-app.use('/api/v1/auth/login', authLimiter);
-app.use('/api/v1/auth/refresh', authLimiter);
-app.use('/api/v1/auth/2fa/verify', authLimiter);
-app.use('/api/v1/auth', require('./routes/auth'));
+const AUTH = '/api/v1/auth';
+app.use(`${AUTH}/login`, authLimiter);
+app.use(`${AUTH}/refresh`, authLimiter);
+app.use(`${AUTH}/2fa/verify`, authLimiter);
+app.use(AUTH, require('./routes/auth'));
 app.use('/api/v1/users', require('./routes/users'));
 app.use('/api/v1/roles', require('./routes/roles'));
 app.use('/api/v1/groups', require('./routes/groups'));
