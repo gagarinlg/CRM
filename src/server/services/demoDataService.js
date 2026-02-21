@@ -106,10 +106,10 @@ const demoDataService = {
       const event3Start = addDays(7); event3Start.setHours(9, 0, 0, 0);
       const event3End = addDays(7); event3End.setHours(10, 0, 0, 0);
 
-      await trx('calendar_events').insert([
-        { title: 'ERP Project Kick-off', type: 'meeting', start_datetime: event1Start, end_datetime: event1End, description: 'Kick-off meeting with Acme team', user_id: userId },
-        { title: 'Discovery Call — Blue Sky', type: 'call', start_datetime: event2Start, end_datetime: event2End, description: 'Exploratory call about e-commerce needs', user_id: userId },
-        { title: 'Proposal Review — Sunrise', type: 'meeting', start_datetime: event3Start, end_datetime: event3End, description: 'Review CRM proposal with Michael Chen', user_id: userId },
+      await trx('events').insert([
+        { title: 'ERP Project Kick-off', type: 'meeting', start_datetime: event1Start, end_datetime: event1End, description: 'Kick-off meeting with Acme team', created_by: userId },
+        { title: 'Discovery Call — Blue Sky', type: 'call', start_datetime: event2Start, end_datetime: event2End, description: 'Exploratory call about e-commerce needs', created_by: userId },
+        { title: 'Proposal Review — Sunrise', type: 'meeting', start_datetime: event3Start, end_datetime: event3End, description: 'Review CRM proposal with Michael Chen', created_by: userId },
       ]);
 
       // Entity tags

@@ -30,6 +30,9 @@ function UserDialog({ open, onClose, user, roles, onSaved }) {
     firstName: yup.string().required(t('validation.firstNameRequired')),
     lastName: yup.string().required(t('validation.lastNameRequired')),
     email: yup.string().email(t('validation.emailInvalid')).required(t('validation.emailRequired')),
+    username: isEdit
+      ? yup.string().min(3, t('validation.usernameMinLength')).optional()
+      : yup.string().min(3, t('validation.usernameMinLength')).required(t('validation.usernameRequired')),
     password: isEdit
       ? yup.string().optional()
       : yup.string().min(8, t('validation.passwordMinLength')).required(t('validation.passwordRequired')),
@@ -37,7 +40,7 @@ function UserDialog({ open, onClose, user, roles, onSaved }) {
 
   const { register, handleSubmit, reset, control, formState: { errors } } = useForm({
     resolver: yupResolver(schema),
-    defaultValues: { firstName: '', lastName: '', email: '', password: '', role: 'user' },
+    defaultValues: { firstName: '', lastName: '', email: '', username: '', password: '', role: 'user' },
   });
 
   useEffect(() => {
@@ -48,9 +51,10 @@ function UserDialog({ open, onClose, user, roles, onSaved }) {
         firstName: user.firstName || user.first_name || '',
         lastName:  user.lastName  || user.last_name  || '',
         email:     user.email     || '',
+        username:  user.username  || '',
         password:  '',
         role:      (user.roles?.[0]?.name || user.roles?.[0] || 'user'),
-      } : { firstName: '', lastName: '', email: '', password: '', role: 'user' };
+      } : { firstName: '', lastName: '', email: '', username: '', password: '', role: 'user' };
       reset(normalized);
     }
   }, [open, user]);
@@ -101,6 +105,9 @@ function UserDialog({ open, onClose, user, roles, onSaved }) {
             </Grid>
             <Grid item xs={12}>
               <TextField {...register('email')} label={t('users.email')} type="email" fullWidth required error={!!errors.email} helperText={errors.email?.message} />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField {...register('username')} label={t('users.username')} fullWidth required={!isEdit} error={!!errors.username} helperText={errors.username?.message} />
             </Grid>
             <Grid item xs={12}>
               <TextField {...register('password')} label={isEdit ? t('users.newPassword') : t('users.password')} type="password" fullWidth required={!isEdit} error={!!errors.password} helperText={errors.password?.message} />
