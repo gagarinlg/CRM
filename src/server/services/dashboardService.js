@@ -40,7 +40,7 @@ const dashboardService = {
     const cutoff = new Date();
     cutoff.setMonth(cutoff.getMonth() - months);
 
-    return db('leads')
+    const rows = await db('leads')
       .whereNull('deleted_at')
       .where('status', 'won')
       .where('updated_at', '>=', cutoff.toISOString())
@@ -48,6 +48,12 @@ const dashboardService = {
       .select(db.raw("DATE_TRUNC('month', updated_at) as month"))
       .sum('value as revenue')
       .orderBy('month');
+
+    // Format month as a readable label for charts
+    return rows.map(r => ({
+      month: r.month ? new Date(r.month).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : '',
+      revenue: parseFloat(r.revenue) || 0,
+    }));
   },
 
   async getLeadConversionData() {

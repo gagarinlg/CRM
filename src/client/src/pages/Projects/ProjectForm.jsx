@@ -24,6 +24,7 @@ export default function ProjectForm() {
   const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState([]);
 
   const { register, handleSubmit, reset, control, watch, formState: { errors } } = useForm({
     resolver: yupResolver(schema),
@@ -43,13 +44,20 @@ export default function ProjectForm() {
   const onSubmit = async (data) => {
     setSaving(true);
     setError('');
+    setFieldErrors([]);
     try {
       const payload = Object.fromEntries(Object.entries(data).map(([k, v]) => [k, v === '' ? null : v]));
       if (isEdit) await api.put(`/projects/${id}`, payload);
       else await api.post('/projects', payload);
       navigate('/projects');
     } catch (err) {
-      setError(err.response?.data?.message || t('errors.saveFailed'));
+      const apiErrors = err.response?.data?.errors;
+      if (apiErrors?.length) {
+        setFieldErrors(apiErrors);
+        setError(err.response.data.message);
+      } else {
+        setError(err.response?.data?.message || t('errors.saveFailed'));
+      }
     } finally {
       setSaving(false);
     }
@@ -63,7 +71,18 @@ export default function ProjectForm() {
         title={isEdit ? t('projects.edit') : t('projects.new')}
         actions={<Button onClick={() => navigate(isEdit ? `/projects/${id}` : '/projects')}>{t('common.cancel')}</Button>}
       />
-      {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error}
+          {fieldErrors.length > 0 && (
+            <ul style={{ margin: '4px 0 0 0', paddingLeft: 20 }}>
+              {fieldErrors.map((e, i) => (
+                <li key={i}><strong>{e.field}</strong>: {e.message}</li>
+              ))}
+            </ul>
+          )}
+        </Alert>
+      )}
 
       <Box component="form" onSubmit={handleSubmit(onSubmit)} noValidate>
         <Grid container spacing={2}>

@@ -71,7 +71,14 @@ export default function Sidebar({ drawerWidth, mobileOpen, onClose, isMobile }) 
   const location = useLocation();
   const { isAdmin } = useAuth();
   const { t } = useTranslation();
-  const [adminOpen, setAdminOpen] = React.useState(false);
+  const [adminOpen, setAdminOpen] = React.useState(() => location.pathname.startsWith('/admin'));
+
+  // Auto-open admin section when navigating to an admin route
+  React.useEffect(() => {
+    if (location.pathname.startsWith('/admin')) {
+      setAdminOpen(true);
+    }
+  }, [location.pathname]);
 
   const handleNav = (path) => {
     navigate(path);

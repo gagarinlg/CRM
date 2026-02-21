@@ -24,6 +24,7 @@ export default function LeadForm() {
   const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState([]);
   const [companies, setCompanies] = useState([]);
   const [contacts, setContacts] = useState([]);
 
@@ -57,13 +58,20 @@ export default function LeadForm() {
   const onSubmit = async (data) => {
     setSaving(true);
     setError('');
+    setFieldErrors([]);
     try {
       const payload = Object.fromEntries(Object.entries(data).map(([k, v]) => [k, v === '' ? null : v]));
       if (isEdit) await api.put(`/leads/${id}`, payload);
       else await api.post('/leads', payload);
       navigate('/leads');
     } catch (err) {
-      setError(err.response?.data?.message || t('errors.saveFailed'));
+      const apiErrors = err.response?.data?.errors;
+      if (apiErrors?.length) {
+        setFieldErrors(apiErrors);
+        setError(err.response.data.message);
+      } else {
+        setError(err.response?.data?.message || t('errors.saveFailed'));
+      }
     } finally {
       setSaving(false);
     }
@@ -77,7 +85,18 @@ export default function LeadForm() {
         title={isEdit ? t('leads.edit') : t('leads.new')}
         actions={<Button onClick={() => navigate(isEdit ? `/leads/${id}` : '/leads')}>{t('common.cancel')}</Button>}
       />
-      {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error}
+          {fieldErrors.length > 0 && (
+            <ul style={{ margin: '4px 0 0 0', paddingLeft: 20 }}>
+              {fieldErrors.map((e, i) => (
+                <li key={i}><strong>{e.field}</strong>: {e.message}</li>
+              ))}
+            </ul>
+          )}
+        </Alert>
+      )}
 
       <Box component="form" onSubmit={handleSubmit(onSubmit)} noValidate>
         <Grid container spacing={2}>

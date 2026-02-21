@@ -25,6 +25,7 @@ export default function CompanyForm() {
   const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState([]);
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm({
     resolver: yupResolver(schema),
@@ -41,6 +42,7 @@ export default function CompanyForm() {
   const onSubmit = async (data) => {
     setSaving(true);
     setError('');
+    setFieldErrors([]);
     try {
       // Strip empty strings to null
       const payload = Object.fromEntries(
@@ -50,7 +52,13 @@ export default function CompanyForm() {
       else await api.post('/companies', payload);
       navigate('/companies');
     } catch (err) {
-      setError(err.response?.data?.message || t('errors.saveFailed'));
+      const apiErrors = err.response?.data?.errors;
+      if (apiErrors?.length) {
+        setFieldErrors(apiErrors);
+        setError(err.response.data.message);
+      } else {
+        setError(err.response?.data?.message || t('errors.saveFailed'));
+      }
     } finally {
       setSaving(false);
     }
@@ -68,7 +76,18 @@ export default function CompanyForm() {
           </Button>
         }
       />
-      {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error}
+          {fieldErrors.length > 0 && (
+            <ul style={{ margin: '4px 0 0 0', paddingLeft: 20 }}>
+              {fieldErrors.map((e, i) => (
+                <li key={i}><strong>{e.field}</strong>: {e.message}</li>
+              ))}
+            </ul>
+          )}
+        </Alert>
+      )}
 
       <Box component="form" onSubmit={handleSubmit(onSubmit)} noValidate>
         <Grid container spacing={2}>

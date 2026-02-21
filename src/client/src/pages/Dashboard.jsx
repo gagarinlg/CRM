@@ -50,10 +50,10 @@ export default function Dashboard() {
   }, []);
 
   const kpiItems = [
-    { key: 'companies', label: t('nav.companies'), value: kpis?.totalCompanies, icon: <BusinessIcon />, color: 'primary.main' },
-    { key: 'contacts', label: t('nav.contacts'), value: kpis?.totalContacts, icon: <PeopleIcon />, color: 'secondary.main' },
-    { key: 'projects', label: t('nav.projects'), value: kpis?.activeProjects, icon: <FolderIcon />, color: 'success.main' },
-    { key: 'leads', label: t('nav.leads'), value: kpis?.openLeads, icon: <TrendingUpIcon />, color: 'warning.main' },
+    { key: 'companies', label: t('nav.companies'), value: kpis?.total_companies, icon: <BusinessIcon />, color: 'primary.main' },
+    { key: 'contacts', label: t('nav.contacts'), value: kpis?.total_contacts, icon: <PeopleIcon />, color: 'secondary.main' },
+    { key: 'projects', label: t('nav.projects'), value: kpis?.active_projects, icon: <FolderIcon />, color: 'success.main' },
+    { key: 'leads', label: t('nav.leads'), value: kpis?.open_leads, icon: <TrendingUpIcon />, color: 'warning.main' },
   ];
 
   return (
@@ -110,8 +110,8 @@ export default function Dashboard() {
           <DashboardWidget title={t('dashboard.leadConversion')}>
             <ChartWidget
               type="bar"
-              data={Array.isArray(leadConversion) ? leadConversion : []}
-              dataKeys={['converted', 'lost', 'open']}
+              data={Array.isArray(leadConversion?.pipeline) ? leadConversion.pipeline : []}
+              dataKeys={['count']}
               xKey="stage"
               height={220}
             />
@@ -128,12 +128,12 @@ export default function Dashboard() {
                     <ListItem disableGutters>
                       <ListItemAvatar>
                         <Avatar sx={{ width: 32, height: 32, bgcolor: 'error.light', fontSize: 13 }}>
-                          {c.firstName?.[0]}{c.lastName?.[0]}
+                          {c.first_name?.[0]}{c.last_name?.[0]}
                         </Avatar>
                       </ListItemAvatar>
                       <ListItemText
-                        primary={`${c.firstName} ${c.lastName}`}
-                        secondary={c.lastContactDate ? `Last: ${dayjs(c.lastContactDate).format('DD MMM YYYY')}` : 'Never contacted'}
+                        primary={`${c.first_name} ${c.last_name}`}
+                        secondary={c.remind_at ? `Due: ${dayjs(c.remind_at).format('DD MMM YYYY')}` : 'No date'}
                         primaryTypographyProps={{ fontSize: 14 }}
                         secondaryTypographyProps={{ fontSize: 12 }}
                       />
@@ -154,14 +154,31 @@ export default function Dashboard() {
               <List dense disablePadding>
                 {recentActivity.slice(0, 8).map((a, i) => (
                   <React.Fragment key={a.id || i}>
-                    <ListItem disableGutters>
+                    <ListItem disableGutters alignItems="flex-start">
+                      <ListItemAvatar>
+                        <Avatar sx={{ width: 32, height: 32, bgcolor: 'primary.light', fontSize: 12 }}>
+                          {a.user_name ? a.user_name.split(' ').map(n => n[0]).join('').toUpperCase() : '?'}
+                        </Avatar>
+                      </ListItemAvatar>
                       <ListItemText
-                        primary={a.description || a.action}
-                        secondary={a.createdAt ? dayjs(a.createdAt).format('DD MMM YYYY HH:mm') : ''}
-                        primaryTypographyProps={{ fontSize: 14 }}
+                        primary={
+                          <Box component="span">
+                            <Typography component="span" variant="body2" fontWeight={600}>
+                              {a.user_name || t('common.unknown')}
+                            </Typography>
+                            {' '}
+                            <Typography component="span" variant="body2">
+                              {a.action?.replace(/_/g, ' ')}
+                            </Typography>
+                            {a.entity_type && (
+                              <Chip label={a.entity_type} size="small" variant="outlined" sx={{ ml: 1, height: 18, fontSize: 10 }} />
+                            )}
+                          </Box>
+                        }
+                        secondary={a.created_at ? dayjs(a.created_at).format('DD MMM YYYY HH:mm') : ''}
+                        primaryTypographyProps={{ component: 'div' }}
                         secondaryTypographyProps={{ fontSize: 12 }}
                       />
-                      {a.type && <Chip label={a.type} size="small" variant="outlined" />}
                     </ListItem>
                     {i < recentActivity.length - 1 && <Divider />}
                   </React.Fragment>

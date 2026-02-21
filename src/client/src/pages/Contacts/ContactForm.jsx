@@ -36,6 +36,7 @@ export default function ContactForm() {
   const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState([]);
   const [companies, setCompanies] = useState([]);
 
   const { register, handleSubmit, reset, control, formState: { errors } } = useForm({
@@ -74,6 +75,7 @@ export default function ContactForm() {
   const onSubmit = async (data) => {
     setSaving(true);
     setError('');
+    setFieldErrors([]);
     try {
       // Remove empty phone entries
       const phones = (data.phones || []).filter(p => p.phone_number.trim() !== '');
@@ -82,7 +84,13 @@ export default function ContactForm() {
       else await api.post('/contacts', payload);
       navigate('/contacts');
     } catch (err) {
-      setError(err.response?.data?.message || t('errors.saveFailed'));
+      const apiErrors = err.response?.data?.errors;
+      if (apiErrors?.length) {
+        setFieldErrors(apiErrors);
+        setError(err.response.data.message);
+      } else {
+        setError(err.response?.data?.message || t('errors.saveFailed'));
+      }
     } finally {
       setSaving(false);
     }
@@ -96,7 +104,18 @@ export default function ContactForm() {
         title={isEdit ? t('contacts.edit') : t('contacts.new')}
         actions={<Button onClick={() => navigate(isEdit ? `/contacts/${id}` : '/contacts')}>{t('common.cancel')}</Button>}
       />
-      {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error}
+          {fieldErrors.length > 0 && (
+            <ul style={{ margin: '4px 0 0 0', paddingLeft: 20 }}>
+              {fieldErrors.map((e, i) => (
+                <li key={i}><strong>{e.field}</strong>: {e.message}</li>
+              ))}
+            </ul>
+          )}
+        </Alert>
+      )}
 
       <Box component="form" onSubmit={handleSubmit(onSubmit)} noValidate>
         <Grid container spacing={2}>
