@@ -69,7 +69,7 @@ function NavItem({ item, selected, onClick }) {
 export default function Sidebar({ drawerWidth, mobileOpen, onClose, isMobile }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { isAdmin } = useAuth();
+  const { isAdminUser } = useAuth();
   const { t } = useTranslation();
   const [adminOpen, setAdminOpen] = React.useState(() => location.pathname.startsWith('/admin'));
 
@@ -104,7 +104,7 @@ export default function Sidebar({ drawerWidth, mobileOpen, onClose, isMobile }) 
             onClick={handleNav}
           />
         ))}
-        {isAdmin() && (
+        {isAdminUser && (
           <>
             <Divider sx={{ my: 1 }} />
             <ListItem disablePadding>

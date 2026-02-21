@@ -72,9 +72,13 @@ export const AuthProvider = ({ children }) => {
 
   const isAdmin = () => user?.roles?.some(r => (r.name || r).toLowerCase() === 'admin');
   const isManager = () => user?.roles?.some(r => ['admin', 'manager'].includes((r.name || r).toLowerCase()));
+  // Pre-computed booleans — reactive to user state changes; more reliable than calling
+  // the functions in render because React tracks state reads for re-render scheduling.
+  const isAdminUser = Boolean(user?.roles?.some(r => (r.name || r).toLowerCase() === 'admin'));
+  const isManagerUser = Boolean(user?.roles?.some(r => ['admin', 'manager'].includes((r.name || r).toLowerCase())));
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, verifyTotp, changePassword, isAdmin, isManager, loadUser }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, verifyTotp, changePassword, isAdmin, isManager, isAdminUser, isManagerUser, loadUser }}>
       {children}
     </AuthContext.Provider>
   );

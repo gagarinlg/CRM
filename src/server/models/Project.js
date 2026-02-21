@@ -85,9 +85,14 @@ const Project = {
   async getContacts(projectId) {
     return db('project_contacts')
       .join('contacts', 'project_contacts.contact_id', 'contacts.id')
+      .leftJoin(
+        db('contact_phones').where({ is_primary: true }).select('contact_id', 'phone_number').as('primary_phone'),
+        'primary_phone.contact_id', 'contacts.id',
+      )
       .where('project_contacts.project_id', projectId)
       .whereNull('contacts.deleted_at')
-      .select('contacts.id', 'contacts.first_name', 'contacts.last_name', 'contacts.email', 'contacts.phone');
+      .select('contacts.id', 'contacts.first_name', 'contacts.last_name', 'contacts.email',
+        'primary_phone.phone_number as phone');
   },
 
   async addMember(projectId, userId, role) {
