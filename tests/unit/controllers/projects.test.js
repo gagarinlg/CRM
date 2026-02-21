@@ -3,11 +3,15 @@
 process.env.JWT_SECRET = 'unit-test-access-secret-32chars!!';
 process.env.JWT_REFRESH_SECRET = 'unit-test-refresh-secret-32chars!';
 
-jest.mock('../../../src/server/config/database', () => ({
-  db: jest.fn(),
-  connectDB: jest.fn().mockResolvedValue(undefined),
-  disconnectDB: jest.fn().mockResolvedValue(undefined),
-}));
+jest.mock('../../../src/server/config/database', () => {
+  const db = jest.fn();
+  db.fn = { now: jest.fn().mockReturnValue('NOW()') };
+  return {
+    db,
+    connectDB: jest.fn().mockResolvedValue(undefined),
+    disconnectDB: jest.fn().mockResolvedValue(undefined),
+  };
+});
 
 jest.mock('../../../src/server/middleware/auth', () => ({
   verifyToken: (req, _res, next) => {
@@ -21,11 +25,14 @@ jest.mock('../../../src/server/middleware/auth', () => ({
 jest.mock('../../../src/server/models/Project');
 jest.mock('../../../src/server/models/AuditLog', () => ({
   create: jest.fn().mockResolvedValue({ id: 'log-id' }),
+  list: jest.fn().mockResolvedValue({ data: [], total: 0 }),
 }));
 
 const request = require('supertest');
 const app = require('../../../src/server/app');
 const Project = require('../../../src/server/models/Project');
+const AuditLog = require('../../../src/server/models/AuditLog');
+const { db } = require('../../../src/server/config/database');
 
 const SAMPLE_PROJECT = {
   id: 'proj-uuid-1',
@@ -34,6 +41,20 @@ const SAMPLE_PROJECT = {
   company_id: 'company-uuid-1',
   created_at: new Date().toISOString(),
 };
+
+function makeDbChain(overrides = {}) {
+  const chain = {
+    where: jest.fn().mockReturnThis(),
+    whereIn: jest.fn().mockReturnThis(),
+    whereNull: jest.fn().mockReturnThis(),
+    update: jest.fn().mockResolvedValue(1),
+    select: jest.fn().mockResolvedValue([]),
+    pluck: jest.fn().mockResolvedValue([]),
+    first: jest.fn().mockResolvedValue(null),
+    ...overrides,
+  };
+  return chain;
+}
 
 beforeEach(() => jest.clearAllMocks());
 
@@ -209,3 +230,175 @@ describe('DELETE /api/v1/projects/:id/groups/:groupId', () => {
     expect(res.status).toBe(200);
   });
 });
+
+describe('GET /api/v1/projects/:id (restricted visibility)', () => {
+  const projectsController = require('../../../src/server/controllers/projectsController');
+
+  function makeReq(userId, roles = []) {
+    return {
+      params: { id: 'proj-uuid-1' },
+      user: { id: userId, roles, permissions: [] },
+      ip: '127.0.0.1',
+    };
+  }
+  function mockRes() {
+    const r = {};
+    r.status = jest.fn().mockReturnValue(r);
+    r.json = jest.fn().mockReturnValue(r);
+    return r;
+  }
+
+  test('admin user always has access to restricted project', async () => {
+    Project.findById.mockResolvedValue({ ...SAMPLE_PROJECT, visibility: 'restricted', created_by: 'someone-else' });
+    Project.getMembers.mockResolvedValue([]);
+    Project.getContacts.mockResolvedValue([]);
+    const req = makeReq('test-user-id', ['admin']);
+    const res = mockRes();
+    await projectsController.getById(req, res, jest.fn());
+    expect(res.status).toHaveBeenCalledWith(200);
+  });
+
+  test('creator has access to their own restricted project', async () => {
+    Project.findById.mockResolvedValue({ ...SAMPLE_PROJECT, visibility: 'restricted', created_by: 'test-user-id' });
+    Project.getMembers.mockResolvedValue([]);
+    Project.getContacts.mockResolvedValue([]);
+    const req = makeReq('test-user-id', []);
+    const res = mockRes();
+    await projectsController.getById(req, res, jest.fn());
+    expect(res.status).toHaveBeenCalledWith(200);
+  });
+
+  test('returns 403 for non-admin non-creator without group/member access', async () => {
+    Project.findById.mockResolvedValue({ ...SAMPLE_PROJECT, visibility: 'restricted', created_by: 'owner-id' });
+    db.mockReturnValue(makeDbChain({ pluck: jest.fn().mockResolvedValue([]), select: jest.fn().mockResolvedValue([]), first: jest.fn().mockResolvedValue(null) }));
+    const req = makeReq('other-user', []);
+    const res = mockRes();
+    await projectsController.getById(req, res, jest.fn());
+    expect(res.status).toHaveBeenCalledWith(403);
+  });
+
+  test('group member has access to restricted project via group membership', async () => {
+    Project.findById.mockResolvedValue({ ...SAMPLE_PROJECT, visibility: 'restricted', created_by: 'owner-id' });
+    Project.getMembers.mockResolvedValue([]);
+    Project.getContacts.mockResolvedValue([]);
+    const chain = makeDbChain();
+    chain.pluck = jest.fn().mockResolvedValue(['grp-1']);
+    chain.select = jest.fn().mockResolvedValue([{ group_id: 'grp-1' }]);
+    db.mockReturnValue(chain);
+    const req = makeReq('group-member', []);
+    const res = mockRes();
+    await projectsController.getById(req, res, jest.fn());
+    expect(res.status).toHaveBeenCalledWith(200);
+  });
+
+  test('direct project member has access to restricted project', async () => {
+    Project.findById.mockResolvedValue({ ...SAMPLE_PROJECT, visibility: 'restricted', created_by: 'owner-id' });
+    Project.getMembers.mockResolvedValue([]);
+    Project.getContacts.mockResolvedValue([]);
+    const chain = makeDbChain();
+    chain.pluck = jest.fn().mockResolvedValue([]);
+    chain.select = jest.fn().mockResolvedValue([]);
+    chain.first = jest.fn().mockResolvedValue({ user_id: 'member-user' });
+    db.mockReturnValue(chain);
+    const req = makeReq('member-user', []);
+    const res = mockRes();
+    await projectsController.getById(req, res, jest.fn());
+    expect(res.status).toHaveBeenCalledWith(200);
+  });
+
+  test('public project is accessible to any authenticated user', async () => {
+    Project.findById.mockResolvedValue({ ...SAMPLE_PROJECT, visibility: 'public' });
+    Project.getMembers.mockResolvedValue([]);
+    Project.getContacts.mockResolvedValue([]);
+    const req = makeReq('any-user', []);
+    const res = mockRes();
+    await projectsController.getById(req, res, jest.fn());
+    expect(res.status).toHaveBeenCalledWith(200);
+  });
+});
+
+describe('GET /api/v1/projects/:id/contacts', () => {
+  test('returns contacts for project', async () => {
+    Project.findById.mockResolvedValue(SAMPLE_PROJECT);
+    Project.getContacts.mockResolvedValue([{ id: 'c1', first_name: 'Alice', last_name: 'Smith' }]);
+    const res = await request(app).get('/api/v1/projects/proj-uuid-1/contacts');
+    expect(res.status).toBe(200);
+    expect(res.body.data[0].first_name).toBe('Alice');
+  });
+
+  test('returns 404 when project not found', async () => {
+    Project.findById.mockResolvedValue(null);
+    const res = await request(app).get('/api/v1/projects/bad-id/contacts');
+    expect(res.status).toBe(404);
+  });
+});
+
+describe('GET /api/v1/projects/:id/members', () => {
+  test('returns members for project', async () => {
+    Project.findById.mockResolvedValue(SAMPLE_PROJECT);
+    Project.getMembers.mockResolvedValue([{ id: 'u1', email: 'bob@example.com', role: 'developer' }]);
+    const res = await request(app).get('/api/v1/projects/proj-uuid-1/members');
+    expect(res.status).toBe(200);
+    expect(res.body.data[0].email).toBe('bob@example.com');
+  });
+
+  test('returns 404 when project not found', async () => {
+    Project.findById.mockResolvedValue(null);
+    const res = await request(app).get('/api/v1/projects/bad-id/members');
+    expect(res.status).toBe(404);
+  });
+});
+
+describe('GET /api/v1/projects/:id/activity', () => {
+  test('returns activity log for project', async () => {
+    Project.findById.mockResolvedValue(SAMPLE_PROJECT);
+    AuditLog.list.mockResolvedValue({ data: [{ id: 'log-1', action: 'create_project' }], total: 1 });
+    const res = await request(app).get('/api/v1/projects/proj-uuid-1/activity');
+    expect(res.status).toBe(200);
+    expect(res.body.data[0].action).toBe('create_project');
+  });
+
+  test('returns 404 when project not found', async () => {
+    Project.findById.mockResolvedValue(null);
+    const res = await request(app).get('/api/v1/projects/bad-id/activity');
+    expect(res.status).toBe(404);
+  });
+});
+
+describe('POST /api/v1/projects/bulk-delete', () => {
+  beforeEach(() => {
+    db.mockReturnValue(makeDbChain());
+  });
+
+  test('bulk deletes projects by ids', async () => {
+    const res = await request(app)
+      .post('/api/v1/projects/bulk-delete')
+      .send({ ids: ['proj-uuid-1', 'proj-uuid-2'] });
+    expect(res.status).toBe(200);
+  });
+
+  test('returns 400 when ids is missing', async () => {
+    const res = await request(app)
+      .post('/api/v1/projects/bulk-delete')
+      .send({});
+    expect(res.status).toBe(400);
+  });
+
+  test('returns 400 when ids is empty array', async () => {
+    const res = await request(app)
+      .post('/api/v1/projects/bulk-delete')
+      .send({ ids: [] });
+    expect(res.status).toBe(400);
+  });
+});
+
+describe('GET /api/v1/projects/export', () => {
+  test('returns CSV data', async () => {
+    Project.list.mockResolvedValue({ data: [SAMPLE_PROJECT], total: 1 });
+    const res = await request(app).get('/api/v1/projects/export');
+    expect(res.status).toBe(200);
+    expect(res.headers['content-type']).toMatch(/text\/csv/);
+    expect(res.text).toContain('id,name,status');
+  });
+});
+

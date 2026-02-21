@@ -3,11 +3,15 @@
 process.env.JWT_SECRET = 'unit-test-access-secret-32chars!!';
 process.env.JWT_REFRESH_SECRET = 'unit-test-refresh-secret-32chars!';
 
-jest.mock('../../../src/server/config/database', () => ({
-  db: jest.fn(),
-  connectDB: jest.fn().mockResolvedValue(undefined),
-  disconnectDB: jest.fn().mockResolvedValue(undefined),
-}));
+jest.mock('../../../src/server/config/database', () => {
+  const db = jest.fn();
+  db.fn = { now: jest.fn().mockReturnValue('NOW()') };
+  return {
+    db,
+    connectDB: jest.fn().mockResolvedValue(undefined),
+    disconnectDB: jest.fn().mockResolvedValue(undefined),
+  };
+});
 
 jest.mock('../../../src/server/middleware/auth', () => ({
   verifyToken: (req, _res, next) => {
@@ -24,16 +28,28 @@ jest.mock('../../../src/server/models/Note');
 jest.mock('../../../src/server/models/Attachment');
 jest.mock('../../../src/server/models/AuditLog', () => ({
   create: jest.fn().mockResolvedValue({ id: 'log-id' }),
+  list: jest.fn().mockResolvedValue({ data: [], total: 0 }),
 }));
 
-// Mock the db() calls used in leadsController (group_members lookup + notes insert in convert)
+// Mock the db() calls used in leadsController
 const { db } = require('../../../src/server/config/database');
-const mockPluck = jest.fn().mockResolvedValue([]);
-const mockInsert = jest.fn().mockResolvedValue([]);
-db.mockReturnValue({
-  where: jest.fn().mockReturnValue({ pluck: mockPluck }),
-  insert: mockInsert,
-});
+
+function makeDbChain(overrides = {}) {
+  const chain = {
+    where: jest.fn().mockReturnThis(),
+    whereIn: jest.fn().mockReturnThis(),
+    whereNull: jest.fn().mockReturnThis(),
+    update: jest.fn().mockResolvedValue(1),
+    select: jest.fn().mockResolvedValue([]),
+    pluck: jest.fn().mockResolvedValue([]),
+    first: jest.fn().mockResolvedValue(null),
+    insert: jest.fn().mockResolvedValue([]),
+    ...overrides,
+  };
+  return chain;
+}
+
+db.mockReturnValue(makeDbChain());
 
 const request = require('supertest');
 const app = require('../../../src/server/app');
@@ -41,6 +57,7 @@ const Lead = require('../../../src/server/models/Lead');
 const Project = require('../../../src/server/models/Project');
 const Note = require('../../../src/server/models/Note');
 const Attachment = require('../../../src/server/models/Attachment');
+const AuditLog = require('../../../src/server/models/AuditLog');
 
 const SAMPLE_LEAD = {
   id: 'lead-uuid-1',
@@ -264,3 +281,132 @@ describe('POST /api/v1/leads/:id/convert', () => {
     expect(res.status).toBe(404);
   });
 });
+
+describe('GET /api/v1/leads/:id (restricted visibility)', () => {
+  const leadsController = require('../../../src/server/controllers/leadsController');
+
+  function makeReq(userId, roles = []) {
+    return {
+      params: { id: 'lead-uuid-1' },
+      user: { id: userId, roles, permissions: [] },
+      ip: '127.0.0.1',
+    };
+  }
+  function mockRes() {
+    const r = {};
+    r.status = jest.fn().mockReturnValue(r);
+    r.json = jest.fn().mockReturnValue(r);
+    return r;
+  }
+
+  test('admin user always has access to restricted lead', async () => {
+    Lead.findById.mockResolvedValue({ ...SAMPLE_LEAD, visibility: 'restricted', created_by: 'someone-else' });
+    const req = makeReq('test-user-id', ['admin']);
+    const res = mockRes();
+    await leadsController.getById(req, res, jest.fn());
+    expect(res.status).toHaveBeenCalledWith(200);
+  });
+
+  test('creator has access to their own restricted lead', async () => {
+    Lead.findById.mockResolvedValue({ ...SAMPLE_LEAD, visibility: 'restricted', created_by: 'test-user-id' });
+    const req = makeReq('test-user-id', []);
+    const res = mockRes();
+    await leadsController.getById(req, res, jest.fn());
+    expect(res.status).toHaveBeenCalledWith(200);
+  });
+
+  test('assigned_to user has access to restricted lead', async () => {
+    Lead.findById.mockResolvedValue({ ...SAMPLE_LEAD, visibility: 'restricted', created_by: 'owner-id', assigned_to: 'assigned-user' });
+    const req = makeReq('assigned-user', []);
+    const res = mockRes();
+    await leadsController.getById(req, res, jest.fn());
+    expect(res.status).toHaveBeenCalledWith(200);
+  });
+
+  test('returns 403 for non-admin non-creator without group/member access', async () => {
+    Lead.findById.mockResolvedValue({ ...SAMPLE_LEAD, visibility: 'restricted', created_by: 'owner-id', assigned_to: 'other' });
+    db.mockReturnValue(makeDbChain({
+      pluck: jest.fn().mockResolvedValue([]),
+      select: jest.fn().mockResolvedValue([]),
+      first: jest.fn().mockResolvedValue(null),
+    }));
+    const req = makeReq('nobody', []);
+    const res = mockRes();
+    await leadsController.getById(req, res, jest.fn());
+    expect(res.status).toHaveBeenCalledWith(403);
+  });
+
+  test('group member has access to restricted lead via group membership', async () => {
+    Lead.findById.mockResolvedValue({ ...SAMPLE_LEAD, visibility: 'restricted', created_by: 'owner-id', assigned_to: null });
+    const chain = makeDbChain();
+    chain.pluck = jest.fn().mockResolvedValue(['grp-1']);
+    chain.select = jest.fn().mockResolvedValue([{ group_id: 'grp-1' }]);
+    db.mockReturnValue(chain);
+    const req = makeReq('group-member', []);
+    const res = mockRes();
+    await leadsController.getById(req, res, jest.fn());
+    expect(res.status).toHaveBeenCalledWith(200);
+  });
+
+  test('public lead is accessible to any authenticated user', async () => {
+    Lead.findById.mockResolvedValue({ ...SAMPLE_LEAD, visibility: 'public' });
+    const req = makeReq('any-user', []);
+    const res = mockRes();
+    await leadsController.getById(req, res, jest.fn());
+    expect(res.status).toHaveBeenCalledWith(200);
+  });
+});
+
+describe('GET /api/v1/leads/:id/activity', () => {
+  test('returns activity log for lead', async () => {
+    Lead.findById.mockResolvedValue(SAMPLE_LEAD);
+    AuditLog.list.mockResolvedValue({ data: [{ id: 'log-1', action: 'create_lead' }], total: 1 });
+    const res = await request(app).get('/api/v1/leads/lead-uuid-1/activity');
+    expect(res.status).toBe(200);
+    expect(res.body.data[0].action).toBe('create_lead');
+  });
+
+  test('returns 404 when lead not found', async () => {
+    Lead.findById.mockResolvedValue(null);
+    const res = await request(app).get('/api/v1/leads/bad-id/activity');
+    expect(res.status).toBe(404);
+  });
+});
+
+describe('POST /api/v1/leads/bulk-delete', () => {
+  beforeEach(() => {
+    db.mockReturnValue(makeDbChain());
+  });
+
+  test('bulk deletes leads by ids', async () => {
+    const res = await request(app)
+      .post('/api/v1/leads/bulk-delete')
+      .send({ ids: ['lead-uuid-1', 'lead-uuid-2'] });
+    expect(res.status).toBe(200);
+  });
+
+  test('returns 400 when ids is missing', async () => {
+    const res = await request(app)
+      .post('/api/v1/leads/bulk-delete')
+      .send({});
+    expect(res.status).toBe(400);
+  });
+
+  test('returns 400 when ids is empty array', async () => {
+    const res = await request(app)
+      .post('/api/v1/leads/bulk-delete')
+      .send({ ids: [] });
+    expect(res.status).toBe(400);
+  });
+});
+
+describe('GET /api/v1/leads/export', () => {
+  test('returns CSV data', async () => {
+    Lead.list.mockResolvedValue({ data: [SAMPLE_LEAD], total: 1 });
+    const res = await request(app).get('/api/v1/leads/export');
+    expect(res.status).toBe(200);
+    expect(res.headers['content-type']).toMatch(/text\/csv/);
+    expect(res.text).toContain('id,title,value');
+  });
+});
+

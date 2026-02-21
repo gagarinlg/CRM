@@ -134,6 +134,8 @@ app.use('/api/v1/settings', require('./routes/settings'));
 app.use('/api/v1/email', require('./routes/email'));
 app.use('/api/v1/i18n', require('./routes/i18n'));
 app.use('/api/v1/attachments/:entityType/:entityId', require('./routes/attachments'));
+app.use('/api/v1/search', require('./routes/search'));
+app.use('/api/v1/tags', require('./routes/tags'));
 
 // ── CalDAV / CardDAV sync endpoints ───────────────────────────────────────
 app.use('/caldav', require('./caldav/index'));

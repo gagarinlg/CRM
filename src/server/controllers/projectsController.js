@@ -3,7 +3,10 @@
 const { body } = require('express-validator');
 const Project = require('../models/Project');
 const AuditLog = require('../models/AuditLog');
-const { success, error, paginated, notFound } = require('../utils/response');
+const { success, error, paginated, notFound, forbidden } = require('../utils/response');
+const { db } = require('../config/database');
+
+const MAX_EXPORT_ROWS = 10000;
 
 const createValidation = [
   body('name').notEmpty().withMessage('Project name is required.'),
@@ -26,7 +29,7 @@ const projectsController = {
       const isAdmin = hasAdminRole(req.user);
       let user_groups = [];
       if (!isAdmin) {
-        user_groups = await require('../config/database').db('group_members')
+        user_groups = await db('group_members')
           .where({ user_id: req.user.id })
           .pluck('group_id');
       }
@@ -51,11 +54,120 @@ const projectsController = {
     try {
       const project = await Project.findById(req.params.id);
       if (!project) return notFound(res, 'Project not found.');
+
+      if (project.visibility === 'restricted') {
+        const isAdmin = hasAdminRole(req.user);
+        if (!isAdmin && project.created_by !== req.user.id) {
+          const userGroups = await db('group_members')
+            .where({ user_id: req.user.id })
+            .pluck('group_id');
+          let hasAccess = false;
+          if (userGroups.length > 0) {
+            const matched = await db('project_groups')
+              .where('project_id', req.params.id)
+              .whereIn('group_id', userGroups)
+              .select('group_id');
+            hasAccess = matched.length > 0;
+          }
+          if (!hasAccess) {
+            const isMember = await db('project_members')
+              .where({ project_id: req.params.id, user_id: req.user.id })
+              .first();
+            hasAccess = !!isMember;
+          }
+          if (!hasAccess) return forbidden(res, 'Access denied.');
+        }
+      }
+
       const [members, contacts] = await Promise.all([
         Project.getMembers(req.params.id),
         Project.getContacts(req.params.id),
       ]);
       return success(res, { ...project, members, contacts });
+    } catch (err) {
+      return next(err);
+    }
+  },
+
+  async getContacts(req, res, next) {
+    try {
+      const project = await Project.findById(req.params.id);
+      if (!project) return notFound(res, 'Project not found.');
+      const contacts = await Project.getContacts(req.params.id);
+      return success(res, contacts);
+    } catch (err) {
+      return next(err);
+    }
+  },
+
+  async getMembers(req, res, next) {
+    try {
+      const project = await Project.findById(req.params.id);
+      if (!project) return notFound(res, 'Project not found.');
+      const members = await Project.getMembers(req.params.id);
+      return success(res, members);
+    } catch (err) {
+      return next(err);
+    }
+  },
+
+  async getActivity(req, res, next) {
+    try {
+      const project = await Project.findById(req.params.id);
+      if (!project) return notFound(res, 'Project not found.');
+      const { page = 1, limit = 20 } = req.query;
+      const result = await AuditLog.list({
+        entity_type: 'project',
+        entity_id: req.params.id,
+        page: parseInt(page, 10),
+        limit: parseInt(limit, 10),
+      });
+      return paginated(res, result.data, result.total, parseInt(page, 10), parseInt(limit, 10));
+    } catch (err) {
+      return next(err);
+    }
+  },
+
+  async bulkDelete(req, res, next) {
+    try {
+      const { ids } = req.body;
+      if (!Array.isArray(ids) || ids.length === 0) return error(res, 'ids array is required.', 400);
+      await db('projects').whereIn('id', ids).update({ deleted_at: db.fn.now() });
+      await AuditLog.create({
+        user_id: req.user.id,
+        action: 'bulk_delete_projects',
+        entity_type: 'project',
+        new_values: { ids },
+        ip_address: req.ip,
+      });
+      return success(res, null, `${ids.length} project(s) deleted.`);
+    } catch (err) {
+      return next(err);
+    }
+  },
+
+  async exportCsv(req, res, next) {
+    try {
+      const isAdmin = hasAdminRole(req.user);
+      let user_groups = [];
+      if (!isAdmin) {
+        user_groups = await db('group_members').where({ user_id: req.user.id }).pluck('group_id');
+      }
+      const result = await Project.list({
+        page: 1,
+        limit: MAX_EXPORT_ROWS,
+        user_id: isAdmin ? null : req.user.id,
+        user_groups,
+      });
+      const rows = result.data;
+      const headers = ['id', 'name', 'status', 'start_date', 'end_date', 'budget', 'progress', 'visibility', 'company_name', 'created_at'];
+      const csv = [
+        headers.join(','),
+        ...rows.map(r => headers.map(h => JSON.stringify(r[h] ?? '')).join(',')),
+      ].join('\n');
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', 'attachment; filename="projects.csv"');
+      return res.send(csv);
     } catch (err) {
       return next(err);
     }

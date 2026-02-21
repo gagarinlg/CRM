@@ -6,7 +6,10 @@ const Project = require('../models/Project');
 const AuditLog = require('../models/AuditLog');
 const Attachment = require('../models/Attachment');
 const Note = require('../models/Note');
-const { success, error, paginated, notFound } = require('../utils/response');
+const { success, error, paginated, notFound, forbidden } = require('../utils/response');
+const { db } = require('../config/database');
+
+const MAX_EXPORT_ROWS = 10000;
 
 const createValidation = [
   body('title').notEmpty().withMessage('Lead title is required.'),
@@ -31,7 +34,7 @@ const leadsController = {
       const isAdmin = hasAdminRole(req.user);
       let user_groups = [];
       if (!isAdmin) {
-        user_groups = await require('../config/database').db('group_members')
+        user_groups = await db('group_members')
           .where({ user_id: req.user.id })
           .pluck('group_id');
       }
@@ -57,6 +60,31 @@ const leadsController = {
     try {
       const lead = await Lead.findById(req.params.id);
       if (!lead) return notFound(res, 'Lead not found.');
+
+      if (lead.visibility === 'restricted') {
+        const isAdmin = hasAdminRole(req.user);
+        if (!isAdmin && lead.created_by !== req.user.id && lead.assigned_to !== req.user.id) {
+          const userGroups = await db('group_members')
+            .where({ user_id: req.user.id })
+            .pluck('group_id');
+          let hasAccess = false;
+          if (userGroups.length > 0) {
+            const matched = await db('lead_groups')
+              .where('lead_id', req.params.id)
+              .whereIn('group_id', userGroups)
+              .select('group_id');
+            hasAccess = matched.length > 0;
+          }
+          if (!hasAccess) {
+            const isMember = await db('lead_members')
+              .where({ lead_id: req.params.id, user_id: req.user.id })
+              .first();
+            hasAccess = !!isMember;
+          }
+          if (!hasAccess) return forbidden(res, 'Access denied.');
+        }
+      }
+
       return success(res, lead);
     } catch (err) {
       return next(err);
@@ -272,6 +300,68 @@ const leadsController = {
     }
   },
 
+  async getActivity(req, res, next) {
+    try {
+      const lead = await Lead.findById(req.params.id);
+      if (!lead) return notFound(res, 'Lead not found.');
+      const { page = 1, limit = 20 } = req.query;
+      const result = await AuditLog.list({
+        entity_type: 'lead',
+        entity_id: req.params.id,
+        page: parseInt(page, 10),
+        limit: parseInt(limit, 10),
+      });
+      return paginated(res, result.data, result.total, parseInt(page, 10), parseInt(limit, 10));
+    } catch (err) {
+      return next(err);
+    }
+  },
+
+  async bulkDelete(req, res, next) {
+    try {
+      const { ids } = req.body;
+      if (!Array.isArray(ids) || ids.length === 0) return error(res, 'ids array is required.', 400);
+      await db('leads').whereIn('id', ids).update({ deleted_at: db.fn.now() });
+      await AuditLog.create({
+        user_id: req.user.id,
+        action: 'bulk_delete_leads',
+        entity_type: 'lead',
+        new_values: { ids },
+        ip_address: req.ip,
+      });
+      return success(res, null, `${ids.length} lead(s) deleted.`);
+    } catch (err) {
+      return next(err);
+    }
+  },
+
+  async exportCsv(req, res, next) {
+    try {
+      const isAdmin = hasAdminRole(req.user);
+      let user_groups = [];
+      if (!isAdmin) {
+        user_groups = await db('group_members').where({ user_id: req.user.id }).pluck('group_id');
+      }
+      const result = await Lead.list({
+        page: 1,
+        limit: MAX_EXPORT_ROWS,
+        user_id: isAdmin ? null : req.user.id,
+        user_groups,
+      });
+      const rows = result.data;
+      const headers = ['id', 'title', 'value', 'probability', 'stage', 'status', 'visibility', 'source', 'company_name', 'contact_name', 'assigned_to_name', 'created_at'];
+      const csv = [
+        headers.join(','),
+        ...rows.map(r => headers.map(h => JSON.stringify(r[h] ?? '')).join(',')),
+      ].join('\n');
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', 'attachment; filename="leads.csv"');
+      return res.send(csv);
+    } catch (err) {
+      return next(err);
+    }
+  },
+
   async convertToProject(req, res, next) {
     try {
       const lead = await Lead.findById(req.params.id);
@@ -331,7 +421,7 @@ const leadsController = {
       // Copy lead notes to project
       const leadNotes = await Note.listByEntity('lead', lead.id);
       for (const n of leadNotes) {
-        await require('../config/database').db('notes').insert({
+        await db('notes').insert({
           entity_type: 'project',
           entity_id: project.id,
           content: n.content,
