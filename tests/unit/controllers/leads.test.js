@@ -160,6 +160,7 @@ describe('DELETE /api/v1/leads/:id', () => {
 
 describe('PATCH /api/v1/leads/:id/stage', () => {
   test('moves lead to new stage', async () => {
+    Lead.findById.mockResolvedValue(SAMPLE_LEAD);
     Lead.moveStage.mockResolvedValue({ ...SAMPLE_LEAD, stage: 'proposal' });
     const res = await request(app)
       .patch('/api/v1/leads/lead-uuid-1/stage')
@@ -340,7 +341,7 @@ describe('GET /api/v1/leads/:id (restricted visibility)', () => {
     Lead.findById.mockResolvedValue({ ...SAMPLE_LEAD, visibility: 'restricted', created_by: 'owner-id', assigned_to: null });
     const chain = makeDbChain();
     chain.pluck = jest.fn().mockResolvedValue(['grp-1']);
-    chain.select = jest.fn().mockResolvedValue([{ group_id: 'grp-1' }]);
+    chain.first = jest.fn().mockResolvedValue({ group_id: 'grp-1' });
     db.mockReturnValue(chain);
     const req = makeReq('group-member', []);
     const res = mockRes();

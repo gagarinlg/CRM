@@ -25,6 +25,25 @@ function hasAdminRole(user) {
   );
 }
 
+async function checkLeadAccess(user, lead) {
+  if (lead.visibility !== 'restricted') return true;
+  if (hasAdminRole(user)) return true;
+  if (lead.created_by === user.id) return true;
+  if (lead.assigned_to === user.id) return true;
+  const userGroups = await db('group_members').where({ user_id: user.id }).pluck('group_id');
+  if (userGroups.length > 0) {
+    const matched = await db('lead_groups')
+      .where('lead_id', lead.id)
+      .whereIn('group_id', userGroups)
+      .first();
+    if (matched) return true;
+  }
+  const isMember = await db('lead_members')
+    .where({ lead_id: lead.id, user_id: user.id })
+    .first();
+  return !!isMember;
+}
+
 const leadsController = {
   createValidation,
 
@@ -60,30 +79,7 @@ const leadsController = {
     try {
       const lead = await Lead.findById(req.params.id);
       if (!lead) return notFound(res, 'Lead not found.');
-
-      if (lead.visibility === 'restricted') {
-        const isAdmin = hasAdminRole(req.user);
-        if (!isAdmin && lead.created_by !== req.user.id && lead.assigned_to !== req.user.id) {
-          const userGroups = await db('group_members')
-            .where({ user_id: req.user.id })
-            .pluck('group_id');
-          let hasAccess = false;
-          if (userGroups.length > 0) {
-            const matched = await db('lead_groups')
-              .where('lead_id', req.params.id)
-              .whereIn('group_id', userGroups)
-              .select('group_id');
-            hasAccess = matched.length > 0;
-          }
-          if (!hasAccess) {
-            const isMember = await db('lead_members')
-              .where({ lead_id: req.params.id, user_id: req.user.id })
-              .first();
-            hasAccess = !!isMember;
-          }
-          if (!hasAccess) return forbidden(res, 'Access denied.');
-        }
-      }
+      if (!(await checkLeadAccess(req.user, lead))) return forbidden(res, 'Access denied.');
 
       return success(res, lead);
     } catch (err) {
@@ -112,6 +108,7 @@ const leadsController = {
     try {
       const existing = await Lead.findById(req.params.id);
       if (!existing) return notFound(res, 'Lead not found.');
+      if (!(await checkLeadAccess(req.user, existing))) return forbidden(res, 'Access denied.');
       const lead = await Lead.update(req.params.id, req.body);
       await AuditLog.create({
         user_id: req.user.id,
@@ -132,6 +129,7 @@ const leadsController = {
     try {
       const existing = await Lead.findById(req.params.id);
       if (!existing) return notFound(res, 'Lead not found.');
+      if (!(await checkLeadAccess(req.user, existing))) return forbidden(res, 'Access denied.');
       await Lead.softDelete(req.params.id);
       await AuditLog.create({
         user_id: req.user.id,
@@ -150,6 +148,9 @@ const leadsController = {
     try {
       const { stage } = req.body;
       if (!stage) return error(res, 'stage is required.', 400);
+      const existing = await Lead.findById(req.params.id);
+      if (!existing) return notFound(res, 'Lead not found.');
+      if (!(await checkLeadAccess(req.user, existing))) return forbidden(res, 'Access denied.');
       const lead = await Lead.moveStage(req.params.id, stage);
       if (!lead) return notFound(res, 'Lead not found.');
       await AuditLog.create({
@@ -188,6 +189,7 @@ const leadsController = {
     try {
       const lead = await Lead.findById(req.params.id);
       if (!lead) return notFound(res, 'Lead not found.');
+      if (!(await checkLeadAccess(req.user, lead))) return forbidden(res, 'Access denied.');
       const notes = await Note.listByEntity('lead', req.params.id);
       return success(res, notes);
     } catch (err) {
@@ -199,6 +201,7 @@ const leadsController = {
     try {
       const lead = await Lead.findById(req.params.id);
       if (!lead) return notFound(res, 'Lead not found.');
+      if (!(await checkLeadAccess(req.user, lead))) return forbidden(res, 'Access denied.');
       const groups = await Lead.getGroups(req.params.id);
       return success(res, groups);
     } catch (err) {
@@ -212,6 +215,7 @@ const leadsController = {
       if (!group_id) return error(res, 'group_id is required.', 400);
       const lead = await Lead.findById(req.params.id);
       if (!lead) return notFound(res, 'Lead not found.');
+      if (!(await checkLeadAccess(req.user, lead))) return forbidden(res, 'Access denied.');
       await Lead.addGroup(req.params.id, group_id);
       return success(res, null, 'Group added.');
     } catch (err) {
@@ -223,6 +227,7 @@ const leadsController = {
     try {
       const lead = await Lead.findById(req.params.id);
       if (!lead) return notFound(res, 'Lead not found.');
+      if (!(await checkLeadAccess(req.user, lead))) return forbidden(res, 'Access denied.');
       await Lead.removeGroup(req.params.id, req.params.groupId);
       return success(res, null, 'Group removed.');
     } catch (err) {
@@ -234,6 +239,7 @@ const leadsController = {
     try {
       const lead = await Lead.findById(req.params.id);
       if (!lead) return notFound(res, 'Lead not found.');
+      if (!(await checkLeadAccess(req.user, lead))) return forbidden(res, 'Access denied.');
       const contacts = await Lead.getContacts(req.params.id);
       return success(res, contacts);
     } catch (err) {
@@ -247,6 +253,7 @@ const leadsController = {
       if (!contact_id) return error(res, 'contact_id is required.', 400);
       const lead = await Lead.findById(req.params.id);
       if (!lead) return notFound(res, 'Lead not found.');
+      if (!(await checkLeadAccess(req.user, lead))) return forbidden(res, 'Access denied.');
       await Lead.addContact(req.params.id, contact_id);
       return success(res, null, 'Contact added.');
     } catch (err) {
@@ -258,6 +265,7 @@ const leadsController = {
     try {
       const lead = await Lead.findById(req.params.id);
       if (!lead) return notFound(res, 'Lead not found.');
+      if (!(await checkLeadAccess(req.user, lead))) return forbidden(res, 'Access denied.');
       await Lead.removeContact(req.params.id, req.params.contactId);
       return success(res, null, 'Contact removed.');
     } catch (err) {
@@ -269,6 +277,7 @@ const leadsController = {
     try {
       const lead = await Lead.findById(req.params.id);
       if (!lead) return notFound(res, 'Lead not found.');
+      if (!(await checkLeadAccess(req.user, lead))) return forbidden(res, 'Access denied.');
       const members = await Lead.getMembers(req.params.id);
       return success(res, members);
     } catch (err) {
@@ -282,6 +291,7 @@ const leadsController = {
       if (!user_id) return error(res, 'user_id is required.', 400);
       const lead = await Lead.findById(req.params.id);
       if (!lead) return notFound(res, 'Lead not found.');
+      if (!(await checkLeadAccess(req.user, lead))) return forbidden(res, 'Access denied.');
       await Lead.addMember(req.params.id, user_id, role);
       return success(res, null, 'Member added.');
     } catch (err) {
@@ -293,6 +303,7 @@ const leadsController = {
     try {
       const lead = await Lead.findById(req.params.id);
       if (!lead) return notFound(res, 'Lead not found.');
+      if (!(await checkLeadAccess(req.user, lead))) return forbidden(res, 'Access denied.');
       await Lead.removeMember(req.params.id, req.params.userId);
       return success(res, null, 'Member removed.');
     } catch (err) {
@@ -304,6 +315,7 @@ const leadsController = {
     try {
       const lead = await Lead.findById(req.params.id);
       if (!lead) return notFound(res, 'Lead not found.');
+      if (!(await checkLeadAccess(req.user, lead))) return forbidden(res, 'Access denied.');
       const { page = 1, limit = 20 } = req.query;
       const result = await AuditLog.list({
         entity_type: 'lead',
@@ -366,6 +378,7 @@ const leadsController = {
     try {
       const lead = await Lead.findById(req.params.id);
       if (!lead) return notFound(res, 'Lead not found.');
+      if (!(await checkLeadAccess(req.user, lead))) return forbidden(res, 'Access denied.');
       if (lead.status === 'won' || lead.status === 'lost') {
         return error(res, 'Cannot convert a lead that is already won or lost.', 400);
       }
@@ -398,6 +411,11 @@ const leadsController = {
         await Project.addMember(project.id, m.id, m.role).catch(() => {});
       }
 
+      // Copy assigned_to as project member if not already added
+      if (lead.assigned_to && !leadMembers.find(m => String(m.id) === String(lead.assigned_to))) {
+        await Project.addMember(project.id, lead.assigned_to, 'member').catch(() => {});
+      }
+
       // Copy lead groups to project
       const leadGroups = await Lead.getGroups(lead.id);
       for (const g of leadGroups) {
@@ -427,6 +445,23 @@ const leadsController = {
           content: n.content,
           type: n.type || 'general',
           created_by: n.created_by,
+        }).catch(() => {});
+      }
+
+      // Create an informational note with the lead's pipeline details
+      const leadInfo = [
+        lead.stage ? `Stage: ${lead.stage}` : null,
+        lead.source ? `Source: ${lead.source}` : null,
+        lead.probability != null ? `Probability: ${lead.probability}%` : null,
+        lead.value != null ? `Lead value: ${lead.value}` : null,
+      ].filter(Boolean).join('\n');
+      if (leadInfo) {
+        await db('notes').insert({
+          entity_type: 'project',
+          entity_id: project.id,
+          content: `Converted from lead. Lead details:\n${leadInfo}`,
+          type: 'general',
+          created_by: req.user.id,
         }).catch(() => {});
       }
 

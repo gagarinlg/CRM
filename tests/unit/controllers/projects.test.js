@@ -142,6 +142,7 @@ describe('DELETE /api/v1/projects/:id', () => {
 
 describe('POST /api/v1/projects/:id/contacts', () => {
   test('adds contact to project', async () => {
+    Project.findById.mockResolvedValue(SAMPLE_PROJECT);
     Project.addContact.mockResolvedValue(undefined);
     const res = await request(app)
       .post('/api/v1/projects/proj-uuid-1/contacts')
@@ -159,6 +160,7 @@ describe('POST /api/v1/projects/:id/contacts', () => {
 
 describe('POST /api/v1/projects/:id/members', () => {
   test('adds member to project', async () => {
+    Project.findById.mockResolvedValue(SAMPLE_PROJECT);
     Project.addMember.mockResolvedValue(undefined);
     const res = await request(app)
       .post('/api/v1/projects/proj-uuid-1/members')
@@ -207,6 +209,7 @@ describe('GET /api/v1/projects/:id/groups', () => {
 
 describe('POST /api/v1/projects/:id/groups', () => {
   test('adds group to project', async () => {
+    Project.findById.mockResolvedValue(SAMPLE_PROJECT);
     Project.addGroup.mockResolvedValue(undefined);
     const res = await request(app)
       .post('/api/v1/projects/proj-uuid-1/groups')
@@ -224,6 +227,7 @@ describe('POST /api/v1/projects/:id/groups', () => {
 
 describe('DELETE /api/v1/projects/:id/groups/:groupId', () => {
   test('removes group from project', async () => {
+    Project.findById.mockResolvedValue(SAMPLE_PROJECT);
     Project.removeGroup.mockResolvedValue(1);
     const res = await request(app)
       .delete('/api/v1/projects/proj-uuid-1/groups/grp-1');
@@ -283,7 +287,7 @@ describe('GET /api/v1/projects/:id (restricted visibility)', () => {
     Project.getContacts.mockResolvedValue([]);
     const chain = makeDbChain();
     chain.pluck = jest.fn().mockResolvedValue(['grp-1']);
-    chain.select = jest.fn().mockResolvedValue([{ group_id: 'grp-1' }]);
+    chain.first = jest.fn().mockResolvedValue({ group_id: 'grp-1' });
     db.mockReturnValue(chain);
     const req = makeReq('group-member', []);
     const res = mockRes();

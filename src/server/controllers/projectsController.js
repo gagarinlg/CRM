@@ -20,6 +20,24 @@ function hasAdminRole(user) {
   );
 }
 
+async function checkProjectAccess(user, project) {
+  if (project.visibility !== 'restricted') return true;
+  if (hasAdminRole(user)) return true;
+  if (project.created_by === user.id) return true;
+  const userGroups = await db('group_members').where({ user_id: user.id }).pluck('group_id');
+  if (userGroups.length > 0) {
+    const matched = await db('project_groups')
+      .where('project_id', project.id)
+      .whereIn('group_id', userGroups)
+      .first();
+    if (matched) return true;
+  }
+  const isMember = await db('project_members')
+    .where({ project_id: project.id, user_id: user.id })
+    .first();
+  return !!isMember;
+}
+
 const projectsController = {
   createValidation,
 
@@ -54,30 +72,7 @@ const projectsController = {
     try {
       const project = await Project.findById(req.params.id);
       if (!project) return notFound(res, 'Project not found.');
-
-      if (project.visibility === 'restricted') {
-        const isAdmin = hasAdminRole(req.user);
-        if (!isAdmin && project.created_by !== req.user.id) {
-          const userGroups = await db('group_members')
-            .where({ user_id: req.user.id })
-            .pluck('group_id');
-          let hasAccess = false;
-          if (userGroups.length > 0) {
-            const matched = await db('project_groups')
-              .where('project_id', req.params.id)
-              .whereIn('group_id', userGroups)
-              .select('group_id');
-            hasAccess = matched.length > 0;
-          }
-          if (!hasAccess) {
-            const isMember = await db('project_members')
-              .where({ project_id: req.params.id, user_id: req.user.id })
-              .first();
-            hasAccess = !!isMember;
-          }
-          if (!hasAccess) return forbidden(res, 'Access denied.');
-        }
-      }
+      if (!(await checkProjectAccess(req.user, project))) return forbidden(res, 'Access denied.');
 
       const [members, contacts] = await Promise.all([
         Project.getMembers(req.params.id),
@@ -93,6 +88,7 @@ const projectsController = {
     try {
       const project = await Project.findById(req.params.id);
       if (!project) return notFound(res, 'Project not found.');
+      if (!(await checkProjectAccess(req.user, project))) return forbidden(res, 'Access denied.');
       const contacts = await Project.getContacts(req.params.id);
       return success(res, contacts);
     } catch (err) {
@@ -104,6 +100,7 @@ const projectsController = {
     try {
       const project = await Project.findById(req.params.id);
       if (!project) return notFound(res, 'Project not found.');
+      if (!(await checkProjectAccess(req.user, project))) return forbidden(res, 'Access denied.');
       const members = await Project.getMembers(req.params.id);
       return success(res, members);
     } catch (err) {
@@ -115,6 +112,7 @@ const projectsController = {
     try {
       const project = await Project.findById(req.params.id);
       if (!project) return notFound(res, 'Project not found.');
+      if (!(await checkProjectAccess(req.user, project))) return forbidden(res, 'Access denied.');
       const { page = 1, limit = 20 } = req.query;
       const result = await AuditLog.list({
         entity_type: 'project',
@@ -194,6 +192,7 @@ const projectsController = {
     try {
       const existing = await Project.findById(req.params.id);
       if (!existing) return notFound(res, 'Project not found.');
+      if (!(await checkProjectAccess(req.user, existing))) return forbidden(res, 'Access denied.');
       const project = await Project.update(req.params.id, req.body);
       await AuditLog.create({
         user_id: req.user.id,
@@ -214,6 +213,7 @@ const projectsController = {
     try {
       const existing = await Project.findById(req.params.id);
       if (!existing) return notFound(res, 'Project not found.');
+      if (!(await checkProjectAccess(req.user, existing))) return forbidden(res, 'Access denied.');
       await Project.softDelete(req.params.id);
       await AuditLog.create({
         user_id: req.user.id,
@@ -232,6 +232,9 @@ const projectsController = {
     try {
       const { contact_id } = req.body;
       if (!contact_id) return error(res, 'contact_id is required.', 400);
+      const project = await Project.findById(req.params.id);
+      if (!project) return notFound(res, 'Project not found.');
+      if (!(await checkProjectAccess(req.user, project))) return forbidden(res, 'Access denied.');
       await Project.addContact(req.params.id, contact_id);
       return success(res, null, 'Contact added to project.');
     } catch (err) {
@@ -241,6 +244,9 @@ const projectsController = {
 
   async removeContact(req, res, next) {
     try {
+      const project = await Project.findById(req.params.id);
+      if (!project) return notFound(res, 'Project not found.');
+      if (!(await checkProjectAccess(req.user, project))) return forbidden(res, 'Access denied.');
       await Project.removeContact(req.params.id, req.params.contactId);
       return success(res, null, 'Contact removed from project.');
     } catch (err) {
@@ -252,6 +258,9 @@ const projectsController = {
     try {
       const { user_id, role } = req.body;
       if (!user_id) return error(res, 'user_id is required.', 400);
+      const project = await Project.findById(req.params.id);
+      if (!project) return notFound(res, 'Project not found.');
+      if (!(await checkProjectAccess(req.user, project))) return forbidden(res, 'Access denied.');
       await Project.addMember(req.params.id, user_id, role);
       return success(res, null, 'Member added to project.');
     } catch (err) {
@@ -261,6 +270,9 @@ const projectsController = {
 
   async removeMember(req, res, next) {
     try {
+      const project = await Project.findById(req.params.id);
+      if (!project) return notFound(res, 'Project not found.');
+      if (!(await checkProjectAccess(req.user, project))) return forbidden(res, 'Access denied.');
       await Project.removeMember(req.params.id, req.params.userId);
       return success(res, null, 'Member removed from project.');
     } catch (err) {
@@ -272,6 +284,7 @@ const projectsController = {
     try {
       const project = await Project.findById(req.params.id);
       if (!project) return notFound(res, 'Project not found.');
+      if (!(await checkProjectAccess(req.user, project))) return forbidden(res, 'Access denied.');
       const notes = await Project.getNotes(req.params.id);
       return success(res, notes);
     } catch (err) {
@@ -283,6 +296,7 @@ const projectsController = {
     try {
       const project = await Project.findById(req.params.id);
       if (!project) return notFound(res, 'Project not found.');
+      if (!(await checkProjectAccess(req.user, project))) return forbidden(res, 'Access denied.');
       const groups = await Project.getGroups(req.params.id);
       return success(res, groups);
     } catch (err) {
@@ -294,6 +308,9 @@ const projectsController = {
     try {
       const { group_id } = req.body;
       if (!group_id) return error(res, 'group_id is required.', 400);
+      const project = await Project.findById(req.params.id);
+      if (!project) return notFound(res, 'Project not found.');
+      if (!(await checkProjectAccess(req.user, project))) return forbidden(res, 'Access denied.');
       await Project.addGroup(req.params.id, group_id);
       return success(res, null, 'Group added to project.');
     } catch (err) {
@@ -303,6 +320,9 @@ const projectsController = {
 
   async removeGroup(req, res, next) {
     try {
+      const project = await Project.findById(req.params.id);
+      if (!project) return notFound(res, 'Project not found.');
+      if (!(await checkProjectAccess(req.user, project))) return forbidden(res, 'Access denied.');
       await Project.removeGroup(req.params.id, req.params.groupId);
       return success(res, null, 'Group removed from project.');
     } catch (err) {

@@ -76,7 +76,7 @@ export default function LeadDetail() {
         setContacts(ctRes.data.data || ctRes.data || []);
         setMembers(mbRes.data.data || mbRes.data || []);
       })
-      .catch(() => setError(t('errors.fetchFailed')))
+      .catch((err) => setError(err?.response?.status === 403 ? t('errors.forbidden') : t('errors.fetchFailed')))
       .finally(() => setLoading(false));
   }, [id, t]);
 

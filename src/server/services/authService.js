@@ -66,6 +66,11 @@ const authService = {
 
     await AuditLog.create({ user_id: user.id, action: 'login', ip_address: ip, user_agent: userAgent });
 
+    const roles = await db('user_roles')
+      .join('roles', 'user_roles.role_id', 'roles.id')
+      .where('user_roles.user_id', user.id)
+      .pluck('roles.name');
+
     return {
       access_token: accessToken,
       refresh_token: refreshToken,
@@ -76,6 +81,7 @@ const authService = {
         first_name: user.first_name,
         last_name: user.last_name,
         force_password_change: user.force_password_change,
+        roles,
       },
     };
   },
@@ -291,6 +297,11 @@ const authService = {
 
     await AuditLog.create({ user_id: user.id, action: 'login', ip_address: ip, user_agent: userAgent });
 
+    const roles = await db('user_roles')
+      .join('roles', 'user_roles.role_id', 'roles.id')
+      .where('user_roles.user_id', user.id)
+      .pluck('roles.name');
+
     return {
       access_token: accessToken,
       refresh_token: refreshToken,
@@ -301,6 +312,7 @@ const authService = {
         first_name: user.first_name,
         last_name: user.last_name,
         force_password_change: user.force_password_change,
+        roles,
       },
     };
   },
