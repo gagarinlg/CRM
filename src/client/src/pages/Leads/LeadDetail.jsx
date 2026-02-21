@@ -1,20 +1,25 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box, Tabs, Tab, Button, Typography, Grid, Card, CardContent,
-  Chip, Alert, Stack, MenuItem, Select, FormControl, InputLabel,
-  Dialog, DialogTitle, DialogContent, DialogActions, List, ListItem, ListItemText,
+  Chip, Alert, Stack, MenuItem, Select, FormControl,
+  Dialog, DialogTitle, DialogContent, DialogActions,
+  Avatar, IconButton, Tooltip,
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import TransformIcon from '@mui/icons-material/Transform';
 import LockIcon from '@mui/icons-material/Lock';
+import PersonAddIcon from '@mui/icons-material/PersonAdd';
+import GroupAddIcon from '@mui/icons-material/GroupAdd';
+import DeleteIcon from '@mui/icons-material/Delete';
 import api from '../../services/api.js';
 import { useTranslation } from '../../i18n/I18nContext.jsx';
 import PageHeader from '../../components/common/PageHeader.jsx';
 import LoadingSpinner from '../../components/common/LoadingSpinner.jsx';
 import NotesList from '../../components/Notes/NotesList.jsx';
 import FilesList from '../../components/Files/FilesList.jsx';
+import EntityPickerDialog from '../../components/common/EntityPickerDialog.jsx';
 
 function InfoRow({ label, value }) {
   if (value == null || value === '') return null;
@@ -39,22 +44,36 @@ export default function LeadDetail() {
   const { t } = useTranslation();
   const [lead, setLead] = useState(null);
   const [groups, setGroups] = useState([]);
+  const [contacts, setContacts] = useState([]);
+  const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [tab, setTab] = useState(0);
   const [movingStage, setMovingStage] = useState(false);
   const [converting, setConverting] = useState(false);
   const [convertDialog, setConvertDialog] = useState(false);
+  const [addContactOpen, setAddContactOpen] = useState(false);
+  const [addMemberOpen, setAddMemberOpen] = useState(false);
+
+  const loadContacts = useCallback(() =>
+    api.get(`/leads/${id}/contacts`).then(r => setContacts(r.data.data || r.data || [])), [id]);
+
+  const loadMembers = useCallback(() =>
+    api.get(`/leads/${id}/members`).then(r => setMembers(r.data.data || r.data || [])), [id]);
 
   useEffect(() => {
     Promise.all([
       api.get(`/leads/${id}`),
       api.get(`/leads/${id}/groups`),
+      api.get(`/leads/${id}/contacts`),
+      api.get(`/leads/${id}/members`),
     ])
-      .then(([leadRes, grpRes]) => {
+      .then(([leadRes, grpRes, ctRes, mbRes]) => {
         setLead(leadRes.data.data || leadRes.data);
         const g = grpRes.data.data || grpRes.data;
         setGroups(Array.isArray(g) ? g : []);
+        setContacts(ctRes.data.data || ctRes.data || []);
+        setMembers(mbRes.data.data || mbRes.data || []);
       })
       .catch(() => setError(t('errors.fetchFailed')))
       .finally(() => setLoading(false));
@@ -86,11 +105,50 @@ export default function LeadDetail() {
     }
   };
 
+  const handleAddContact = async (contact) => {
+    setAddContactOpen(false);
+    try {
+      await api.post(`/leads/${id}/contacts`, { contact_id: contact.id });
+      loadContacts();
+    } catch { setError(t('errors.saveFailed')); }
+  };
+
+  const handleRemoveContact = async (contactId) => {
+    try {
+      await api.delete(`/leads/${id}/contacts/${contactId}`);
+      setContacts(prev => prev.filter(c => c.id !== contactId));
+    } catch { setError(t('errors.saveFailed')); }
+  };
+
+  const handleAddMember = async (user) => {
+    setAddMemberOpen(false);
+    try {
+      await api.post(`/leads/${id}/members`, { user_id: user.id });
+      loadMembers();
+    } catch { setError(t('errors.saveFailed')); }
+  };
+
+  const handleRemoveMember = async (userId) => {
+    try {
+      await api.delete(`/leads/${id}/members/${userId}`);
+      setMembers(prev => prev.filter(m => m.id !== userId));
+    } catch { setError(t('errors.saveFailed')); }
+  };
+
   if (loading) return <LoadingSpinner />;
   if (!lead) return <Alert severity="error">{error || t('errors.notFound')}</Alert>;
 
   const canConvert = !['won', 'lost'].includes(lead.status);
   const isRestricted = lead.visibility === 'restricted';
+
+  // Tabs: Info, Contacts, Members, Notes, Files, [Groups if restricted]
+  let tabIndex = 0;
+  const TAB_INFO = tabIndex++;
+  const TAB_CONTACTS = tabIndex++;
+  const TAB_MEMBERS = tabIndex++;
+  const TAB_NOTES = tabIndex++;
+  const TAB_FILES = tabIndex++;
+  const TAB_GROUPS = isRestricted ? tabIndex++ : -1;
 
   return (
     <Box>
@@ -125,12 +183,14 @@ export default function LeadDetail() {
 
       <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
         <Tab label={t('common.info')} />
+        <Tab label={`${t('nav.contacts')} (${contacts.length})`} />
+        <Tab label={`${t('leads.members', 'Members')} (${members.length})`} />
         <Tab label={t('notes.title')} />
         <Tab label={t('files.title', 'Files')} />
         {isRestricted && <Tab label={t('leads.groups', 'Access Groups')} />}
       </Tabs>
 
-      <TabPanel value={tab} index={0}>
+      <TabPanel value={tab} index={TAB_INFO}>
         <Grid container spacing={3}>
           <Grid item xs={12} md={6}>
             <Card>
@@ -199,36 +259,107 @@ export default function LeadDetail() {
         </Grid>
       </TabPanel>
 
-      <TabPanel value={tab} index={1}>
+      <TabPanel value={tab} index={TAB_CONTACTS}>
+        <Box display="flex" justifyContent="flex-end" mb={1}>
+          <Tooltip title={t('leads.addContact', 'Add Contact')}>
+            <IconButton color="primary" onClick={() => setAddContactOpen(true)}><PersonAddIcon /></IconButton>
+          </Tooltip>
+        </Box>
+        {contacts.length === 0 ? (
+          <Typography color="text.secondary">{t('common.noResults')}</Typography>
+        ) : contacts.map(c => (
+          <Card key={c.id} sx={{ mb: 1 }}>
+            <CardContent sx={{ py: 1.5, display: 'flex', alignItems: 'center' }}>
+              <Box flex={1} sx={{ cursor: 'pointer' }} onClick={() => navigate(`/contacts/${c.id}`)}>
+                <Typography variant="body1" fontWeight={500}>{c.first_name} {c.last_name}</Typography>
+                <Typography variant="body2" color="text.secondary">{c.position || c.email}</Typography>
+              </Box>
+              <Tooltip title={t('leads.removeContact', 'Remove')}>
+                <IconButton size="small" color="error" onClick={() => handleRemoveContact(c.id)}><DeleteIcon fontSize="small" /></IconButton>
+              </Tooltip>
+            </CardContent>
+          </Card>
+        ))}
+      </TabPanel>
+
+      <TabPanel value={tab} index={TAB_MEMBERS}>
+        <Box display="flex" justifyContent="flex-end" mb={1}>
+          <Tooltip title={t('leads.addMember', 'Add Member')}>
+            <IconButton color="primary" onClick={() => setAddMemberOpen(true)}><GroupAddIcon /></IconButton>
+          </Tooltip>
+        </Box>
+        {members.length === 0 ? (
+          <Typography color="text.secondary">{t('common.noResults')}</Typography>
+        ) : members.map(m => (
+          <Card key={m.id} sx={{ mb: 1 }}>
+            <CardContent sx={{ py: 1.5, display: 'flex', alignItems: 'center' }}>
+              <Avatar sx={{ width: 28, height: 28, fontSize: 12, mr: 1.5 }}>
+                {m.first_name?.[0]}{m.last_name?.[0]}
+              </Avatar>
+              <Box flex={1}>
+                <Typography variant="body2" fontWeight={500}>{m.first_name} {m.last_name}</Typography>
+                <Typography variant="caption" color="text.secondary">{m.email}</Typography>
+              </Box>
+              {m.role && <Chip label={m.role} size="small" sx={{ mr: 1 }} />}
+              <Tooltip title={t('leads.removeMember', 'Remove')}>
+                <IconButton size="small" color="error" onClick={() => handleRemoveMember(m.id)}><DeleteIcon fontSize="small" /></IconButton>
+              </Tooltip>
+            </CardContent>
+          </Card>
+        ))}
+      </TabPanel>
+
+      <TabPanel value={tab} index={TAB_NOTES}>
         <NotesList entityType="lead" entityId={id} />
       </TabPanel>
 
-      <TabPanel value={tab} index={2}>
+      <TabPanel value={tab} index={TAB_FILES}>
         <FilesList entityType="lead" entityId={id} />
       </TabPanel>
 
-      {isRestricted && (
-        <TabPanel value={tab} index={3}>
+      {isRestricted && TAB_GROUPS >= 0 && (
+        <TabPanel value={tab} index={TAB_GROUPS}>
           <Card>
             <CardContent>
               <Typography variant="subtitle2" mb={2}>{t('leads.groups', 'Access Groups')}</Typography>
               {groups.length === 0 ? (
                 <Typography variant="body2" color="text.secondary">
-                  {t('leads.noGroups', 'No groups assigned. All users with lead access can see this.')}
+                  {t('leads.noGroups', 'No groups assigned.')}
                 </Typography>
-              ) : (
-                <List dense>
-                  {groups.map(g => (
-                    <ListItem key={g.id} disableGutters>
-                      <ListItemText primary={g.name} secondary={g.description} />
-                    </ListItem>
-                  ))}
-                </List>
-              )}
+              ) : groups.map(g => (
+                <Box key={g.id} mb={1}>
+                  <Typography variant="body2" fontWeight={500}>{g.name}</Typography>
+                  {g.description && <Typography variant="caption" color="text.secondary">{g.description}</Typography>}
+                </Box>
+              ))}
             </CardContent>
           </Card>
         </TabPanel>
       )}
+
+      {/* Add Contact dialog */}
+      <EntityPickerDialog
+        open={addContactOpen}
+        onClose={() => setAddContactOpen(false)}
+        onSelect={handleAddContact}
+        title={t('leads.addContact', 'Add Contact')}
+        fetchItems={search => api.get('/contacts', { params: { search, limit: 50 } }).then(r => (r.data.data || r.data.items || []))}
+        getLabel={c => `${c.first_name} ${c.last_name}`}
+        getSubLabel={c => c.email}
+        getInitials={c => `${c.first_name?.[0] || ''}${c.last_name?.[0] || ''}`}
+      />
+
+      {/* Add Member dialog */}
+      <EntityPickerDialog
+        open={addMemberOpen}
+        onClose={() => setAddMemberOpen(false)}
+        onSelect={handleAddMember}
+        title={t('leads.addMember', 'Add Member')}
+        fetchItems={search => api.get('/users', { params: { search, limit: 50 } }).then(r => (r.data.data || r.data.items || []))}
+        getLabel={u => `${u.first_name} ${u.last_name}`}
+        getSubLabel={u => u.email}
+        getInitials={u => `${u.first_name?.[0] || ''}${u.last_name?.[0] || ''}`}
+      />
 
       {/* Convert to Project confirmation dialog */}
       <Dialog open={convertDialog} onClose={() => setConvertDialog(false)} maxWidth="sm" fullWidth>
@@ -248,4 +379,3 @@ export default function LeadDetail() {
     </Box>
   );
 }
-

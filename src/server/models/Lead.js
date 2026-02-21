@@ -143,6 +143,56 @@ const Lead = {
       .where('lead_groups.lead_id', leadId)
       .select('groups.id', 'groups.name', 'groups.description');
   },
+
+  async getContacts(leadId) {
+    return db('lead_contacts')
+      .join('contacts', 'lead_contacts.contact_id', 'contacts.id')
+      .leftJoin('companies', 'contacts.company_id', 'companies.id')
+      .where('lead_contacts.lead_id', leadId)
+      .select(
+        'contacts.id',
+        'contacts.first_name',
+        'contacts.last_name',
+        'contacts.email',
+        'contacts.position',
+        'companies.name as company_name',
+      );
+  },
+
+  async addContact(leadId, contactId) {
+    await db('lead_contacts')
+      .insert({ lead_id: leadId, contact_id: contactId })
+      .onConflict(['lead_id', 'contact_id'])
+      .ignore();
+  },
+
+  async removeContact(leadId, contactId) {
+    return db('lead_contacts').where({ lead_id: leadId, contact_id: contactId }).delete();
+  },
+
+  async getMembers(leadId) {
+    return db('lead_members')
+      .join('users', 'lead_members.user_id', 'users.id')
+      .where('lead_members.lead_id', leadId)
+      .select(
+        'users.id',
+        'users.first_name',
+        'users.last_name',
+        'users.email',
+        'lead_members.role',
+      );
+  },
+
+  async addMember(leadId, userId, role) {
+    await db('lead_members')
+      .insert({ lead_id: leadId, user_id: userId, role: role || null })
+      .onConflict(['lead_id', 'user_id'])
+      .merge({ role: role || null });
+  },
+
+  async removeMember(leadId, userId) {
+    return db('lead_members').where({ lead_id: leadId, user_id: userId }).delete();
+  },
 };
 
 module.exports = Lead;

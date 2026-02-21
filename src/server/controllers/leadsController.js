@@ -201,6 +201,76 @@ const leadsController = {
     }
   },
 
+  async getContacts(req, res, next) {
+    try {
+      const lead = await Lead.findById(req.params.id);
+      if (!lead) return notFound(res, 'Lead not found.');
+      const contacts = await Lead.getContacts(req.params.id);
+      return success(res, contacts);
+    } catch (err) {
+      return next(err);
+    }
+  },
+
+  async addContact(req, res, next) {
+    try {
+      const { contact_id } = req.body;
+      if (!contact_id) return error(res, 'contact_id is required.', 400);
+      const lead = await Lead.findById(req.params.id);
+      if (!lead) return notFound(res, 'Lead not found.');
+      await Lead.addContact(req.params.id, contact_id);
+      return success(res, null, 'Contact added.');
+    } catch (err) {
+      return next(err);
+    }
+  },
+
+  async removeContact(req, res, next) {
+    try {
+      const lead = await Lead.findById(req.params.id);
+      if (!lead) return notFound(res, 'Lead not found.');
+      await Lead.removeContact(req.params.id, req.params.contactId);
+      return success(res, null, 'Contact removed.');
+    } catch (err) {
+      return next(err);
+    }
+  },
+
+  async getMembers(req, res, next) {
+    try {
+      const lead = await Lead.findById(req.params.id);
+      if (!lead) return notFound(res, 'Lead not found.');
+      const members = await Lead.getMembers(req.params.id);
+      return success(res, members);
+    } catch (err) {
+      return next(err);
+    }
+  },
+
+  async addMember(req, res, next) {
+    try {
+      const { user_id, role } = req.body;
+      if (!user_id) return error(res, 'user_id is required.', 400);
+      const lead = await Lead.findById(req.params.id);
+      if (!lead) return notFound(res, 'Lead not found.');
+      await Lead.addMember(req.params.id, user_id, role);
+      return success(res, null, 'Member added.');
+    } catch (err) {
+      return next(err);
+    }
+  },
+
+  async removeMember(req, res, next) {
+    try {
+      const lead = await Lead.findById(req.params.id);
+      if (!lead) return notFound(res, 'Lead not found.');
+      await Lead.removeMember(req.params.id, req.params.userId);
+      return success(res, null, 'Member removed.');
+    } catch (err) {
+      return next(err);
+    }
+  },
+
   async convertToProject(req, res, next) {
     try {
       const lead = await Lead.findById(req.params.id);

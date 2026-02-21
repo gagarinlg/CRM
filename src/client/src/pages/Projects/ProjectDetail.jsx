@@ -1,18 +1,22 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box, Tabs, Tab, Button, Typography, Grid, Card, CardContent,
-  Chip, Alert, Stack, Avatar, LinearProgress,
+  Chip, Alert, Stack, Avatar, LinearProgress, IconButton, Tooltip,
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import LockIcon from '@mui/icons-material/Lock';
+import PersonAddIcon from '@mui/icons-material/PersonAdd';
+import GroupAddIcon from '@mui/icons-material/GroupAdd';
+import DeleteIcon from '@mui/icons-material/Delete';
 import api from '../../services/api.js';
 import { useTranslation } from '../../i18n/I18nContext.jsx';
 import PageHeader from '../../components/common/PageHeader.jsx';
 import LoadingSpinner from '../../components/common/LoadingSpinner.jsx';
 import NotesList from '../../components/Notes/NotesList.jsx';
 import FilesList from '../../components/Files/FilesList.jsx';
+import EntityPickerDialog from '../../components/common/EntityPickerDialog.jsx';
 import dayjs from 'dayjs';
 
 function InfoRow({ label, value }) {
@@ -40,25 +44,66 @@ export default function ProjectDetail() {
   const [error, setError] = useState('');
   const [tab, setTab] = useState(0);
   const [groups, setGroups] = useState([]);
+  const [contacts, setContacts] = useState([]);
+  const [members, setMembers] = useState([]);
+  const [addContactOpen, setAddContactOpen] = useState(false);
+  const [addMemberOpen, setAddMemberOpen] = useState(false);
+
+  const loadContacts = useCallback(() =>
+    api.get(`/projects/${id}/contacts`).then(r => setContacts(r.data.data || r.data || [])), [id]);
+
+  const loadMembers = useCallback(() =>
+    api.get(`/projects/${id}/members`).then(r => setMembers(r.data.data || r.data || [])), [id]);
 
   useEffect(() => {
     Promise.all([
       api.get(`/projects/${id}`),
       api.get(`/projects/${id}/groups`),
     ]).then(([projRes, grpRes]) => {
-      setProject(projRes.data.data || projRes.data);
+      const p = projRes.data.data || projRes.data;
+      setProject(p);
+      setContacts(p.contacts || []);
+      setMembers(p.members || []);
       const grpData = grpRes.data.data || grpRes.data;
       setGroups(Array.isArray(grpData) ? grpData : []);
     }).catch(() => setError(t('errors.fetchFailed')))
       .finally(() => setLoading(false));
   }, [id, t]);
 
+  const handleAddContact = async (contact) => {
+    setAddContactOpen(false);
+    try {
+      await api.post(`/projects/${id}/contacts`, { contact_id: contact.id });
+      loadContacts();
+    } catch { setError(t('errors.saveFailed')); }
+  };
+
+  const handleRemoveContact = async (contactId) => {
+    try {
+      await api.delete(`/projects/${id}/contacts/${contactId}`);
+      setContacts(prev => prev.filter(c => c.id !== contactId));
+    } catch { setError(t('errors.saveFailed')); }
+  };
+
+  const handleAddMember = async (user) => {
+    setAddMemberOpen(false);
+    try {
+      await api.post(`/projects/${id}/members`, { user_id: user.id });
+      loadMembers();
+    } catch { setError(t('errors.saveFailed')); }
+  };
+
+  const handleRemoveMember = async (userId) => {
+    try {
+      await api.delete(`/projects/${id}/members/${userId}`);
+      setMembers(prev => prev.filter(m => m.id !== userId));
+    } catch { setError(t('errors.saveFailed')); }
+  };
+
   if (loading) return <LoadingSpinner />;
   if (!project) return <Alert severity="error">{error || t('errors.notFound')}</Alert>;
 
   const progress = project.progress ?? 0;
-  const contacts = project.contacts || [];
-  const members = project.members || [];
   const isRestricted = project.visibility === 'restricted';
 
   return (
@@ -118,34 +163,50 @@ export default function ProjectDetail() {
       </TabPanel>
 
       <TabPanel value={tab} index={1}>
+        <Box display="flex" justifyContent="flex-end" mb={1}>
+          <Tooltip title={t('projects.addContact', 'Add Contact')}>
+            <IconButton color="primary" onClick={() => setAddContactOpen(true)}><PersonAddIcon /></IconButton>
+          </Tooltip>
+        </Box>
         {contacts.length === 0 ? (
           <Typography color="text.secondary">{t('common.noResults')}</Typography>
         ) : contacts.map(c => (
-          <Card key={c.id} sx={{ mb: 1, cursor: 'pointer' }} onClick={() => navigate(`/contacts/${c.id}`)}>
-            <CardContent sx={{ py: 1.5 }}>
-              <Typography variant="body1" fontWeight={500}>{c.first_name} {c.last_name}</Typography>
-              <Typography variant="body2" color="text.secondary">{c.email}</Typography>
+          <Card key={c.id} sx={{ mb: 1 }}>
+            <CardContent sx={{ py: 1.5, display: 'flex', alignItems: 'center' }}>
+              <Box flex={1} sx={{ cursor: 'pointer' }} onClick={() => navigate(`/contacts/${c.id}`)}>
+                <Typography variant="body1" fontWeight={500}>{c.first_name} {c.last_name}</Typography>
+                <Typography variant="body2" color="text.secondary">{c.position || c.email}</Typography>
+              </Box>
+              <Tooltip title={t('projects.removeContact', 'Remove')}>
+                <IconButton size="small" color="error" onClick={() => handleRemoveContact(c.id)}><DeleteIcon fontSize="small" /></IconButton>
+              </Tooltip>
             </CardContent>
           </Card>
         ))}
       </TabPanel>
 
       <TabPanel value={tab} index={2}>
+        <Box display="flex" justifyContent="flex-end" mb={1}>
+          <Tooltip title={t('projects.addMember', 'Add Member')}>
+            <IconButton color="primary" onClick={() => setAddMemberOpen(true)}><GroupAddIcon /></IconButton>
+          </Tooltip>
+        </Box>
         {members.length === 0 ? (
           <Typography color="text.secondary">{t('common.noResults')}</Typography>
         ) : members.map(m => (
           <Card key={m.id} sx={{ mb: 1 }}>
-            <CardContent sx={{ py: 1.5 }}>
-              <Box display="flex" alignItems="center" gap={1.5}>
-                <Avatar sx={{ width: 28, height: 28, fontSize: 12 }}>
-                  {m.first_name?.[0]}{m.last_name?.[0]}
-                </Avatar>
-                <Box>
-                  <Typography variant="body2" fontWeight={500}>{m.first_name} {m.last_name}</Typography>
-                  <Typography variant="caption" color="text.secondary">{m.email}</Typography>
-                </Box>
-                {m.role && <Chip label={m.role} size="small" sx={{ ml: 'auto' }} />}
+            <CardContent sx={{ py: 1.5, display: 'flex', alignItems: 'center' }}>
+              <Avatar sx={{ width: 28, height: 28, fontSize: 12, mr: 1.5 }}>
+                {m.first_name?.[0]}{m.last_name?.[0]}
+              </Avatar>
+              <Box flex={1}>
+                <Typography variant="body2" fontWeight={500}>{m.first_name} {m.last_name}</Typography>
+                <Typography variant="caption" color="text.secondary">{m.email}</Typography>
               </Box>
+              {m.role && <Chip label={m.role} size="small" sx={{ mr: 1 }} />}
+              <Tooltip title={t('projects.removeMember', 'Remove')}>
+                <IconButton size="small" color="error" onClick={() => handleRemoveMember(m.id)}><DeleteIcon fontSize="small" /></IconButton>
+              </Tooltip>
             </CardContent>
           </Card>
         ))}
@@ -173,6 +234,30 @@ export default function ProjectDetail() {
           ))}
         </TabPanel>
       )}
+
+      {/* Add Contact dialog */}
+      <EntityPickerDialog
+        open={addContactOpen}
+        onClose={() => setAddContactOpen(false)}
+        onSelect={handleAddContact}
+        title={t('projects.addContact', 'Add Contact')}
+        fetchItems={search => api.get('/contacts', { params: { search, limit: 50 } }).then(r => (r.data.data || r.data.items || []))}
+        getLabel={c => `${c.first_name} ${c.last_name}`}
+        getSubLabel={c => c.email}
+        getInitials={c => `${c.first_name?.[0] || ''}${c.last_name?.[0] || ''}`}
+      />
+
+      {/* Add Member dialog */}
+      <EntityPickerDialog
+        open={addMemberOpen}
+        onClose={() => setAddMemberOpen(false)}
+        onSelect={handleAddMember}
+        title={t('projects.addMember', 'Add Member')}
+        fetchItems={search => api.get('/users', { params: { search, limit: 50 } }).then(r => (r.data.data || r.data.items || []))}
+        getLabel={u => `${u.first_name} ${u.last_name}`}
+        getSubLabel={u => u.email}
+        getInitials={u => `${u.first_name?.[0] || ''}${u.last_name?.[0] || ''}`}
+      />
     </Box>
   );
 }
