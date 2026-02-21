@@ -11,20 +11,24 @@ const createValidation = [
   body('budget').optional({ checkFalsy: true }).isFloat({ min: 0 }),
 ];
 
+function hasAdminRole(user) {
+  return user.roles && user.roles.some(r =>
+    ['admin', 'manager'].includes((r.name || r).toLowerCase()),
+  );
+}
+
 const projectsController = {
   createValidation,
 
   async list(req, res, next) {
     try {
       const { page = 1, limit = 20, search, status, company_id, sort, order } = req.query;
-      const isAdmin = req.user.roles && req.user.roles.some(r => ['admin', 'manager'].includes((r.name || r).toLowerCase()));
-      // Non-admins get filtered by group visibility
+      const isAdmin = hasAdminRole(req.user);
       let user_groups = [];
       if (!isAdmin) {
-        const rows = await require('../config/database').db('group_members')
+        user_groups = await require('../config/database').db('group_members')
           .where({ user_id: req.user.id })
           .pluck('group_id');
-        user_groups = rows;
       }
       const result = await Project.list({
         page: parseInt(page, 10),
