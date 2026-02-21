@@ -2,6 +2,7 @@
 
 const { body } = require('express-validator');
 const User = require('../models/User');
+const Role = require('../models/Role');
 const AuditLog = require('../models/AuditLog');
 const { success, error, paginated, notFound } = require('../utils/response');
 
@@ -54,6 +55,13 @@ const usersController = {
   async create(req, res, next) {
     try {
       const user = await User.create(req.body);
+
+      // Assign the chosen role if provided
+      if (req.body.role) {
+        const role = await Role.findByName(req.body.role);
+        if (role) await User.assignRole(user.id, role.id);
+      }
+
       await AuditLog.create({
         user_id: req.user.id,
         action: 'create_user',
@@ -75,6 +83,17 @@ const usersController = {
       if (!existing) return notFound(res, 'User not found.');
 
       const user = await User.update(req.params.id, req.body);
+
+      // Swap roles when a new role is provided
+      if (req.body.role) {
+        const role = await Role.findByName(req.body.role);
+        if (role) {
+          const currentRoles = await User.getUserRoles(req.params.id);
+          await Promise.all(currentRoles.map((r) => User.removeRole(req.params.id, r.id)));
+          await User.assignRole(req.params.id, role.id);
+        }
+      }
+
       await AuditLog.create({
         user_id: req.user.id,
         action: 'update_user',
