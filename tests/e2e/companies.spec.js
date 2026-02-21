@@ -1,5 +1,5 @@
 // @ts-check
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('./fixtures');
 // Auth state is provided by auth.setup.js via playwright.config.js storageState
 
 test.describe('Companies page', () => {

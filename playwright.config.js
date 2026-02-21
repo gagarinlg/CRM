@@ -31,6 +31,8 @@ module.exports = defineConfig({
     /* Default action timeout */
     actionTimeout: 10 * 1000,
     navigationTimeout: 15 * 1000,
+    /* Assertion timeout – give React time to call /auth/me and set user state */
+    assertionTimeout: 15 * 1000,
   },
 
   projects: [
