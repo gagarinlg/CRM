@@ -7,9 +7,11 @@ import AttachFileIcon from '@mui/icons-material/AttachFile';
 import DeleteIcon from '@mui/icons-material/Delete';
 import DownloadIcon from '@mui/icons-material/Download';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
+import VisibilityIcon from '@mui/icons-material/Visibility';
 import api from '../../services/api.js';
 import { useTranslation } from '../../i18n/I18nContext.jsx';
 import ConfirmDialog from '../common/ConfirmDialog.jsx';
+import FilePreviewDialog from './FilePreviewDialog.jsx';
 import dayjs from 'dayjs';
 
 function formatBytes(bytes) {
@@ -27,6 +29,7 @@ export default function FilesList({ entityType, entityId }) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
   const [deleteId, setDeleteId] = useState(null);
+  const [previewFile, setPreviewFile] = useState(null);
   const fileInputRef = useRef(null);
 
   const endpoint = `/attachments/${entityType}/${entityId}`;
@@ -36,7 +39,9 @@ export default function FilesList({ entityType, entityId }) {
     try {
       const res = await api.get(endpoint);
       const data = res.data.data || res.data;
-      setFiles(Array.isArray(data) ? data : []);
+      const arr = Array.isArray(data) ? data : [];
+      // Attach entity context so FilePreviewDialog can build the preview URL
+      setFiles(arr.map(f => ({ ...f, entity_type: entityType, entity_id: entityId })));
     } catch {
       setError(t('errors.fetchFailed'));
     } finally {
@@ -141,6 +146,11 @@ export default function FilesList({ entityType, entityId }) {
                   </Stack>
                 </Box>
                 <Box display="flex" gap={0.5} flexShrink={0}>
+                  <Tooltip title={t('files.preview', 'Preview')}>
+                    <IconButton size="small" onClick={() => setPreviewFile(file)}>
+                      <VisibilityIcon sx={{ fontSize: 16 }} />
+                    </IconButton>
+                  </Tooltip>
                   <Tooltip title={t('files.download', 'Download')}>
                     <IconButton size="small" onClick={() => handleDownload(file)}>
                       <DownloadIcon sx={{ fontSize: 16 }} />
@@ -164,6 +174,13 @@ export default function FilesList({ entityType, entityId }) {
         message={t('files.deleteMessage', 'Are you sure you want to delete this file? This cannot be undone.')}
         onConfirm={handleDelete}
         onCancel={() => setDeleteId(null)}
+      />
+
+      <FilePreviewDialog
+        open={Boolean(previewFile)}
+        file={previewFile}
+        onClose={() => setPreviewFile(null)}
+        onDownload={() => { handleDownload(previewFile); }}
       />
     </Box>
   );

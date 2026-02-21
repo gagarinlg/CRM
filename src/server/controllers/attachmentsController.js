@@ -78,6 +78,21 @@ const attachmentsController = {
     }
   },
 
+  async preview(req, res, next) {
+    try {
+      const attachment = await Attachment.findById(req.params.id);
+      if (!attachment) return notFound(res, 'File not found.');
+      const filePath = path.join(UPLOAD_DIR, attachment.filename);
+      if (!fs.existsSync(filePath)) return notFound(res, 'File not found on disk.');
+      // Serve inline (not as attachment) so the browser / frontend can render it
+      res.setHeader('Content-Type', attachment.mime_type || 'application/octet-stream');
+      res.setHeader('Content-Disposition', `inline; filename="${encodeURIComponent(attachment.original_name)}"`);
+      res.sendFile(filePath);
+    } catch (err) {
+      return next(err);
+    }
+  },
+
   async delete(req, res, next) {
     try {
       const attachment = await Attachment.findById(req.params.id);
