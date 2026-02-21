@@ -20,4 +20,7 @@ router.post('/reminders', settingsController.saveReminderSettings);
 // System info (admin only)
 router.get('/system', requireRole('admin'), settingsController.getSystemInfo);
 
+// Demo data (admin only)
+router.post('/demo-data', requireRole('admin'), settingsController.loadDemoData);
+
 module.exports = router;

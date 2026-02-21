@@ -415,7 +415,7 @@ Click the **Delete** (trash) icon next to the file. Confirm in the dialog. Only 
 
 Notes can be attached to **Companies**, **Contacts**, **Projects**, and **Leads**.
 
-### 9.1 Adding a Note
+### 11.1 Adding a Note
 
 From any detail page (company, contact, project, or lead):
 1. Scroll to the **Notes** section.
@@ -425,22 +425,22 @@ From any detail page (company, contact, project, or lead):
 
 Notes are timestamped and show which user created them.
 
-### 9.2 Editing and Deleting Notes
+### 11.2 Editing and Deleting Notes
 
 - **Edit:** Click the pencil icon on a note. Only the note's author and admins can edit it.
 - **Delete:** Click the trash icon. Only the note's author and admins can delete it.
 
 ---
 
-## 10. Calendar
+## 12. Calendar
 
 The calendar shows all events linked to your account. Events can also be linked to contacts, companies, projects, or leads.
 
-### 10.1 Views (Month / Week / Day)
+### 12.1 Views (Month / Week / Day)
 
 Use the **Month / Week / Day** buttons at the top of the calendar page to switch views. Use the **<** and **>** arrows to navigate to previous or next periods. Click **Today** to return to the current date.
 
-### 10.2 Creating an Event
+### 12.2 Creating an Event
 
 1. Click a time slot on the calendar, or click **+ New Event**.
 2. Fill in:
@@ -458,12 +458,12 @@ Use the **Month / Week / Day** buttons at the top of the calendar page to switch
 
 3. Click **Save**.
 
-### 10.3 Editing and Deleting Events
+### 12.3 Editing and Deleting Events
 
 - **Edit:** Click the event on the calendar, then click **Edit**.
 - **Delete:** Click the event → **Delete**, confirm in the dialog.
 
-### 10.4 Recurring Events
+### 12.4 Recurring Events
 
 When creating or editing an event, tick **Repeat** and choose a recurrence rule:
 - **Daily**, **Weekly**, **Monthly**, or **Yearly**
@@ -476,7 +476,7 @@ When deleting a recurring event you can choose to delete:
 
 ---
 
-## 11. Contact Reminders
+## 13. Contact Reminders
 
 The CRM tracks the **Last Contact Date** for each contact. When that date is older than your configured threshold, the system reminds you.
 
@@ -498,7 +498,7 @@ Open the contact → click **Update Last Contact**. The reminder clock resets.
 
 ---
 
-## 12. Reports
+## 14. Reports & CSV Export
 
 > **Requires:** `reports.read` permission (Manager or Admin role by default).  
 > **Exporting** requires `reports.generate`.
@@ -513,9 +513,23 @@ Open the contact → click **Update Last Contact**. The reminder clock resets.
 4. Click **Run Report** to view results in the browser.
 5. To export, click **Export CSV** or **Export PDF**.
 
+### Quick CSV export from list views
+
+The **Projects** and **Leads** list pages each have an **Export CSV** button in the toolbar. Clicking it downloads the current filtered list as a CSV file — no need to go to the Reports section.
+
 ---
 
-## 13. Searching & Filtering
+## 15. Global Search
+
+Click the **Search** icon (🔍) in the top navigation bar to open the global search dialog.
+
+- Type at least 2 characters to search across **all** entities simultaneously: companies, contacts, projects, and leads.
+- Results are grouped by entity type. Click any result to navigate directly to that record.
+- Press **Esc** or click outside the dialog to close it.
+
+---
+
+## 16. Searching & Filtering
 
 Every list page (Companies, Contacts, Projects, Leads) has a search box at the top. Typing searches across the most relevant fields for that entity.
 
@@ -529,7 +543,19 @@ Click **Clear Filters** to reset all filters.
 
 ---
 
-## 14. Keyboard Shortcuts
+## 17. Bulk Delete
+
+All list views (Companies, Contacts, Projects, Leads) support selecting and deleting multiple records at once.
+
+1. Tick the checkbox next to each record you want to delete (or tick the header checkbox to select all visible records).
+2. A **Delete Selected** button appears in the toolbar above the list.
+3. Click it, then confirm in the dialog.
+
+> Bulk delete requires the same `delete` permission as single-record delete.
+
+---
+
+## 18. Keyboard Shortcuts
 
 | Shortcut | Action |
 |----------|--------|
@@ -546,7 +572,7 @@ Click **Clear Filters** to reset all filters.
 
 ---
 
-## 15. Frequently Asked Questions
+## 19. Frequently Asked Questions
 
 **Q: I cannot see the Admin menu.**  
 A: The Admin section is only visible to users with the **Admin** or **Manager** role. Contact your system administrator.

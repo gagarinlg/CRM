@@ -174,6 +174,46 @@ function SystemInfo() {
   );
 }
 
+function DemoData() {
+  const { t } = useTranslation();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [done, setDone] = useState(false);
+
+  const handleLoad = async () => {
+    setLoading(true);
+    setError('');
+    setSuccess('');
+    try {
+      const res = await api.post('/settings/demo-data');
+      const result = res.data.data || res.data;
+      if (result.alreadyLoaded) {
+        setSuccess(t('settings.demoDataAlready'));
+      } else {
+        setSuccess(t('settings.demoDataSuccess'));
+      }
+      setDone(true);
+    } catch (err) {
+      setError(err.response?.data?.message || t('errors.saveFailed'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Box>
+      <Typography variant="body1" mb={2}>{t('settings.demoDataDescription')}</Typography>
+      <Alert severity="warning" sx={{ mb: 2 }}>{t('settings.demoDataWarning')}</Alert>
+      {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+      {success && <Alert severity="success" sx={{ mb: 2 }}>{success}</Alert>}
+      <Button variant="contained" onClick={handleLoad} disabled={loading || done}>
+        {loading ? <CircularProgress size={18} color="inherit" /> : t('settings.demoDataLoad')}
+      </Button>
+    </Box>
+  );
+}
+
 export default function SettingsAdmin() {
   const { t } = useTranslation();
   const [tab, setTab] = useState(0);
@@ -186,11 +226,13 @@ export default function SettingsAdmin() {
           <Tab label={t('settings.smtp')} />
           <Tab label={t('settings.reminders')} />
           <Tab label={t('settings.system')} />
+          <Tab label={t('settings.demoData')} />
         </Tabs>
         <CardContent>
           <TabPanel value={tab} index={0}><SMTPSettings /></TabPanel>
           <TabPanel value={tab} index={1}><ReminderSettings /></TabPanel>
           <TabPanel value={tab} index={2}><SystemInfo /></TabPanel>
+          <TabPanel value={tab} index={3}><DemoData /></TabPanel>
         </CardContent>
       </Card>
     </Box>

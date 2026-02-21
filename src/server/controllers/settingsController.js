@@ -4,6 +4,7 @@ const { body } = require('express-validator');
 const { db } = require('../config/database');
 const emailService = require('../services/emailService');
 const reminderService = require('../services/reminderService');
+const demoDataService = require('../services/demoDataService');
 const { success } = require('../utils/response');
 
 const smtpValidation = [
@@ -87,6 +88,20 @@ const settingsController = {
     try {
       const settings = await reminderService.updateSettings(req.user.id, req.body);
       return success(res, settings, 'Reminder settings saved.');
+    } catch (err) {
+      return next(err);
+    }
+  },
+
+  // ── Demo Data ──────────────────────────────────────────────────────────────
+
+  async loadDemoData(req, res, next) {
+    try {
+      const result = await demoDataService.load(req.user.id);
+      if (result.alreadyLoaded) {
+        return success(res, result, 'Demo data is already loaded.');
+      }
+      return success(res, result, 'Demo data loaded successfully.');
     } catch (err) {
       return next(err);
     }
