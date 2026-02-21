@@ -84,11 +84,11 @@ export default function EventForm({ open, onClose, onSaved, event }) {
                 <FormControl fullWidth>
                   <InputLabel>{t('calendar.eventType')}</InputLabel>
                   <Select {...field} label={t('calendar.eventType')}>
-                    <MenuItem value="meeting">Meeting</MenuItem>
-                    <MenuItem value="call">Call</MenuItem>
-                    <MenuItem value="task">Task</MenuItem>
-                    <MenuItem value="reminder">Reminder</MenuItem>
-                    <MenuItem value="other">Other</MenuItem>
+                    <MenuItem value="meeting">{t('calendar.typeMeeting')}</MenuItem>
+                    <MenuItem value="call">{t('calendar.typeCall')}</MenuItem>
+                    <MenuItem value="task">{t('calendar.typeTask')}</MenuItem>
+                    <MenuItem value="reminder">{t('calendar.typeReminder')}</MenuItem>
+                    <MenuItem value="other">{t('calendar.typeOther')}</MenuItem>
                   </Select>
                 </FormControl>
               )}

@@ -53,11 +53,11 @@ export default function NoteForm({ entityType, entityId, note, onSaved, onCancel
           <FormControl size="small" sx={{ mb: 1, minWidth: 140 }}>
             <InputLabel>{t('notes.type')}</InputLabel>
             <Select {...field} label={t('notes.type')}>
-              <MenuItem value="general">General</MenuItem>
-              <MenuItem value="call">Call</MenuItem>
-              <MenuItem value="meeting">Meeting</MenuItem>
-              <MenuItem value="email">Email</MenuItem>
-              <MenuItem value="task">Task</MenuItem>
+              <MenuItem value="general">{t('notes.typeGeneral')}</MenuItem>
+              <MenuItem value="call">{t('notes.typeCall')}</MenuItem>
+              <MenuItem value="meeting">{t('notes.typeMeeting')}</MenuItem>
+              <MenuItem value="email">{t('notes.typeEmail')}</MenuItem>
+              <MenuItem value="task">{t('notes.typeTask')}</MenuItem>
             </Select>
           </FormControl>
         )}

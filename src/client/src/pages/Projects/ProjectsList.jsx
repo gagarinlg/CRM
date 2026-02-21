@@ -5,16 +5,21 @@ import {
   TableRow, TablePagination, Paper, IconButton, Chip, Alert, Tooltip,
   Stack, MenuItem, Select, FormControl, InputLabel,
 } from '@mui/material';
+import ToggleButton from '@mui/material/ToggleButton';
+import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import VisibilityIcon from '@mui/icons-material/Visibility';
+import ViewListIcon from '@mui/icons-material/ViewList';
+import ViewKanbanIcon from '@mui/icons-material/ViewKanban';
 import api from '../../services/api.js';
 import { useTranslation } from '../../i18n/I18nContext.jsx';
 import PageHeader from '../../components/common/PageHeader.jsx';
 import SearchBar from '../../components/common/SearchBar.jsx';
 import LoadingSpinner from '../../components/common/LoadingSpinner.jsx';
 import ConfirmDialog from '../../components/common/ConfirmDialog.jsx';
+import ProjectsKanbanBoard from '../../components/Projects/KanbanBoard.jsx';
 import useDebounce from '../../hooks/useDebounce.js';
 import dayjs from 'dayjs';
 
@@ -34,6 +39,7 @@ export default function ProjectsList() {
   const [total, setTotal] = useState(0);
   const [statusFilter, setStatusFilter] = useState('');
   const [deleteId, setDeleteId] = useState(null);
+  const [viewMode, setViewMode] = useState('list');
   const debouncedSearch = useDebounce(search, 400);
 
   const fetchProjects = useCallback(async () => {
@@ -84,15 +90,20 @@ export default function ProjectsList() {
           <InputLabel>{t('projects.status')}</InputLabel>
           <Select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} label={t('projects.status')}>
             <MenuItem value="">{t('common.all')}</MenuItem>
-            <MenuItem value="planning">Planning</MenuItem>
-            <MenuItem value="active">Active</MenuItem>
-            <MenuItem value="on_hold">On Hold</MenuItem>
-            <MenuItem value="completed">Completed</MenuItem>
-            <MenuItem value="cancelled">Cancelled</MenuItem>
+            <MenuItem value="planning">{t('projects.statusPlanning')}</MenuItem>
+            <MenuItem value="active">{t('projects.statusActive')}</MenuItem>
+            <MenuItem value="on_hold">{t('projects.statusOnHold')}</MenuItem>
+            <MenuItem value="completed">{t('projects.statusCompleted')}</MenuItem>
+            <MenuItem value="cancelled">{t('projects.statusCancelled')}</MenuItem>
           </Select>
         </FormControl>
+        <ToggleButtonGroup value={viewMode} exclusive onChange={(_, v) => v && setViewMode(v)} size="small">
+          <ToggleButton value="list"><ViewListIcon fontSize="small" /></ToggleButton>
+          <ToggleButton value="kanban"><ViewKanbanIcon fontSize="small" /></ToggleButton>
+        </ToggleButtonGroup>
       </Stack>
 
+      {viewMode === 'list' ? (
       <Paper>
         <TableContainer>
           <Table size="small">
@@ -154,6 +165,9 @@ export default function ProjectsList() {
           rowsPerPageOptions={[10, 20, 50]}
         />
       </Paper>
+      ) : (
+        <ProjectsKanbanBoard projects={projects} />
+      )}
 
       <ConfirmDialog
         open={Boolean(deleteId)}

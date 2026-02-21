@@ -98,7 +98,7 @@ export default function Profile() {
       setTotpData(res.data.data || res.data);
       setTotpStep('setup');
     } catch (err) {
-      setTotpError(err.response?.data?.message || 'Failed to start 2FA setup.');
+      setTotpError(err.response?.data?.message || t('auth.totpSetupFailed'));
     } finally {
       setTotpLoading(false);
     }
@@ -113,7 +113,7 @@ export default function Profile() {
       setTotpStep('done');
       await loadUser();
     } catch (err) {
-      setTotpError(err.response?.data?.message || 'Invalid code. Please try again.');
+      setTotpError(err.response?.data?.message || t('auth.totpInvalid'));
     } finally {
       setTotpLoading(false);
     }
@@ -128,7 +128,7 @@ export default function Profile() {
       setDisablePassword('');
       await loadUser();
     } catch (err) {
-      setTotpError(err.response?.data?.message || 'Failed to disable 2FA.');
+      setTotpError(err.response?.data?.message || t('auth.totpDisableFailed'));
     } finally {
       setTotpLoading(false);
     }
@@ -160,8 +160,8 @@ export default function Profile() {
               ))}
               <Box mt={1}>
                 {totpEnabled
-                  ? <Chip icon={<SecurityIcon />} label="2FA enabled" color="success" size="small" />
-                  : <Chip icon={<SecurityIcon />} label="2FA disabled" color="default" size="small" />}
+                  ? <Chip icon={<SecurityIcon />} label={t('profile.twoFactorEnabled')} color="success" size="small" />
+                  : <Chip icon={<SecurityIcon />} label={t('profile.twoFactorDisabled')} color="default" size="small" />}
               </Box>
             </CardContent>
           </Card>
@@ -242,7 +242,7 @@ export default function Profile() {
             <CardContent>
               <Box display="flex" alignItems="center" gap={1} mb={1}>
                 <SecurityIcon color={totpEnabled ? 'success' : 'action'} />
-                <Typography variant="subtitle2">Two-Factor Authentication (2FA)</Typography>
+                <Typography variant="subtitle2">{t('profile.twoFactor')}</Typography>
               </Box>
               <Divider sx={{ mb: 2 }} />
 
@@ -252,11 +252,10 @@ export default function Profile() {
               {totpStep === 'idle' && !totpEnabled && (
                 <Box>
                   <Typography variant="body2" color="text.secondary" mb={2}>
-                    Add an extra layer of security. You will need an authenticator app such as
-                    Google Authenticator, Authy, or any TOTP-compatible app.
+                    {t('profile.twoFactorSetupHint')}
                   </Typography>
                   <Button variant="contained" onClick={handleSetup2FA} disabled={totpLoading}>
-                    {totpLoading ? <CircularProgress size={18} color="inherit" /> : 'Set up 2FA'}
+                    {totpLoading ? <CircularProgress size={18} color="inherit" /> : t('profile.setUp2fa')}
                   </Button>
                 </Box>
               )}
@@ -265,8 +264,7 @@ export default function Profile() {
               {totpStep === 'setup' && totpData && (
                 <Box>
                   <Typography variant="body2" mb={2}>
-                    Scan the QR code below with your authenticator app. If you cannot scan it,
-                    enter the secret key manually.
+                    {t('profile.twoFactorScanHint')}
                   </Typography>
 
                   <Box display="flex" justifyContent="center" mb={2}>
@@ -278,7 +276,7 @@ export default function Profile() {
                   </Box>
 
                   <Typography variant="caption" display="block" color="text.secondary" mb={0.5}>
-                    Manual entry secret key:
+                    {t('profile.twoFactorSecretKey')}
                   </Typography>
                   <Box
                     sx={{
@@ -298,11 +296,11 @@ export default function Profile() {
                   </Box>
 
                   <Typography variant="body2" mb={1}>
-                    After scanning, enter the 6-digit code from your app to confirm:
+                    {t('profile.twoFactorConfirmHint')}
                   </Typography>
                   <Stack direction="row" spacing={2} alignItems="flex-start">
                     <TextField
-                      label="6-digit code"
+                      label={t('profile.twoFactorCodeLabel')}
                       value={totpCode}
                       onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
                       inputProps={{ inputMode: 'numeric', pattern: '[0-9]*', maxLength: 6 }}
@@ -310,10 +308,10 @@ export default function Profile() {
                       sx={{ width: 160 }}
                     />
                     <Button variant="contained" onClick={handleVerifySetup} disabled={totpLoading || totpCode.length < 6}>
-                      {totpLoading ? <CircularProgress size={18} color="inherit" /> : 'Confirm & Enable'}
+                      {totpLoading ? <CircularProgress size={18} color="inherit" /> : t('profile.twoFactorConfirmButton')}
                     </Button>
                     <Button variant="text" onClick={() => { setTotpStep('idle'); setTotpCode(''); setTotpData(null); }}>
-                      Cancel
+                      {t('common.cancel')}
                     </Button>
                   </Stack>
                 </Box>
@@ -322,10 +320,9 @@ export default function Profile() {
               {/* Done — show backup codes once */}
               {totpStep === 'done' && backupCodes && (
                 <Box>
-                  <Alert severity="success" sx={{ mb: 2 }}>2FA is now enabled on your account.</Alert>
+                  <Alert severity="success" sx={{ mb: 2 }}>{t('profile.twoFactorEnabledSuccess')}</Alert>
                   <Alert severity="warning" sx={{ mb: 2 }}>
-                    <strong>Save your backup codes now.</strong> They will not be shown again.
-                    Each code can be used once if you lose access to your authenticator app.
+                    {t('profile.twoFactorBackupWarning')}
                   </Alert>
                   <Box
                     sx={{
@@ -344,7 +341,7 @@ export default function Profile() {
                       <span key={i}>{code}</span>
                     ))}
                   </Box>
-                  <Button variant="outlined" onClick={() => setTotpStep('idle')}>Done</Button>
+                  <Button variant="outlined" onClick={() => setTotpStep('idle')}>{t('profile.done')}</Button>
                 </Box>
               )}
 
@@ -352,11 +349,11 @@ export default function Profile() {
               {totpEnabled && totpStep === 'idle' && (
                 <Box>
                   <Alert severity="info" sx={{ mb: 2 }}>
-                    Two-factor authentication is currently <strong>enabled</strong> on your account.
+                    {t('profile.twoFactorIsEnabled')}
                   </Alert>
                   {totpStep !== 'disable' && (
                     <Button variant="outlined" color="error" onClick={() => setTotpStep('disable')}>
-                      Disable 2FA
+                      {t('profile.disable2fa')}
                     </Button>
                   )}
                 </Box>
@@ -365,21 +362,21 @@ export default function Profile() {
               {totpEnabled && totpStep === 'disable' && (
                 <Box>
                   <Typography variant="body2" mb={1}>
-                    Enter your current password to disable two-factor authentication:
+                    {t('profile.disable2faHint')}
                   </Typography>
                   <Stack direction="row" spacing={2} alignItems="flex-start">
                     <TextField
-                      label="Current password"
+                      label={t('profile.currentPassword')}
                       type="password"
                       value={disablePassword}
                       onChange={(e) => setDisablePassword(e.target.value)}
                       size="small"
                     />
                     <Button variant="contained" color="error" onClick={handleDisable2FA} disabled={totpLoading || !disablePassword}>
-                      {totpLoading ? <CircularProgress size={18} color="inherit" /> : 'Disable 2FA'}
+                      {totpLoading ? <CircularProgress size={18} color="inherit" /> : t('profile.disable2fa')}
                     </Button>
                     <Button variant="text" onClick={() => { setTotpStep('idle'); setDisablePassword(''); }}>
-                      Cancel
+                      {t('common.cancel')}
                     </Button>
                   </Stack>
                 </Box>

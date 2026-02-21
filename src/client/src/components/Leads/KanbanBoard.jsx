@@ -4,18 +4,9 @@ import EditIcon from '@mui/icons-material/Edit';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from '../../i18n/I18nContext.jsx';
 
-const STAGES = [
-  { key: 'new', label: 'New', color: '#1976d2' },
-  { key: 'contacted', label: 'Contacted', color: '#7b1fa2' },
-  { key: 'qualified', label: 'Qualified', color: '#0288d1' },
-  { key: 'proposal', label: 'Proposal', color: '#ed6c02' },
-  { key: 'negotiation', label: 'Negotiation', color: '#2e7d32' },
-  { key: 'won', label: 'Won', color: '#1b5e20' },
-  { key: 'lost', label: 'Lost', color: '#c62828' },
-];
-
 function LeadCard({ lead, onMove }) {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   return (
     <Card sx={{ mb: 1, '&:hover': { boxShadow: 4 } }}>
       <CardContent sx={{ py: 1.5, px: 2, '&:last-child': { pb: 1.5 } }}>
@@ -28,7 +19,7 @@ function LeadCard({ lead, onMove }) {
           >
             {lead.title}
           </Typography>
-          <Tooltip title="Edit">
+          <Tooltip title={t('common.edit')}>
             <IconButton size="small" onClick={() => navigate(`/leads/${lead.id}/edit`)}>
               <EditIcon sx={{ fontSize: 14 }} />
             </IconButton>
@@ -49,6 +40,16 @@ function LeadCard({ lead, onMove }) {
 
 export default function KanbanBoard({ leads = [], onStageChange }) {
   const { t } = useTranslation();
+
+  const STAGES = [
+    { key: 'new',         label: t('leads.stageNew'),         color: '#1976d2' },
+    { key: 'contacted',   label: t('leads.stageContacted'),   color: '#7b1fa2' },
+    { key: 'qualified',   label: t('leads.stageQualified'),   color: '#0288d1' },
+    { key: 'proposal',    label: t('leads.stageProposal'),    color: '#ed6c02' },
+    { key: 'negotiation', label: t('leads.stageNegotiation'), color: '#2e7d32' },
+    { key: 'won',         label: t('leads.stageWon'),         color: '#1b5e20' },
+    { key: 'lost',        label: t('leads.stageLost'),        color: '#c62828' },
+  ];
 
   const byStage = STAGES.reduce((acc, s) => {
     acc[s.key] = leads.filter(l => l.stage === s.key);

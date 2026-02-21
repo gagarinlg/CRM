@@ -89,7 +89,7 @@ export default function LeadsList() {
           <Select value={stageFilter} onChange={e => setStageFilter(e.target.value)} label={t('leads.stage')}>
             <MenuItem value="">{t('common.all')}</MenuItem>
             {['new', 'contacted', 'qualified', 'proposal', 'negotiation', 'won', 'lost'].map(s => (
-              <MenuItem key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</MenuItem>
+              <MenuItem key={s} value={s}>{t(`leads.stage${s.charAt(0).toUpperCase() + s.slice(1)}`)}</MenuItem>
             ))}
           </Select>
         </FormControl>

@@ -81,8 +81,8 @@ export default function ContactsList() {
           <InputLabel>{t('contacts.status')}</InputLabel>
           <Select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} label={t('contacts.status')}>
             <MenuItem value="">{t('common.all')}</MenuItem>
-            <MenuItem value="active">Active</MenuItem>
-            <MenuItem value="inactive">Inactive</MenuItem>
+            <MenuItem value="active">{t('common.active')}</MenuItem>
+            <MenuItem value="inactive">{t('common.inactive')}</MenuItem>
           </Select>
         </FormControl>
       </Stack>
