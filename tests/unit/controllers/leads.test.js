@@ -20,19 +20,27 @@ jest.mock('../../../src/server/middleware/auth', () => ({
 
 jest.mock('../../../src/server/models/Lead');
 jest.mock('../../../src/server/models/Project');
+jest.mock('../../../src/server/models/Note');
+jest.mock('../../../src/server/models/Attachment');
 jest.mock('../../../src/server/models/AuditLog', () => ({
   create: jest.fn().mockResolvedValue({ id: 'log-id' }),
 }));
 
-// Mock the db('group_members') call in leadsController.list
+// Mock the db() calls used in leadsController (group_members lookup + notes insert in convert)
 const { db } = require('../../../src/server/config/database');
 const mockPluck = jest.fn().mockResolvedValue([]);
-db.mockReturnValue({ where: jest.fn().mockReturnValue({ pluck: mockPluck }) });
+const mockInsert = jest.fn().mockResolvedValue([]);
+db.mockReturnValue({
+  where: jest.fn().mockReturnValue({ pluck: mockPluck }),
+  insert: mockInsert,
+});
 
 const request = require('supertest');
 const app = require('../../../src/server/app');
 const Lead = require('../../../src/server/models/Lead');
 const Project = require('../../../src/server/models/Project');
+const Note = require('../../../src/server/models/Note');
+const Attachment = require('../../../src/server/models/Attachment');
 
 const SAMPLE_LEAD = {
   id: 'lead-uuid-1',
@@ -208,10 +216,14 @@ describe('POST /api/v1/leads/:id/convert', () => {
   test('converts open lead to project', async () => {
     Lead.findById.mockResolvedValue({ ...SAMPLE_LEAD, contact_id: null });
     Lead.getGroups.mockResolvedValue([]);
+    Lead.getContacts.mockResolvedValue([]);
+    Lead.getMembers.mockResolvedValue([]);
     Lead.update.mockResolvedValue({ ...SAMPLE_LEAD, status: 'won' });
     Project.create.mockResolvedValue(PROJECT);
     Project.addContact = jest.fn().mockResolvedValue();
     Project.addGroup = jest.fn().mockResolvedValue();
+    Note.listByEntity = jest.fn().mockResolvedValue([]);
+    Attachment.listByEntity = jest.fn().mockResolvedValue([]);
     const res = await request(app).post('/api/v1/leads/lead-uuid-1/convert');
     expect(res.status).toBe(201);
     expect(res.body.data.project_id).toBe('proj-uuid-1');
@@ -220,10 +232,14 @@ describe('POST /api/v1/leads/:id/convert', () => {
   test('copies contact and groups when converting', async () => {
     Lead.findById.mockResolvedValue({ ...SAMPLE_LEAD, contact_id: 'c1' });
     Lead.getGroups.mockResolvedValue([{ id: 'g1', name: 'Sales' }]);
+    Lead.getContacts.mockResolvedValue([{ contact_id: 'c1' }]);
+    Lead.getMembers.mockResolvedValue([]);
     Lead.update.mockResolvedValue({ ...SAMPLE_LEAD, status: 'won' });
     Project.create.mockResolvedValue(PROJECT);
     Project.addContact = jest.fn().mockResolvedValue();
     Project.addGroup = jest.fn().mockResolvedValue();
+    Note.listByEntity = jest.fn().mockResolvedValue([]);
+    Attachment.listByEntity = jest.fn().mockResolvedValue([]);
     const res = await request(app).post('/api/v1/leads/lead-uuid-1/convert');
     expect(res.status).toBe(201);
     expect(Project.addContact).toHaveBeenCalledWith(PROJECT.id, 'c1');
