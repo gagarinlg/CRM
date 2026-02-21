@@ -450,25 +450,36 @@ const leadsController = {
 
       // Create an informational note with the lead's pipeline details,
       // labelled in the converting user's preferred language.
+      // Labels are looked up from the shared translations table so that
+      // adding a new language via the admin UI automatically covers this note too.
       const convertingUser = await db('users').where({ id: req.user.id }).first();
       const lang = convertingUser?.preferred_language || 'en';
-      const NOTE_LABELS = {
-        en: { convertedFrom: 'Converted from lead. Lead details', stage: 'Stage', source: 'Source', probability: 'Probability', value: 'Lead value' },
-        de: { convertedFrom: 'Aus Lead konvertiert. Lead-Details', stage: 'Phase', source: 'Quelle', probability: 'Wahrscheinlichkeit', value: 'Lead-Wert' },
-        cs: { convertedFrom: 'Převedeno z leadu. Detaily leadu', stage: 'Fáze', source: 'Zdroj', probability: 'Pravděpodobnost', value: 'Hodnota leadu' },
+      const lookupLabel = async (key) => {
+        if (lang !== 'en') {
+          const row = await db('translations').where({ language_code: lang, key }).first();
+          if (row?.value) return row.value;
+        }
+        const row = await db('translations').where({ language_code: 'en', key }).first();
+        return row?.value || key;
       };
-      const lbl = NOTE_LABELS[lang] || NOTE_LABELS.en;
+      const [convertedFromLabel, stageLabel, sourceLabel, probabilityLabel, valueLabel] = await Promise.all([
+        lookupLabel('leads.convertedFrom'),
+        lookupLabel('leads.stage'),
+        lookupLabel('leads.source'),
+        lookupLabel('leads.probability'),
+        lookupLabel('leads.value'),
+      ]);
       const leadInfo = [
-        lead.stage ? `${lbl.stage}: ${lead.stage}` : null,
-        lead.source ? `${lbl.source}: ${lead.source}` : null,
-        lead.probability != null ? `${lbl.probability}: ${lead.probability}%` : null,
-        lead.value != null ? `${lbl.value}: ${lead.value}` : null,
+        lead.stage ? `${stageLabel}: ${lead.stage}` : null,
+        lead.source ? `${sourceLabel}: ${lead.source}` : null,
+        lead.probability != null ? `${probabilityLabel}: ${lead.probability}%` : null,
+        lead.value != null ? `${valueLabel}: ${lead.value}` : null,
       ].filter(Boolean).join('\n');
       if (leadInfo) {
         await db('notes').insert({
           entity_type: 'project',
           entity_id: project.id,
-          content: `${lbl.convertedFrom}:\n${leadInfo}`,
+          content: `${convertedFromLabel}:\n${leadInfo}`,
           type: 'general',
           created_by: req.user.id,
         }).catch(() => {});
