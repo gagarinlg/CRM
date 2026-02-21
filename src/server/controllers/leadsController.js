@@ -4,6 +4,7 @@ const { body } = require('express-validator');
 const Lead = require('../models/Lead');
 const Project = require('../models/Project');
 const AuditLog = require('../models/AuditLog');
+const Attachment = require('../models/Attachment');
 const { success, error, paginated, notFound } = require('../utils/response');
 
 const createValidation = [
@@ -311,6 +312,20 @@ const leadsController = {
       const leadGroups = await Lead.getGroups(lead.id);
       for (const g of leadGroups) {
         await Project.addGroup(project.id, g.id).catch(() => {});
+      }
+
+      // Copy lead file attachments to project (same file on disk, new DB row)
+      const leadFiles = await Attachment.listByEntity('lead', lead.id);
+      for (const f of leadFiles) {
+        await Attachment.create({
+          entity_type: 'project',
+          entity_id: project.id,
+          filename: f.filename,
+          original_name: f.original_name,
+          mime_type: f.mime_type,
+          size: f.size,
+          uploaded_by: f.uploaded_by,
+        }).catch(() => {});
       }
 
       // Mark lead as won
