@@ -352,6 +352,8 @@ const TRANSLATIONS = {
       groupsHint: 'Nur Mitglieder der ausgewählten Gruppen können diesen Lead sehen.',
       noGroups: 'Keine Gruppen zugewiesen. Alle Benutzer mit Lead-Zugriff können diesen sehen.',
     },
+    notes: {
+      title: 'Notizen', new: 'Neue Notiz',
       content: 'Notizinhalt', type: 'Notiztyp',
       addNote: 'Notiz hinzufügen', editNote: 'Notiz bearbeiten',
       noNotes: 'Noch keine Notizen. Erste Notiz hinzufügen.',
