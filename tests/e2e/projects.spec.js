@@ -89,8 +89,8 @@ test.describe('Projects page', () => {
 
   test('status filter shows only matching projects', async ({ page }) => {
     await expect(page.locator('table, [role="table"]')).toBeVisible({ timeout: 10000 });
-    // Open the status filter dropdown
-    const statusSelect = page.getByRole('combobox').filter({ hasText: /all|status/i }).first();
+    // Open the status filter dropdown — nth(1) skips the language selector in the TopBar
+    const statusSelect = page.getByRole('combobox').nth(1);
     await statusSelect.click();
     // Choose "Planning"
     await page.getByRole('option', { name: /planning/i }).click();

@@ -23,9 +23,8 @@ test.describe('Notes on a project', () => {
   });
 
   test('can add a note to a project', async ({ page }) => {
-    // Click the add note (+) button in the NotesList
-    // Try clicking any small icon button near the notes title
-    const noteAddBtn = page.locator('button').filter({ has: page.locator('svg') }).last();
+    // The NotesList add button is the only primary-colored icon button in the notes tab panel
+    const noteAddBtn = page.locator('main .MuiIconButton-colorPrimary').first();
     await noteAddBtn.click();
     // The inline note form should appear (textarea for content)
     const contentInput = page.locator('textarea[name="content"]').or(page.locator('textarea')).first();
@@ -38,7 +37,7 @@ test.describe('Notes on a project', () => {
 
   test('can delete a note from a project', async ({ page }) => {
     // First add a note
-    const noteAddBtn = page.locator('button').filter({ has: page.locator('svg') }).last();
+    const noteAddBtn = page.locator('main .MuiIconButton-colorPrimary').first();
     await noteAddBtn.click();
     const contentInput = page.locator('textarea[name="content"]').or(page.locator('textarea')).first();
     await expect(contentInput).toBeVisible({ timeout: 8000 });
@@ -73,7 +72,7 @@ test.describe('Notes on a lead', () => {
   });
 
   test('can add a note to a lead', async ({ page }) => {
-    const noteAddBtn = page.locator('button').filter({ has: page.locator('svg') }).last();
+    const noteAddBtn = page.locator('main .MuiIconButton-colorPrimary').first();
     await noteAddBtn.click();
     const contentInput = page.locator('textarea[name="content"]').or(page.locator('textarea')).first();
     await expect(contentInput).toBeVisible({ timeout: 8000 });

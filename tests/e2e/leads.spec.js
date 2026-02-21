@@ -132,8 +132,8 @@ test.describe('Lead detail page', () => {
   });
 
   test('lead detail stage can be changed', async ({ page }) => {
-    // Open the stage dropdown and pick a different stage
-    const stageSelect = page.getByRole('combobox').first();
+    // Open the stage dropdown — nth(1) skips the language selector in the TopBar
+    const stageSelect = page.getByRole('combobox').nth(1);
     await stageSelect.click();
     await page.getByRole('option', { name: /contacted/i }).click();
     // The chip/select value should update

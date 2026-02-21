@@ -20,6 +20,7 @@ import LoadingSpinner from '../../components/common/LoadingSpinner.jsx';
 import NotesList from '../../components/Notes/NotesList.jsx';
 import FilesList from '../../components/Files/FilesList.jsx';
 import EntityPickerDialog from '../../components/common/EntityPickerDialog.jsx';
+import EntityTags from '../../components/common/EntityTags.jsx';
 
 function InfoRow({ label, value }) {
   if (value == null || value === '') return null;
@@ -220,6 +221,10 @@ export default function LeadDetail() {
                     <Chip icon={<LockIcon />} label={t('leads.visibilityRestricted', 'Restricted')} size="small" color="warning" variant="outlined" />
                   </Box>
                 )}
+                <Box mt={2}>
+                  <Typography variant="caption" color="text.secondary" display="block" mb={0.5}>{t('tags.title', 'Tags')}</Typography>
+                  <EntityTags entityType="lead" entityId={id} />
+                </Box>
               </CardContent>
             </Card>
           </Grid>
