@@ -31,11 +31,19 @@ const processQueue = (error, token = null) => {
 };
 
 // Auto-refresh on 401
+// Auth endpoints should never trigger a token-refresh / page-redirect loop.
+// If /auth/login itself returns 401 (wrong credentials) we must let the error
+// propagate to the caller (Login.jsx) so it can display the error message.
+// Attempting a refresh on the login endpoint would cause an infinite redirect.
+const AUTH_SKIP_REFRESH = ['/auth/login', '/auth/refresh', '/auth/2fa'];
+
 api.interceptors.response.use(
   res => res,
   async error => {
     const originalRequest = error.config;
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    const url = originalRequest?.url || '';
+    const isAuthEndpoint = AUTH_SKIP_REFRESH.some(p => url.includes(p));
+    if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
