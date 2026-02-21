@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import {
   Box, Button, Grid, Card, CardContent, Typography, Alert,
   CircularProgress, MenuItem, Select, FormControl, InputLabel,
-  TextField, Stack, Divider,
+  TextField, Stack,
 } from '@mui/material';
 import DownloadIcon from '@mui/icons-material/Download';
 import AssessmentIcon from '@mui/icons-material/Assessment';
@@ -13,10 +13,10 @@ import ChartWidget from '../../components/Dashboard/ChartWidget.jsx';
 import DashboardWidget from '../../components/Dashboard/DashboardWidget.jsx';
 
 const REPORTS = [
-  { key: 'sales', label: 'reports.sales', endpoint: '/reports/sales' },
-  { key: 'lead-pipeline', label: 'reports.leadPipeline', endpoint: '/reports/lead-pipeline' },
-  { key: 'project-status', label: 'reports.projectStatus', endpoint: '/reports/project-status' },
-  { key: 'contact-activity', label: 'reports.contactActivity', endpoint: '/reports/contact-activity' },
+  { key: 'sales', label: 'reports.sales', endpoint: '/reports/sales', dataKey: 'leads', summaryKeys: ['summary'] },
+  { key: 'lead-pipeline', label: 'reports.leadPipeline', endpoint: '/reports/lead-pipeline', dataKey: 'pipeline', summaryKeys: ['total_leads'] },
+  { key: 'project-status', label: 'reports.projectStatus', endpoint: '/reports/project-status', dataKey: 'projects', summaryKeys: ['statuses'] },
+  { key: 'contact-activity', label: 'reports.contactActivity', endpoint: '/reports/contact-activity', dataKey: 'contacts', summaryKeys: ['overdue_reminders'] },
 ];
 
 export default function ReportsPage() {
@@ -25,6 +25,8 @@ export default function ReportsPage() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [reportData, setReportData] = useState(null);
+  const [reportRows, setReportRows] = useState([]);
+  const [reportMeta, setReportMeta] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -38,7 +40,17 @@ export default function ReportsPage() {
       if (startDate) params.from = startDate;
       if (endDate) params.to = endDate;
       const res = await api.get(report.endpoint, { params });
-      setReportData(res.data.data || res.data);
+      const raw = res.data.data || res.data;
+      setReportData(raw);
+      // Extract the primary data array using the report's dataKey
+      const rows = raw[report.dataKey] ?? (Array.isArray(raw) ? raw : []);
+      setReportRows(rows);
+      // Collect summary/metadata fields
+      const meta = {};
+      (report.summaryKeys || []).forEach(k => {
+        if (raw[k] !== undefined) meta[k] = raw[k];
+      });
+      setReportMeta(meta);
     } catch (err) {
       setError(err.response?.status === 403 ? t('errors.forbidden') : t('errors.fetchFailed'));
     } finally {
@@ -47,11 +59,9 @@ export default function ReportsPage() {
   };
 
   const downloadCSV = () => {
-    if (!reportData) return;
-    const rows = Array.isArray(reportData) ? reportData : [reportData];
-    if (rows.length === 0) return;
-    const headers = Object.keys(rows[0]).join(',');
-    const body = rows.map(r => Object.values(r).map(v => `"${v ?? ''}"`).join(',')).join('\n');
+    if (!reportRows.length) return;
+    const headers = Object.keys(reportRows[0]).join(',');
+    const body = reportRows.map(r => Object.values(r).map(v => `"${v ?? ''}"`).join(',')).join('\n');
     const blob = new Blob([`${headers}\n${body}`], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -61,12 +71,12 @@ export default function ReportsPage() {
     URL.revokeObjectURL(url);
   };
 
-  const chartData = Array.isArray(reportData) ? reportData : [];
+  const chartData = reportRows;
   const chartKeys = chartData.length > 0
-    ? Object.keys(chartData[0]).filter(k => typeof chartData[0][k] === 'number').slice(0, 4)
+    ? Object.keys(chartData[0]).filter(k => typeof chartData[0][k] === 'number' || (typeof chartData[0][k] === 'string' && !isNaN(parseFloat(chartData[0][k])))).slice(0, 4)
     : [];
   const xKey = chartData.length > 0
-    ? (Object.keys(chartData[0]).find(k => typeof chartData[0][k] === 'string') || 'name')
+    ? (Object.keys(chartData[0]).find(k => typeof chartData[0][k] === 'string' && isNaN(parseFloat(chartData[0][k]))) || Object.keys(chartData[0])[0])
     : 'name';
 
   return (
@@ -114,20 +124,37 @@ export default function ReportsPage() {
             >
               {t('reports.generate')}
             </Button>
-            {reportData && (
-              <Button variant="outlined" startIcon={<DownloadIcon />} onClick={downloadCSV}>
-                {t('reports.download')}
-              </Button>
-            )}
           </Stack>
         </CardContent>
       </Card>
 
       {reportData && (
         <Grid container spacing={3}>
+          {/* Summary/metadata cards */}
+          {Object.keys(reportMeta).length > 0 && (
+            <Grid item xs={12}>
+              <Card>
+                <CardContent>
+                  <Typography variant="subtitle2" mb={1}>{t('reports.summary') || 'Summary'}</Typography>
+                  <Stack direction="row" spacing={3} flexWrap="wrap">
+                    {Object.entries(reportMeta).map(([k, v]) => (
+                      <Box key={k}>
+                        <Typography variant="caption" color="text.secondary">{k.replace(/_/g, ' ')}</Typography>
+                        <Typography variant="h6">{Array.isArray(v) ? v.length : String(v ?? '—')}</Typography>
+                      </Box>
+                    ))}
+                    <Box>
+                      <Typography variant="caption" color="text.secondary">total rows</Typography>
+                      <Typography variant="h6">{reportRows.length}</Typography>
+                    </Box>
+                  </Stack>
+                </CardContent>
+              </Card>
+            </Grid>
+          )}
           {chartData.length > 0 && chartKeys.length > 0 && (
             <Grid item xs={12}>
-              <DashboardWidget title={t(`reports.${selectedReport.replace('-', '_')}`) || selectedReport}>
+              <DashboardWidget title={t(`reports.${selectedReport.replace(/-/g, '_')}`) || selectedReport}>
                 <ChartWidget type="bar" data={chartData} dataKeys={chartKeys} xKey={xKey} height={300} />
               </DashboardWidget>
             </Grid>
@@ -135,21 +162,28 @@ export default function ReportsPage() {
           <Grid item xs={12}>
             <Card>
               <CardContent>
-                <Typography variant="subtitle2" mb={2}>{t('reports.data')}</Typography>
-                {chartData.length === 0 ? (
-                  <Typography variant="body2" color="text.secondary">{t('common.noResults')}</Typography>
+                <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
+                  <Typography variant="subtitle2">{t('reports.data')}</Typography>
+                  {reportRows.length > 0 && (
+                    <Button size="small" variant="outlined" startIcon={<DownloadIcon />} onClick={downloadCSV}>
+                      {t('reports.download')}
+                    </Button>
+                  )}
+                </Stack>
+                {reportRows.length === 0 ? (
+                  <Typography variant="body2" color="text.secondary">{t('reports.noData') || t('common.noResults')}</Typography>
                 ) : (
                   <Box overflow="auto">
                     <table style={{ borderCollapse: 'collapse', width: '100%', fontSize: 13 }}>
                       <thead>
                         <tr>
-                          {Object.keys(chartData[0]).map(k => (
+                          {Object.keys(reportRows[0]).map(k => (
                             <th key={k} style={{ textAlign: 'left', padding: '6px 12px', borderBottom: '1px solid #eee', background: '#f5f5f5' }}>{k}</th>
                           ))}
                         </tr>
                       </thead>
                       <tbody>
-                        {chartData.map((row, i) => (
+                        {reportRows.map((row, i) => (
                           <tr key={i} style={{ background: i % 2 ? '#fafafa' : '#fff' }}>
                             {Object.values(row).map((v, j) => (
                               <td key={j} style={{ padding: '6px 12px', borderBottom: '1px solid #f0f0f0' }}>{String(v ?? '')}</td>
