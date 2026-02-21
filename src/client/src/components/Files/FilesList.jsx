@@ -71,9 +71,21 @@ export default function FilesList({ entityType, entityId }) {
     }
   };
 
-  const handleDownload = (file) => {
-    const base = (api.defaults.baseURL || '/api/v1').replace(/\/$/, '');
-    window.open(`${base}${endpoint}/${file.id}/download`, '_blank');
+  const handleDownload = async (file) => {
+    try {
+      const url = `/attachments/${entityType}/${entityId}/${file.id}/download`;
+      const res = await api.get(url, { responseType: 'blob' });
+      const blobUrl = URL.createObjectURL(res.data);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = file.original_name || 'download';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
+    } catch {
+      setError(t('errors.fetchFailed'));
+    }
   };
 
   const handleDelete = async () => {

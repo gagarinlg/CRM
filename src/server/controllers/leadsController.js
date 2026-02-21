@@ -5,6 +5,7 @@ const Lead = require('../models/Lead');
 const Project = require('../models/Project');
 const AuditLog = require('../models/AuditLog');
 const Attachment = require('../models/Attachment');
+const Note = require('../models/Note');
 const { success, error, paginated, notFound } = require('../utils/response');
 
 const createValidation = [
@@ -159,7 +160,6 @@ const leadsController = {
     try {
       const lead = await Lead.findById(req.params.id);
       if (!lead) return notFound(res, 'Lead not found.');
-      const Note = require('../models/Note');
       const notes = await Note.listByEntity('lead', req.params.id);
       return success(res, notes);
     } catch (err) {
@@ -325,6 +325,18 @@ const leadsController = {
           mime_type: f.mime_type,
           size: f.size,
           uploaded_by: f.uploaded_by,
+        }).catch(() => {});
+      }
+
+      // Copy lead notes to project
+      const leadNotes = await Note.listByEntity('lead', lead.id);
+      for (const n of leadNotes) {
+        await require('../config/database').db('notes').insert({
+          entity_type: 'project',
+          entity_id: project.id,
+          content: n.content,
+          type: n.type || 'general',
+          created_by: n.created_by,
         }).catch(() => {});
       }
 
