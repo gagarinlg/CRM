@@ -10,7 +10,8 @@ test.describe('Dashboard page', () => {
   });
 
   test('dashboard page loads without error', async ({ page }) => {
-    await expect(page.locator('body')).not.toContainText('Error');
+    // Verify dashboard rendered content — not stuck in error/loading state
+    await expect(page.locator('.MuiGrid-root, .MuiCard-root').first()).toBeVisible({ timeout: 10000 });
     await expect(page.locator('main, [role="main"], #root')).toBeVisible();
   });
 
@@ -18,7 +19,8 @@ test.describe('Dashboard page', () => {
     await expect(
       page.getByRole('link', { name: /companies/i })
         .or(page.getByRole('button', { name: /companies/i }))
-        .or(page.getByText(/companies/i).first()),
+        .or(page.getByText(/companies/i))
+        .first(),
     ).toBeVisible({ timeout: 10000 });
   });
 

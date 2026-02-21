@@ -79,7 +79,7 @@ export default function LeadForm() {
       />
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
-      <Box component="form" onSubmit={handleSubmit(onSubmit)}>
+      <Box component="form" onSubmit={handleSubmit(onSubmit)} noValidate>
         <Grid container spacing={2}>
           <Grid item xs={12} sm={8}>
             <TextField {...register('title')} label={t('leads.title_field')} fullWidth required error={!!errors.title} helperText={errors.title?.message} />

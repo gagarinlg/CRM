@@ -65,7 +65,7 @@ export default function ProjectForm() {
       />
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
-      <Box component="form" onSubmit={handleSubmit(onSubmit)}>
+      <Box component="form" onSubmit={handleSubmit(onSubmit)} noValidate>
         <Grid container spacing={2}>
           <Grid item xs={12} sm={8}>
             <TextField {...register('name')} label={t('projects.name')} fullWidth required error={!!errors.name} helperText={errors.name?.message} />

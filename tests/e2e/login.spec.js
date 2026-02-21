@@ -29,7 +29,7 @@ test.describe('Login page', () => {
 
   test('shows validation error when submitting empty form', async ({ page }) => {
     await page.getByRole('button', { name: /sign in/i }).click();
-    await expect(page.getByText(/required/i)).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText(/required/i).first()).toBeVisible({ timeout: 5000 });
   });
 
   test('shows error on invalid credentials', async ({ page }) => {

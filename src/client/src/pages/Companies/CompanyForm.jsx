@@ -70,7 +70,7 @@ export default function CompanyForm() {
       />
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
-      <Box component="form" onSubmit={handleSubmit(onSubmit)}>
+      <Box component="form" onSubmit={handleSubmit(onSubmit)} noValidate>
         <Grid container spacing={2}>
           <Grid item xs={12} sm={6}>
             <TextField {...register('name')} label={t('companies.name')} fullWidth required error={!!errors.name} helperText={errors.name?.message} />

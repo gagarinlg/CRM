@@ -97,7 +97,7 @@ export default function Login() {
 
           {!totpPending ? (
             /* ── Step 1: email + password ── */
-            <Box component="form" onSubmit={credForm.handleSubmit(onCredSubmit)}>
+            <Box component="form" onSubmit={credForm.handleSubmit(onCredSubmit)} noValidate>
               <TextField
                 {...credForm.register('email')}
                 label="Email or username"

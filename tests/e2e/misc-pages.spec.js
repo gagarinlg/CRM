@@ -43,15 +43,12 @@ test.describe('Profile page', () => {
   });
 
   test('shows personal info section', async ({ page }) => {
-    await expect(
-      page.getByLabel(/first name/i).or(page.getByText(/first name/i).first())
-    ).toBeVisible({ timeout: 10000 });
+    // Use input name attribute — reliable regardless of i18n/translation state
+    await expect(page.locator('input[name="firstName"]')).toBeVisible({ timeout: 10000 });
   });
 
   test('shows change password section', async ({ page }) => {
-    await expect(
-      page.getByLabel(/current password/i).or(page.getByText(/current password/i).first())
-    ).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('input[name="currentPassword"]')).toBeVisible({ timeout: 10000 });
   });
 
   test('shows 2FA section', async ({ page }) => {

@@ -24,6 +24,6 @@ test.describe('Leads page', () => {
     await page.goto('/leads/new', { waitUntil: 'load' });
     await expect(page.locator('main')).toBeVisible({ timeout: 20000 });
     await page.getByRole('button', { name: /save/i }).click();
-    await expect(page.getByText(/required/i)).toBeVisible({ timeout: 8000 });
+    await expect(page.getByText(/required/i).first()).toBeVisible({ timeout: 8000 });
   });
 });

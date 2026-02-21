@@ -24,7 +24,7 @@ test.describe('Contacts page', () => {
     await page.goto('/contacts/new', { waitUntil: 'load' });
     await expect(page.locator('main')).toBeVisible({ timeout: 20000 });
     await page.getByRole('button', { name: /save/i }).click();
-    await expect(page.getByText(/required/i)).toBeVisible({ timeout: 8000 });
+    await expect(page.getByText(/required/i).first()).toBeVisible({ timeout: 8000 });
   });
 
   test('contact form has add phone number button', async ({ page }) => {
