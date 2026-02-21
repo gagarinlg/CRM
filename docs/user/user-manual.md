@@ -65,6 +65,8 @@
 2. Enter your **Username** or **Email** and your **Password**.
 3. Click **Sign In**.
 
+![Login page](screenshots/01-login.png)
+
 ### If Two-Factor Authentication is enabled on your account
 
 After entering your password you will see a second screen asking for a **6-digit code**. Open your authenticator app (Google Authenticator, Authy, Bitwarden, etc.), find the CRM entry, and enter the current code.
@@ -120,6 +122,8 @@ Protect your account with a time-based one-time password (TOTP).
 
 The dashboard is the first page you see after logging in. It gives you a live overview of your business data.
 
+![Dashboard overview](screenshots/02-dashboard.png)
+
 ### 4.1 Understanding Widgets
 
 | Widget | What it shows |
@@ -150,6 +154,8 @@ Each user has their own dashboard layout — changes you make do not affect othe
 ### 5.1 Viewing Companies
 
 Click **Companies** in the left sidebar. The list shows all companies with search, filter, and sort options.
+
+![Companies list](screenshots/03-companies-list.png)
 
 - **Search:** Type in the search box to filter by name, email, or phone.
 - **Filter by industry:** Use the Industry dropdown.
@@ -197,6 +203,8 @@ The company detail page shows:
 
 Click on any item to navigate to it directly.
 
+![Company detail view](screenshots/04-company-detail.png)
+
 ---
 
 ## 6. Contacts
@@ -204,6 +212,8 @@ Click on any item to navigate to it directly.
 ### 6.1 Viewing Contacts
 
 Click **Contacts** in the sidebar. Search by name, email, or phone. Filter by company or sort by any column.
+
+![Contacts list](screenshots/05-contacts-list.png)
 
 ### 6.2 Creating a Contact
 
@@ -257,6 +267,8 @@ Shows:
 - Projects the contact is involved in
 - Last contact date
 
+![Contact detail view](screenshots/06-contact-detail.png)
+
 ---
 
 ## 7. Projects
@@ -266,6 +278,8 @@ Shows:
 Click **Projects** in the sidebar. Filter by **Status** or **Company**, or search by project name.
 
 Project statuses: *Planning* → *In Progress* → *On Hold* → *Completed* → *Cancelled*
+
+![Projects list](screenshots/07-projects-list.png)
 
 ### 7.2 Creating a Project
 
@@ -303,6 +317,8 @@ On the project detail page:
 - **Team Members tab:** Click **Add Member** → select a user → choose their role on the project.
 - **Contacts tab:** Click **Add Contact** → search for and select a contact to link.
 
+![Project detail view](screenshots/08-project-detail.png)
+
 ---
 
 ## 8. Leads
@@ -314,6 +330,10 @@ Leads represent potential sales opportunities at various stages of the sales fun
 Click **Leads** in the sidebar. Switch between:
 - **List view** — sortable table of all leads
 - **Kanban view** — cards arranged by stage (drag to move)
+
+![Leads list view](screenshots/09-leads-list.png)
+
+![Leads Kanban view](screenshots/10-leads-kanban.png)
 
 ### 8.2 Creating a Lead
 
@@ -366,6 +386,8 @@ On the **Leads** page, click the **Pipeline Stats** or **Conversion Stats** tab 
 - Pipeline value broken down by stage
 - Conversion rates between stages
 - Won vs. Lost ratio
+
+![Lead detail view](screenshots/11-lead-detail.png)
 
 ---
 
@@ -435,6 +457,8 @@ Notes are timestamped and show which user created them.
 ## 12. Calendar
 
 The calendar shows all events linked to your account. Events can also be linked to contacts, companies, projects, or leads.
+
+![Calendar](screenshots/12-calendar.png)
 
 ### 12.1 Views (Month / Week / Day)
 
@@ -513,6 +537,8 @@ Open the contact → click **Update Last Contact**. The reminder clock resets.
 4. Click **Run Report** to view results in the browser.
 5. To export, click **Export CSV** or **Export PDF**.
 
+![Reports page](screenshots/13-reports.png)
+
 ### Quick CSV export from list views
 
 The **Projects** and **Leads** list pages each have an **Export CSV** button in the toolbar. Clicking it downloads the current filtered list as a CSV file — no need to go to the Reports section.
@@ -526,6 +552,8 @@ Click the **Search** icon (🔍) in the top navigation bar to open the global se
 - Type at least 2 characters to search across **all** entities simultaneously: companies, contacts, projects, and leads.
 - Results are grouped by entity type. Click any result to navigate directly to that record.
 - Press **Esc** or click outside the dialog to close it.
+
+![Global search dialog](screenshots/17-global-search.png)
 
 ---
 
