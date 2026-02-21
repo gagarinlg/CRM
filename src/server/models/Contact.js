@@ -104,12 +104,25 @@ const Contact = {
       .limit(limit)
       .offset(offset);
 
-    // Attach primary phone to each row for display in list view
+    // Attach primary phone and tags to each row (two extra queries, never N+1)
     if (data.length > 0) {
       const ids = data.map((c) => c.id);
       const phones = await db('contact_phones').whereIn('contact_id', ids).where({ is_primary: true });
       const phoneMap = Object.fromEntries(phones.map((p) => [p.contact_id, p.phone_number]));
-      data.forEach((c) => { c.primary_phone = phoneMap[c.id] || null; });
+      const tagRows = await db('entity_tags')
+        .join('tags', 'entity_tags.tag_id', 'tags.id')
+        .where('entity_tags.entity_type', 'contact')
+        .whereIn('entity_tags.entity_id', ids)
+        .select('entity_tags.entity_id as entity_id', 'tags.id', 'tags.name', 'tags.color');
+      const tagMap = {};
+      tagRows.forEach((r) => {
+        if (!tagMap[r.entity_id]) tagMap[r.entity_id] = [];
+        tagMap[r.entity_id].push({ id: r.id, name: r.name, color: r.color });
+      });
+      data.forEach((c) => {
+        c.primary_phone = phoneMap[c.id] || null;
+        c.tags = tagMap[c.id] || [];
+      });
     }
 
     return { data, total: parseInt(count, 10) };

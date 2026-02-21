@@ -111,6 +111,7 @@ export default function LeadsList() {
                 <TableRow>
                   <TableCell>{t('leads.title_field')}</TableCell>
                   <TableCell>{t('leads.stage')}</TableCell>
+                  <TableCell>{t('tags.title', 'Tags')}</TableCell>
                   <TableCell>{t('leads.value')}</TableCell>
                   <TableCell>{t('leads.company')}</TableCell>
                   <TableCell>{t('leads.contact')}</TableCell>
@@ -119,14 +120,21 @@ export default function LeadsList() {
               </TableHead>
               <TableBody>
                 {loading ? (
-                  <TableRow><TableCell colSpan={6}><LoadingSpinner /></TableCell></TableRow>
+                  <TableRow><TableCell colSpan={7}><LoadingSpinner /></TableCell></TableRow>
                 ) : leads.length === 0 ? (
-                  <TableRow><TableCell colSpan={6} align="center">{t('common.noResults')}</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={7} align="center">{t('common.noResults')}</TableCell></TableRow>
                 ) : leads.map(l => (
                   <TableRow key={l.id} hover onClick={() => navigate(`/leads/${l.id}`)} sx={{ cursor: 'pointer' }}>
                     <TableCell sx={{ fontWeight: 500 }}>{l.title}</TableCell>
                     <TableCell>
                       <Chip label={l.stage} size="small" color={STAGE_COLORS[l.stage] || 'default'} />
+                    </TableCell>
+                    <TableCell>
+                      <Box display="flex" flexWrap="wrap" gap={0.5}>
+                        {(l.tags || []).map(tag => (
+                          <Chip key={tag.id} label={tag.name} size="small" sx={{ bgcolor: tag.color || '#6b7280', color: '#fff', fontSize: 11, height: 20 }} />
+                        ))}
+                      </Box>
                     </TableCell>
                     <TableCell>{l.value != null ? `€${Number(l.value).toLocaleString()}` : '—'}</TableCell>
                     <TableCell>{l.company_name || '—'}</TableCell>

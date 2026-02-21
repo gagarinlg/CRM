@@ -100,6 +100,7 @@ export default function ProjectsList() {
               <TableRow>
                 <TableCell>{t('projects.name')}</TableCell>
                 <TableCell>{t('projects.status')}</TableCell>
+                <TableCell>{t('tags.title', 'Tags')}</TableCell>
                 <TableCell>{t('projects.startDate')}</TableCell>
                 <TableCell>{t('projects.endDate')}</TableCell>
                 <TableCell>{t('projects.budget')}</TableCell>
@@ -108,14 +109,21 @@ export default function ProjectsList() {
             </TableHead>
             <TableBody>
               {loading ? (
-                <TableRow><TableCell colSpan={6}><LoadingSpinner /></TableCell></TableRow>
+                <TableRow><TableCell colSpan={7}><LoadingSpinner /></TableCell></TableRow>
               ) : projects.length === 0 ? (
-                <TableRow><TableCell colSpan={6} align="center">{t('common.noResults')}</TableCell></TableRow>
+                <TableRow><TableCell colSpan={7} align="center">{t('common.noResults')}</TableCell></TableRow>
               ) : projects.map(p => (
                 <TableRow key={p.id} hover onClick={() => navigate(`/projects/${p.id}`)} sx={{ cursor: 'pointer' }}>
                   <TableCell sx={{ fontWeight: 500 }}>{p.name}</TableCell>
                   <TableCell>
                     <Chip label={p.status} size="small" color={STATUS_COLORS[p.status] || 'default'} />
+                  </TableCell>
+                  <TableCell>
+                    <Box display="flex" flexWrap="wrap" gap={0.5}>
+                      {(p.tags || []).map(tag => (
+                        <Chip key={tag.id} label={tag.name} size="small" sx={{ bgcolor: tag.color || '#6b7280', color: '#fff', fontSize: 11, height: 20 }} />
+                      ))}
+                    </Box>
                   </TableCell>
                   <TableCell>{p.start_date ? dayjs(p.start_date).format('DD MMM YYYY') : '—'}</TableCell>
                   <TableCell>{p.end_date ? dayjs(p.end_date).format('DD MMM YYYY') : '—'}</TableCell>

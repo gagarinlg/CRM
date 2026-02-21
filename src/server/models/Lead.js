@@ -90,6 +90,23 @@ const Lead = {
       .orderBy(`leads.${sortCol}`, sortOrder)
       .limit(limit)
       .offset(offset);
+
+    // Batch-fetch tags for all returned leads (two queries, never N+1)
+    if (data.length > 0) {
+      const ids = data.map((l) => l.id);
+      const tagRows = await db('entity_tags')
+        .join('tags', 'entity_tags.tag_id', 'tags.id')
+        .where('entity_tags.entity_type', 'lead')
+        .whereIn('entity_tags.entity_id', ids)
+        .select('entity_tags.entity_id as entity_id', 'tags.id', 'tags.name', 'tags.color');
+      const tagMap = {};
+      tagRows.forEach((r) => {
+        if (!tagMap[r.entity_id]) tagMap[r.entity_id] = [];
+        tagMap[r.entity_id].push({ id: r.id, name: r.name, color: r.color });
+      });
+      data.forEach((l) => { l.tags = tagMap[l.id] || []; });
+    }
+
     return { data, total: parseInt(count, 10) };
   },
 
