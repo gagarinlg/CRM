@@ -324,7 +324,7 @@ describe('GET /api/v1/leads/:id (restricted visibility)', () => {
     expect(res.status).toHaveBeenCalledWith(200);
   });
 
-  test('returns 403 for non-admin non-creator without group/member access', async () => {
+  test('returns 404 for non-admin non-creator without group/member access', async () => {
     Lead.findById.mockResolvedValue({ ...SAMPLE_LEAD, visibility: 'restricted', created_by: 'owner-id', assigned_to: 'other' });
     db.mockReturnValue(makeDbChain({
       pluck: jest.fn().mockResolvedValue([]),
@@ -334,7 +334,7 @@ describe('GET /api/v1/leads/:id (restricted visibility)', () => {
     const req = makeReq('nobody', []);
     const res = mockRes();
     await leadsController.getById(req, res, jest.fn());
-    expect(res.status).toHaveBeenCalledWith(403);
+    expect(res.status).toHaveBeenCalledWith(404);
   });
 
   test('group member has access to restricted lead via group membership', async () => {

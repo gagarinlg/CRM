@@ -3,7 +3,7 @@
 const { body } = require('express-validator');
 const Project = require('../models/Project');
 const AuditLog = require('../models/AuditLog');
-const { success, error, paginated, notFound, forbidden } = require('../utils/response');
+const { success, error, paginated, notFound } = require('../utils/response');
 const { db } = require('../config/database');
 
 const MAX_EXPORT_ROWS = 10000;
@@ -72,7 +72,7 @@ const projectsController = {
     try {
       const project = await Project.findById(req.params.id);
       if (!project) return notFound(res, 'Project not found.');
-      if (!(await checkProjectAccess(req.user, project))) return forbidden(res, 'Access denied.');
+      if (!(await checkProjectAccess(req.user, project))) return notFound(res, 'Project not found.');
 
       const [members, contacts] = await Promise.all([
         Project.getMembers(req.params.id),
@@ -88,7 +88,7 @@ const projectsController = {
     try {
       const project = await Project.findById(req.params.id);
       if (!project) return notFound(res, 'Project not found.');
-      if (!(await checkProjectAccess(req.user, project))) return forbidden(res, 'Access denied.');
+      if (!(await checkProjectAccess(req.user, project))) return notFound(res, 'Project not found.');
       const contacts = await Project.getContacts(req.params.id);
       return success(res, contacts);
     } catch (err) {
@@ -100,7 +100,7 @@ const projectsController = {
     try {
       const project = await Project.findById(req.params.id);
       if (!project) return notFound(res, 'Project not found.');
-      if (!(await checkProjectAccess(req.user, project))) return forbidden(res, 'Access denied.');
+      if (!(await checkProjectAccess(req.user, project))) return notFound(res, 'Project not found.');
       const members = await Project.getMembers(req.params.id);
       return success(res, members);
     } catch (err) {
@@ -112,7 +112,7 @@ const projectsController = {
     try {
       const project = await Project.findById(req.params.id);
       if (!project) return notFound(res, 'Project not found.');
-      if (!(await checkProjectAccess(req.user, project))) return forbidden(res, 'Access denied.');
+      if (!(await checkProjectAccess(req.user, project))) return notFound(res, 'Project not found.');
       const { page = 1, limit = 20 } = req.query;
       const result = await AuditLog.list({
         entity_type: 'project',
@@ -192,7 +192,7 @@ const projectsController = {
     try {
       const existing = await Project.findById(req.params.id);
       if (!existing) return notFound(res, 'Project not found.');
-      if (!(await checkProjectAccess(req.user, existing))) return forbidden(res, 'Access denied.');
+      if (!(await checkProjectAccess(req.user, existing))) return notFound(res, 'Project not found.');
       const project = await Project.update(req.params.id, req.body);
       await AuditLog.create({
         user_id: req.user.id,
@@ -213,7 +213,7 @@ const projectsController = {
     try {
       const existing = await Project.findById(req.params.id);
       if (!existing) return notFound(res, 'Project not found.');
-      if (!(await checkProjectAccess(req.user, existing))) return forbidden(res, 'Access denied.');
+      if (!(await checkProjectAccess(req.user, existing))) return notFound(res, 'Project not found.');
       await Project.softDelete(req.params.id);
       await AuditLog.create({
         user_id: req.user.id,
@@ -234,7 +234,7 @@ const projectsController = {
       if (!contact_id) return error(res, 'contact_id is required.', 400);
       const project = await Project.findById(req.params.id);
       if (!project) return notFound(res, 'Project not found.');
-      if (!(await checkProjectAccess(req.user, project))) return forbidden(res, 'Access denied.');
+      if (!(await checkProjectAccess(req.user, project))) return notFound(res, 'Project not found.');
       await Project.addContact(req.params.id, contact_id);
       return success(res, null, 'Contact added to project.');
     } catch (err) {
@@ -246,7 +246,7 @@ const projectsController = {
     try {
       const project = await Project.findById(req.params.id);
       if (!project) return notFound(res, 'Project not found.');
-      if (!(await checkProjectAccess(req.user, project))) return forbidden(res, 'Access denied.');
+      if (!(await checkProjectAccess(req.user, project))) return notFound(res, 'Project not found.');
       await Project.removeContact(req.params.id, req.params.contactId);
       return success(res, null, 'Contact removed from project.');
     } catch (err) {
@@ -260,7 +260,7 @@ const projectsController = {
       if (!user_id) return error(res, 'user_id is required.', 400);
       const project = await Project.findById(req.params.id);
       if (!project) return notFound(res, 'Project not found.');
-      if (!(await checkProjectAccess(req.user, project))) return forbidden(res, 'Access denied.');
+      if (!(await checkProjectAccess(req.user, project))) return notFound(res, 'Project not found.');
       await Project.addMember(req.params.id, user_id, role);
       return success(res, null, 'Member added to project.');
     } catch (err) {
@@ -272,7 +272,7 @@ const projectsController = {
     try {
       const project = await Project.findById(req.params.id);
       if (!project) return notFound(res, 'Project not found.');
-      if (!(await checkProjectAccess(req.user, project))) return forbidden(res, 'Access denied.');
+      if (!(await checkProjectAccess(req.user, project))) return notFound(res, 'Project not found.');
       await Project.removeMember(req.params.id, req.params.userId);
       return success(res, null, 'Member removed from project.');
     } catch (err) {
@@ -284,7 +284,7 @@ const projectsController = {
     try {
       const project = await Project.findById(req.params.id);
       if (!project) return notFound(res, 'Project not found.');
-      if (!(await checkProjectAccess(req.user, project))) return forbidden(res, 'Access denied.');
+      if (!(await checkProjectAccess(req.user, project))) return notFound(res, 'Project not found.');
       const notes = await Project.getNotes(req.params.id);
       return success(res, notes);
     } catch (err) {
@@ -296,7 +296,7 @@ const projectsController = {
     try {
       const project = await Project.findById(req.params.id);
       if (!project) return notFound(res, 'Project not found.');
-      if (!(await checkProjectAccess(req.user, project))) return forbidden(res, 'Access denied.');
+      if (!(await checkProjectAccess(req.user, project))) return notFound(res, 'Project not found.');
       const groups = await Project.getGroups(req.params.id);
       return success(res, groups);
     } catch (err) {
@@ -310,7 +310,7 @@ const projectsController = {
       if (!group_id) return error(res, 'group_id is required.', 400);
       const project = await Project.findById(req.params.id);
       if (!project) return notFound(res, 'Project not found.');
-      if (!(await checkProjectAccess(req.user, project))) return forbidden(res, 'Access denied.');
+      if (!(await checkProjectAccess(req.user, project))) return notFound(res, 'Project not found.');
       await Project.addGroup(req.params.id, group_id);
       return success(res, null, 'Group added to project.');
     } catch (err) {
@@ -322,7 +322,7 @@ const projectsController = {
     try {
       const project = await Project.findById(req.params.id);
       if (!project) return notFound(res, 'Project not found.');
-      if (!(await checkProjectAccess(req.user, project))) return forbidden(res, 'Access denied.');
+      if (!(await checkProjectAccess(req.user, project))) return notFound(res, 'Project not found.');
       await Project.removeGroup(req.params.id, req.params.groupId);
       return success(res, null, 'Group removed from project.');
     } catch (err) {

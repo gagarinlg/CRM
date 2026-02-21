@@ -6,7 +6,7 @@ const Project = require('../models/Project');
 const AuditLog = require('../models/AuditLog');
 const Attachment = require('../models/Attachment');
 const Note = require('../models/Note');
-const { success, error, paginated, notFound, forbidden } = require('../utils/response');
+const { success, error, paginated, notFound } = require('../utils/response');
 const { db } = require('../config/database');
 
 const MAX_EXPORT_ROWS = 10000;
@@ -79,7 +79,7 @@ const leadsController = {
     try {
       const lead = await Lead.findById(req.params.id);
       if (!lead) return notFound(res, 'Lead not found.');
-      if (!(await checkLeadAccess(req.user, lead))) return forbidden(res, 'Access denied.');
+      if (!(await checkLeadAccess(req.user, lead))) return notFound(res, 'Lead not found.');
 
       return success(res, lead);
     } catch (err) {
@@ -108,7 +108,7 @@ const leadsController = {
     try {
       const existing = await Lead.findById(req.params.id);
       if (!existing) return notFound(res, 'Lead not found.');
-      if (!(await checkLeadAccess(req.user, existing))) return forbidden(res, 'Access denied.');
+      if (!(await checkLeadAccess(req.user, existing))) return notFound(res, 'Lead not found.');
       const lead = await Lead.update(req.params.id, req.body);
       await AuditLog.create({
         user_id: req.user.id,
@@ -129,7 +129,7 @@ const leadsController = {
     try {
       const existing = await Lead.findById(req.params.id);
       if (!existing) return notFound(res, 'Lead not found.');
-      if (!(await checkLeadAccess(req.user, existing))) return forbidden(res, 'Access denied.');
+      if (!(await checkLeadAccess(req.user, existing))) return notFound(res, 'Lead not found.');
       await Lead.softDelete(req.params.id);
       await AuditLog.create({
         user_id: req.user.id,
@@ -150,7 +150,7 @@ const leadsController = {
       if (!stage) return error(res, 'stage is required.', 400);
       const existing = await Lead.findById(req.params.id);
       if (!existing) return notFound(res, 'Lead not found.');
-      if (!(await checkLeadAccess(req.user, existing))) return forbidden(res, 'Access denied.');
+      if (!(await checkLeadAccess(req.user, existing))) return notFound(res, 'Lead not found.');
       const lead = await Lead.moveStage(req.params.id, stage);
       if (!lead) return notFound(res, 'Lead not found.');
       await AuditLog.create({
@@ -189,7 +189,7 @@ const leadsController = {
     try {
       const lead = await Lead.findById(req.params.id);
       if (!lead) return notFound(res, 'Lead not found.');
-      if (!(await checkLeadAccess(req.user, lead))) return forbidden(res, 'Access denied.');
+      if (!(await checkLeadAccess(req.user, lead))) return notFound(res, 'Lead not found.');
       const notes = await Note.listByEntity('lead', req.params.id);
       return success(res, notes);
     } catch (err) {
@@ -201,7 +201,7 @@ const leadsController = {
     try {
       const lead = await Lead.findById(req.params.id);
       if (!lead) return notFound(res, 'Lead not found.');
-      if (!(await checkLeadAccess(req.user, lead))) return forbidden(res, 'Access denied.');
+      if (!(await checkLeadAccess(req.user, lead))) return notFound(res, 'Lead not found.');
       const groups = await Lead.getGroups(req.params.id);
       return success(res, groups);
     } catch (err) {
@@ -215,7 +215,7 @@ const leadsController = {
       if (!group_id) return error(res, 'group_id is required.', 400);
       const lead = await Lead.findById(req.params.id);
       if (!lead) return notFound(res, 'Lead not found.');
-      if (!(await checkLeadAccess(req.user, lead))) return forbidden(res, 'Access denied.');
+      if (!(await checkLeadAccess(req.user, lead))) return notFound(res, 'Lead not found.');
       await Lead.addGroup(req.params.id, group_id);
       return success(res, null, 'Group added.');
     } catch (err) {
@@ -227,7 +227,7 @@ const leadsController = {
     try {
       const lead = await Lead.findById(req.params.id);
       if (!lead) return notFound(res, 'Lead not found.');
-      if (!(await checkLeadAccess(req.user, lead))) return forbidden(res, 'Access denied.');
+      if (!(await checkLeadAccess(req.user, lead))) return notFound(res, 'Lead not found.');
       await Lead.removeGroup(req.params.id, req.params.groupId);
       return success(res, null, 'Group removed.');
     } catch (err) {
@@ -239,7 +239,7 @@ const leadsController = {
     try {
       const lead = await Lead.findById(req.params.id);
       if (!lead) return notFound(res, 'Lead not found.');
-      if (!(await checkLeadAccess(req.user, lead))) return forbidden(res, 'Access denied.');
+      if (!(await checkLeadAccess(req.user, lead))) return notFound(res, 'Lead not found.');
       const contacts = await Lead.getContacts(req.params.id);
       return success(res, contacts);
     } catch (err) {
@@ -253,7 +253,7 @@ const leadsController = {
       if (!contact_id) return error(res, 'contact_id is required.', 400);
       const lead = await Lead.findById(req.params.id);
       if (!lead) return notFound(res, 'Lead not found.');
-      if (!(await checkLeadAccess(req.user, lead))) return forbidden(res, 'Access denied.');
+      if (!(await checkLeadAccess(req.user, lead))) return notFound(res, 'Lead not found.');
       await Lead.addContact(req.params.id, contact_id);
       return success(res, null, 'Contact added.');
     } catch (err) {
@@ -265,7 +265,7 @@ const leadsController = {
     try {
       const lead = await Lead.findById(req.params.id);
       if (!lead) return notFound(res, 'Lead not found.');
-      if (!(await checkLeadAccess(req.user, lead))) return forbidden(res, 'Access denied.');
+      if (!(await checkLeadAccess(req.user, lead))) return notFound(res, 'Lead not found.');
       await Lead.removeContact(req.params.id, req.params.contactId);
       return success(res, null, 'Contact removed.');
     } catch (err) {
@@ -277,7 +277,7 @@ const leadsController = {
     try {
       const lead = await Lead.findById(req.params.id);
       if (!lead) return notFound(res, 'Lead not found.');
-      if (!(await checkLeadAccess(req.user, lead))) return forbidden(res, 'Access denied.');
+      if (!(await checkLeadAccess(req.user, lead))) return notFound(res, 'Lead not found.');
       const members = await Lead.getMembers(req.params.id);
       return success(res, members);
     } catch (err) {
@@ -291,7 +291,7 @@ const leadsController = {
       if (!user_id) return error(res, 'user_id is required.', 400);
       const lead = await Lead.findById(req.params.id);
       if (!lead) return notFound(res, 'Lead not found.');
-      if (!(await checkLeadAccess(req.user, lead))) return forbidden(res, 'Access denied.');
+      if (!(await checkLeadAccess(req.user, lead))) return notFound(res, 'Lead not found.');
       await Lead.addMember(req.params.id, user_id, role);
       return success(res, null, 'Member added.');
     } catch (err) {
@@ -303,7 +303,7 @@ const leadsController = {
     try {
       const lead = await Lead.findById(req.params.id);
       if (!lead) return notFound(res, 'Lead not found.');
-      if (!(await checkLeadAccess(req.user, lead))) return forbidden(res, 'Access denied.');
+      if (!(await checkLeadAccess(req.user, lead))) return notFound(res, 'Lead not found.');
       await Lead.removeMember(req.params.id, req.params.userId);
       return success(res, null, 'Member removed.');
     } catch (err) {
@@ -315,7 +315,7 @@ const leadsController = {
     try {
       const lead = await Lead.findById(req.params.id);
       if (!lead) return notFound(res, 'Lead not found.');
-      if (!(await checkLeadAccess(req.user, lead))) return forbidden(res, 'Access denied.');
+      if (!(await checkLeadAccess(req.user, lead))) return notFound(res, 'Lead not found.');
       const { page = 1, limit = 20 } = req.query;
       const result = await AuditLog.list({
         entity_type: 'lead',
@@ -378,7 +378,7 @@ const leadsController = {
     try {
       const lead = await Lead.findById(req.params.id);
       if (!lead) return notFound(res, 'Lead not found.');
-      if (!(await checkLeadAccess(req.user, lead))) return forbidden(res, 'Access denied.');
+      if (!(await checkLeadAccess(req.user, lead))) return notFound(res, 'Lead not found.');
       if (lead.status === 'won' || lead.status === 'lost') {
         return error(res, 'Cannot convert a lead that is already won or lost.', 400);
       }

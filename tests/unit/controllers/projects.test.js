@@ -272,13 +272,13 @@ describe('GET /api/v1/projects/:id (restricted visibility)', () => {
     expect(res.status).toHaveBeenCalledWith(200);
   });
 
-  test('returns 403 for non-admin non-creator without group/member access', async () => {
+  test('returns 404 for non-admin non-creator without group/member access', async () => {
     Project.findById.mockResolvedValue({ ...SAMPLE_PROJECT, visibility: 'restricted', created_by: 'owner-id' });
     db.mockReturnValue(makeDbChain({ pluck: jest.fn().mockResolvedValue([]), select: jest.fn().mockResolvedValue([]), first: jest.fn().mockResolvedValue(null) }));
     const req = makeReq('other-user', []);
     const res = mockRes();
     await projectsController.getById(req, res, jest.fn());
-    expect(res.status).toHaveBeenCalledWith(403);
+    expect(res.status).toHaveBeenCalledWith(404);
   });
 
   test('group member has access to restricted project via group membership', async () => {

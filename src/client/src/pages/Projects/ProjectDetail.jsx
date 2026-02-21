@@ -67,7 +67,7 @@ export default function ProjectDetail() {
       setMembers(p.members || []);
       const grpData = grpRes.data.data || grpRes.data;
       setGroups(Array.isArray(grpData) ? grpData : []);
-    }).catch((err) => setError(err?.response?.status === 403 ? t('errors.forbidden') : t('errors.fetchFailed')))
+    }).catch((err) => setError(err?.response?.status === 404 ? t('projects.notFound') : t('errors.fetchFailed')))
       .finally(() => setLoading(false));
   }, [id, t]);
 
