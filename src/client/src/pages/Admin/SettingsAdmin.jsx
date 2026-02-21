@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
   Box, Tabs, Tab, Card, CardContent, TextField, Button, Alert,
   CircularProgress, Grid, Stack, Typography, Divider, Switch,
-  FormControlLabel,
+  FormControlLabel, Select, InputLabel, FormControl, MenuItem,
 } from '@mui/material';
 import { useForm } from 'react-hook-form';
 import api from '../../services/api.js';
@@ -214,6 +214,71 @@ function DemoData() {
   );
 }
 
+function CalendarSettings() {
+  const { t } = useTranslation();
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [weekStart, setWeekStart] = useState(1);
+  const [weekNumbers, setWeekNumbers] = useState(false);
+
+  useEffect(() => {
+    api.get('/settings/calendar')
+      .then(res => {
+        const d = res.data.data || res.data;
+        setWeekStart(d.week_start ?? 1);
+        setWeekNumbers(d.week_numbers ?? false);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleSave = async () => {
+    setSaving(true);
+    setError('');
+    setSuccess('');
+    try {
+      await api.post('/settings/calendar', { week_start: weekStart, week_numbers: weekNumbers });
+      setSuccess(t('settings.calendarSaved'));
+    } catch (err) {
+      setError(err.response?.data?.message || t('errors.saveFailed'));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) return <LoadingSpinner />;
+  return (
+    <Card>
+      <CardContent>
+        <Typography variant="h6" gutterBottom>{t('settings.calendarSettings')}</Typography>
+        <Divider sx={{ mb: 2 }} />
+        {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+        {success && <Alert severity="success" sx={{ mb: 2 }}>{success}</Alert>}
+        <Stack spacing={3} maxWidth={400}>
+          <FormControl size="small" fullWidth>
+            <InputLabel>{t('settings.calendarWeekStart')}</InputLabel>
+            <Select value={weekStart} onChange={e => setWeekStart(e.target.value)} label={t('settings.calendarWeekStart')}>
+              <MenuItem value={0}>{t('calendar.weekStartSunday')}</MenuItem>
+              <MenuItem value={1}>{t('calendar.weekStartMonday')}</MenuItem>
+            </Select>
+          </FormControl>
+          <FormControlLabel
+            control={<Switch checked={weekNumbers} onChange={e => setWeekNumbers(e.target.checked)} />}
+            label={t('settings.calendarWeekNumbers')}
+          />
+          <Box>
+            <Button variant="contained" onClick={handleSave} disabled={saving}>
+              {saving ? <CircularProgress size={18} color="inherit" /> : t('common.save')}
+            </Button>
+          </Box>
+        </Stack>
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function SettingsAdmin() {
   const { t } = useTranslation();
   const [tab, setTab] = useState(0);
@@ -224,15 +289,17 @@ export default function SettingsAdmin() {
       <Card>
         <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ borderBottom: 1, borderColor: 'divider' }}>
           <Tab label={t('settings.smtp')} />
+          <Tab label={t('settings.calendarSettings')} />
           <Tab label={t('settings.reminders')} />
           <Tab label={t('settings.system')} />
           <Tab label={t('settings.demoData')} />
         </Tabs>
         <CardContent>
           <TabPanel value={tab} index={0}><SMTPSettings /></TabPanel>
-          <TabPanel value={tab} index={1}><ReminderSettings /></TabPanel>
-          <TabPanel value={tab} index={2}><SystemInfo /></TabPanel>
-          <TabPanel value={tab} index={3}><DemoData /></TabPanel>
+          <TabPanel value={tab} index={1}><CalendarSettings /></TabPanel>
+          <TabPanel value={tab} index={2}><ReminderSettings /></TabPanel>
+          <TabPanel value={tab} index={3}><SystemInfo /></TabPanel>
+          <TabPanel value={tab} index={4}><DemoData /></TabPanel>
         </CardContent>
       </Card>
     </Box>

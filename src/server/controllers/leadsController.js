@@ -485,8 +485,8 @@ const leadsController = {
         }).catch(() => {});
       }
 
-      // Mark lead as won
-      await Lead.update(lead.id, { status: 'won' });
+      // Mark lead as won (both status and stage so Kanban shows the correct column)
+      await Lead.update(lead.id, { status: 'won', stage: 'won' });
 
       await AuditLog.create({
         user_id: req.user.id,

@@ -22,13 +22,23 @@ const TYPE_COLORS = {
 };
 
 export default function CalendarPage() {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const { user, hasPermission, isAdminUser, isManagerUser } = useAuth();
   const [events, setEvents] = useState([]);
   const [error, setError] = useState('');
   const [formOpen, setFormOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [deleteId, setDeleteId] = useState(null);
+  const [systemCalSettings, setSystemCalSettings] = useState({ week_start: 1, week_numbers: false });
+
+  useEffect(() => {
+    api.get('/settings/calendar').then(res => {
+      setSystemCalSettings(res.data.data || res.data);
+    }).catch(() => {});
+  }, []);
+
+  const effectiveWeekStart = user?.week_start != null ? user.week_start : systemCalSettings.week_start;
+  const effectiveWeekNumbers = user?.show_week_numbers ?? systemCalSettings.week_numbers;
 
   const canWrite = hasPermission('calendar.write');
   const canDelete = hasPermission('calendar.delete');
@@ -178,6 +188,10 @@ export default function CalendarPage() {
           selectMirror
           editable={canWrite}
           dayMaxEvents
+          firstDay={effectiveWeekStart}
+          weekNumbers={effectiveWeekNumbers}
+          weekNumberFormat={{ week: 'numeric' }}
+          locale={locale}
           datesSet={handleDatesSet}
           select={handleDateSelect}
           eventClick={handleEventClick}

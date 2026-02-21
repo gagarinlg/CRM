@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   Box, TextField, Button, CircularProgress, Alert,
-  MenuItem, Select, FormControl, InputLabel,
+  MenuItem, Select, FormControl, InputLabel, FormControlLabel, Checkbox,
 } from '@mui/material';
 import { useForm, Controller } from 'react-hook-form';
 import api from '../../services/api.js';
@@ -16,6 +16,7 @@ export default function NoteForm({ entityType, entityId, note, onSaved, onCancel
     defaultValues: {
       content: note?.content || '',
       type: note?.type || 'general',
+      is_private: note?.is_private || false,
     },
   });
 
@@ -26,6 +27,7 @@ export default function NoteForm({ entityType, entityId, note, onSaved, onCancel
       const payload = {
         content: data.content,
         type: data.type,
+        is_private: data.is_private,
         entity_type: entityType,
         entity_id: entityId,
       };
@@ -60,6 +62,16 @@ export default function NoteForm({ entityType, entityId, note, onSaved, onCancel
               <MenuItem value="task">{t('notes.typeTask')}</MenuItem>
             </Select>
           </FormControl>
+        )}
+      />
+      <Controller
+        name="is_private"
+        control={control}
+        render={({ field }) => (
+          <FormControlLabel
+            control={<Checkbox {...field} checked={field.value} size="small" />}
+            label={t('notes.private')}
+          />
         )}
       />
       <TextField

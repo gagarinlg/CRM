@@ -19,7 +19,7 @@ const notesController = {
     try {
       const { entity_type, entity_id } = req.query;
       if (!entity_type || !entity_id) return error(res, 'entity_type and entity_id are required.', 400);
-      const notes = await Note.listByEntity(entity_type, entity_id);
+      const notes = await Note.listByEntity(entity_type, entity_id, req.user.id);
       return success(res, notes);
     } catch (err) {
       return next(err);

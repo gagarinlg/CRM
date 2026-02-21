@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import {
   Box, Card, CardContent, TextField, Button, Alert, CircularProgress,
   Grid, Typography, Divider, Avatar, Stack, Chip,
-  MenuItem, Select, FormControl, InputLabel,
+  MenuItem, Select, FormControl, InputLabel, Switch, FormControlLabel,
 } from '@mui/material';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -24,6 +24,12 @@ export default function Profile() {
   const [pwdError, setPwdError] = useState('');
   const [pwdSuccess, setPwdSuccess] = useState('');
   const [langSaving, setLangSaving] = useState(false);
+  // Calendar preferences state
+  const [calSaving, setCalSaving] = useState(false);
+  const [calError, setCalError] = useState('');
+  const [calSuccess, setCalSuccess] = useState('');
+  const [weekStart, setWeekStart] = useState(user?.week_start ?? '');
+  const [showWeekNumbers, setShowWeekNumbers] = useState(user?.show_week_numbers ?? false);
   // 2FA state
   const [totpStep, setTotpStep] = useState('idle'); // idle | setup | verify | done | disable
   const [totpData, setTotpData] = useState(null);   // { secret, qr_image, qr_url }
@@ -84,14 +90,31 @@ export default function Profile() {
     }
   };
 
-  const handleLanguageChange = async (lang) => {
-    setLangSaving(true);
+  const handleLanguageChange = async (lang) => {    setLangSaving(true);
     changeLocale(lang);
     try {
       await api.put(`/users/${user.id}`, { preferred_language: lang });
       await loadUser();
     } catch { /* non-fatal */ } finally {
       setLangSaving(false);
+    }
+  };
+
+  const handleCalendarSave = async () => {
+    setCalSaving(true);
+    setCalError('');
+    setCalSuccess('');
+    try {
+      await api.put(`/users/${user.id}`, {
+        week_start: weekStart === '' ? null : parseInt(weekStart, 10),
+        show_week_numbers: showWeekNumbers,
+      });
+      await loadUser();
+      setCalSuccess(t('profile.saved'));
+    } catch (err) {
+      setCalError(err.response?.data?.message || t('errors.saveFailed'));
+    } finally {
+      setCalSaving(false);
     }
   };
 
@@ -241,6 +264,35 @@ export default function Profile() {
               <Typography variant="caption" display="block" color="text.secondary" mt={1}>
                 {t('profile.languageHint')}
               </Typography>
+            </CardContent>
+          </Card>
+
+          {/* ── Calendar Preferences ── */}
+          <Card sx={{ mb: 3 }}>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>{t('profile.calendarPreferences')}</Typography>
+              <Divider sx={{ mb: 2 }} />
+              {calError && <Alert severity="error" sx={{ mb: 2 }}>{calError}</Alert>}
+              {calSuccess && <Alert severity="success" sx={{ mb: 2 }}>{calSuccess}</Alert>}
+              <Stack spacing={2}>
+                <FormControl size="small" fullWidth>
+                  <InputLabel>{t('calendar.weekStart')}</InputLabel>
+                  <Select value={weekStart} onChange={e => setWeekStart(e.target.value)} label={t('calendar.weekStart')}>
+                    <MenuItem value="">{t('calendar.weekStartSystem')}</MenuItem>
+                    <MenuItem value={0}>{t('calendar.weekStartSunday')}</MenuItem>
+                    <MenuItem value={1}>{t('calendar.weekStartMonday')}</MenuItem>
+                  </Select>
+                </FormControl>
+                <FormControlLabel
+                  control={<Switch checked={showWeekNumbers} onChange={e => setShowWeekNumbers(e.target.checked)} />}
+                  label={t('calendar.weekNumbers')}
+                />
+                <Box>
+                  <Button variant="contained" onClick={handleCalendarSave} disabled={calSaving}>
+                    {calSaving ? <CircularProgress size={18} color="inherit" /> : t('common.save')}
+                  </Button>
+                </Box>
+              </Stack>
             </CardContent>
           </Card>
 

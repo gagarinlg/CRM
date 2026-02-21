@@ -72,6 +72,15 @@ export default function LeadsList() {
     }
   };
 
+  const handleStageChange = async (leadId, newStage) => {
+    try {
+      await api.patch(`/leads/${leadId}/stage`, { stage: newStage });
+      fetchLeads();
+    } catch {
+      setError(t('errors.saveFailed'));
+    }
+  };
+
   return (
     <Box>
       <PageHeader
@@ -106,7 +115,7 @@ export default function LeadsList() {
       </Stack>
 
       {viewMode === 'kanban' ? (
-        loading ? <LoadingSpinner /> : <KanbanBoard leads={leads} />
+        loading ? <LoadingSpinner /> : <KanbanBoard leads={leads} onStageChange={handleStageChange} />
       ) : (
         <Paper>
           <TableContainer>

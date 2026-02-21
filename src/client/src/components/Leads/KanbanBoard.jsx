@@ -1,14 +1,25 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Box, Card, CardContent, Typography, Chip, IconButton, Tooltip } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from '../../i18n/I18nContext.jsx';
+import { useAuth } from '../../store/AuthContext.jsx';
 
-function LeadCard({ lead, onMove }) {
+function LeadCard({ lead, onMove, canEdit }) {
   const navigate = useNavigate();
   const { t } = useTranslation();
+
+  const handleDragStart = (e) => {
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', JSON.stringify({ id: lead.id, stage: lead.stage }));
+  };
+
   return (
-    <Card sx={{ mb: 1, '&:hover': { boxShadow: 4 } }}>
+    <Card
+      draggable
+      onDragStart={handleDragStart}
+      sx={{ mb: 1, cursor: 'grab', '&:hover': { boxShadow: 4 }, '&:active': { cursor: 'grabbing' } }}
+    >
       <CardContent sx={{ py: 1.5, px: 2, '&:last-child': { pb: 1.5 } }}>
         <Box display="flex" justifyContent="space-between" alignItems="flex-start">
           <Typography
@@ -19,15 +30,19 @@ function LeadCard({ lead, onMove }) {
           >
             {lead.title}
           </Typography>
-          <Tooltip title={t('common.edit')}>
-            <IconButton size="small" onClick={() => navigate(`/leads/${lead.id}/edit`)}>
-              <EditIcon sx={{ fontSize: 14 }} />
-            </IconButton>
-          </Tooltip>
+          {canEdit && (
+            <Tooltip title={t('common.edit')}>
+              <IconButton size="small" onClick={() => navigate(`/leads/${lead.id}/edit`)}>
+                <EditIcon sx={{ fontSize: 14 }} />
+              </IconButton>
+            </Tooltip>
+          )}
         </Box>
-        {lead.companyName && (
-          <Typography variant="caption" color="text.secondary" display="block">{lead.companyName}</Typography>
-        )}
+        {lead.companyName || lead.company_name ? (
+          <Typography variant="caption" color="text.secondary" display="block">
+            {lead.companyName || lead.company_name}
+          </Typography>
+        ) : null}
         {lead.value != null && (
           <Typography variant="caption" color="success.main" fontWeight={600}>
             €{Number(lead.value).toLocaleString()}
@@ -40,6 +55,9 @@ function LeadCard({ lead, onMove }) {
 
 export default function KanbanBoard({ leads = [], onStageChange }) {
   const { t } = useTranslation();
+  const { hasPermission } = useAuth();
+  const canEdit = hasPermission('leads.write');
+  const [dragOverStage, setDragOverStage] = useState(null);
 
   const STAGES = [
     { key: 'new',         label: t('leads.stageNew'),         color: '#1976d2' },
@@ -56,24 +74,43 @@ export default function KanbanBoard({ leads = [], onStageChange }) {
     return acc;
   }, {});
 
+  const handleDragOver = (e, stageKey) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    setDragOverStage(stageKey);
+  };
+
+  const handleDragLeave = () => setDragOverStage(null);
+
+  const handleDrop = (e, targetStage) => {
+    e.preventDefault();
+    setDragOverStage(null);
+    try {
+      const { id, stage: currentStage } = JSON.parse(e.dataTransfer.getData('text/plain'));
+      if (currentStage !== targetStage && onStageChange) {
+        onStageChange(id, targetStage);
+      }
+    } catch { /* ignore parse errors */ }
+  };
+
   return (
-    <Box
-      display="flex"
-      gap={2}
-      overflow="auto"
-      pb={2}
-      sx={{ minHeight: 400 }}
-    >
+    <Box display="flex" gap={2} overflow="auto" pb={2} sx={{ minHeight: 400 }}>
       {STAGES.map(stage => (
         <Box
           key={stage.key}
+          onDragOver={canEdit ? (e) => handleDragOver(e, stage.key) : undefined}
+          onDragLeave={canEdit ? handleDragLeave : undefined}
+          onDrop={canEdit ? (e) => handleDrop(e, stage.key) : undefined}
           sx={{
             minWidth: 200,
             maxWidth: 220,
             flexShrink: 0,
-            bgcolor: 'grey.50',
+            bgcolor: dragOverStage === stage.key ? 'action.hover' : 'grey.50',
             borderRadius: 2,
             p: 1.5,
+            border: dragOverStage === stage.key ? '2px dashed' : '2px solid transparent',
+            borderColor: dragOverStage === stage.key ? 'primary.main' : 'transparent',
+            transition: 'background-color 0.15s, border-color 0.15s',
           }}
         >
           <Box display="flex" alignItems="center" gap={1} mb={1.5}>
@@ -83,7 +120,7 @@ export default function KanbanBoard({ leads = [], onStageChange }) {
           </Box>
           <Box>
             {byStage[stage.key].map(lead => (
-              <LeadCard key={lead.id} lead={lead} onMove={onStageChange} />
+              <LeadCard key={lead.id} lead={lead} onMove={onStageChange} canEdit={canEdit} />
             ))}
             {byStage[stage.key].length === 0 && (
               <Typography variant="caption" color="text.secondary" display="block" textAlign="center" py={2}>

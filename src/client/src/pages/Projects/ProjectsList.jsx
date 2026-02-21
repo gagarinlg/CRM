@@ -74,6 +74,15 @@ export default function ProjectsList() {
     }
   };
 
+  const handleStatusChange = async (projectId, newStatus) => {
+    try {
+      await api.put(`/projects/${projectId}`, { status: newStatus });
+      fetchProjects();
+    } catch {
+      setError(t('errors.saveFailed'));
+    }
+  };
+
   return (
     <Box>
       <PageHeader
@@ -174,7 +183,7 @@ export default function ProjectsList() {
         />
       </Paper>
       ) : (
-        <ProjectsKanbanBoard projects={projects} />
+        <ProjectsKanbanBoard projects={projects} onStatusChange={handleStatusChange} />
       )}
 
       <ConfirmDialog

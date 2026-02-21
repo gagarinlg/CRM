@@ -1,16 +1,27 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Box, Card, CardContent, Typography, Chip, IconButton, Tooltip, LinearProgress } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from '../../i18n/I18nContext.jsx';
+import { useAuth } from '../../store/AuthContext.jsx';
 import dayjs from 'dayjs';
 
-function ProjectCard({ project }) {
+function ProjectCard({ project, canEdit }) {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const progress = project.progress ?? 0;
+
+  const handleDragStart = (e) => {
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', JSON.stringify({ id: project.id, status: project.status }));
+  };
+
   return (
-    <Card sx={{ mb: 1, '&:hover': { boxShadow: 4 } }}>
+    <Card
+      draggable
+      onDragStart={handleDragStart}
+      sx={{ mb: 1, cursor: 'grab', '&:hover': { boxShadow: 4 }, '&:active': { cursor: 'grabbing' } }}
+    >
       <CardContent sx={{ py: 1.5, px: 2, '&:last-child': { pb: 1.5 } }}>
         <Box display="flex" justifyContent="space-between" alignItems="flex-start">
           <Typography
@@ -21,11 +32,13 @@ function ProjectCard({ project }) {
           >
             {project.name}
           </Typography>
-          <Tooltip title={t('common.edit')}>
-            <IconButton size="small" onClick={() => navigate(`/projects/${project.id}/edit`)}>
-              <EditIcon sx={{ fontSize: 14 }} />
-            </IconButton>
-          </Tooltip>
+          {canEdit && (
+            <Tooltip title={t('common.edit')}>
+              <IconButton size="small" onClick={() => navigate(`/projects/${project.id}/edit`)}>
+                <EditIcon sx={{ fontSize: 14 }} />
+              </IconButton>
+            </Tooltip>
+          )}
         </Box>
         {project.company_name && (
           <Typography variant="caption" color="text.secondary" display="block">{project.company_name}</Typography>
@@ -49,8 +62,11 @@ function ProjectCard({ project }) {
   );
 }
 
-export default function KanbanBoard({ projects = [] }) {
+export default function KanbanBoard({ projects = [], onStatusChange }) {
   const { t } = useTranslation();
+  const { hasPermission } = useAuth();
+  const canEdit = hasPermission('projects.write');
+  const [dragOverStatus, setDragOverStatus] = useState(null);
 
   const STATUSES = [
     { key: 'planning',   label: t('projects.statusPlanning'),   color: '#0288d1' },
@@ -65,12 +81,44 @@ export default function KanbanBoard({ projects = [] }) {
     return acc;
   }, {});
 
+  const handleDragOver = (e, statusKey) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    setDragOverStatus(statusKey);
+  };
+
+  const handleDragLeave = () => setDragOverStatus(null);
+
+  const handleDrop = (e, targetStatus) => {
+    e.preventDefault();
+    setDragOverStatus(null);
+    try {
+      const { id, status: currentStatus } = JSON.parse(e.dataTransfer.getData('text/plain'));
+      if (currentStatus !== targetStatus && onStatusChange) {
+        onStatusChange(id, targetStatus);
+      }
+    } catch { /* ignore */ }
+  };
+
   return (
     <Box display="flex" gap={2} overflow="auto" pb={2} sx={{ minHeight: 400 }}>
       {STATUSES.map(status => (
         <Box
           key={status.key}
-          sx={{ minWidth: 200, maxWidth: 240, flexShrink: 0, bgcolor: 'grey.50', borderRadius: 2, p: 1.5 }}
+          onDragOver={canEdit ? (e) => handleDragOver(e, status.key) : undefined}
+          onDragLeave={canEdit ? handleDragLeave : undefined}
+          onDrop={canEdit ? (e) => handleDrop(e, status.key) : undefined}
+          sx={{
+            minWidth: 200,
+            maxWidth: 240,
+            flexShrink: 0,
+            bgcolor: dragOverStatus === status.key ? 'action.hover' : 'grey.50',
+            borderRadius: 2,
+            p: 1.5,
+            border: dragOverStatus === status.key ? '2px dashed' : '2px solid transparent',
+            borderColor: dragOverStatus === status.key ? 'primary.main' : 'transparent',
+            transition: 'background-color 0.15s, border-color 0.15s',
+          }}
         >
           <Box display="flex" alignItems="center" gap={1} mb={1.5}>
             <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: status.color }} />
@@ -79,7 +127,7 @@ export default function KanbanBoard({ projects = [] }) {
           </Box>
           <Box>
             {byStatus[status.key].map(project => (
-              <ProjectCard key={project.id} project={project} />
+              <ProjectCard key={project.id} project={project} canEdit={canEdit} />
             ))}
             {byStatus[status.key].length === 0 && (
               <Typography variant="caption" color="text.secondary" display="block" textAlign="center" py={2}>
