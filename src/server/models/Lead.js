@@ -20,7 +20,7 @@ const Lead = {
   },
 
   async create(data, createdBy) {
-    const allowed = ['title', 'value', 'probability', 'stage', 'source', 'status', 'company_id', 'contact_id', 'assigned_to', 'notes'];
+    const allowed = ['title', 'value', 'probability', 'stage', 'source', 'status', 'visibility', 'company_id', 'contact_id', 'assigned_to', 'notes'];
     const fields = Object.fromEntries(Object.entries(data).filter(([k]) => allowed.includes(k)));
     const [lead] = await db('leads')
       .insert({ ...fields, created_by: createdBy })
@@ -29,7 +29,7 @@ const Lead = {
   },
 
   async update(id, data) {
-    const allowed = ['title', 'value', 'probability', 'stage', 'source', 'status', 'company_id', 'contact_id', 'assigned_to'];
+    const allowed = ['title', 'value', 'probability', 'stage', 'source', 'status', 'visibility', 'company_id', 'contact_id', 'assigned_to'];
     const fields = Object.fromEntries(Object.entries(data).filter(([k]) => allowed.includes(k)));
     fields.updated_at = db.fn.now();
     const [lead] = await db('leads').where({ id, deleted_at: null }).update(fields).returning('*');
@@ -40,7 +40,7 @@ const Lead = {
     return db('leads').where({ id }).update({ deleted_at: db.fn.now() });
   },
 
-  async list({ page = 1, limit = 20, search, stage, status, assigned_to, sort = 'created_at', order = 'desc' } = {}) {
+  async list({ page = 1, limit = 20, search, stage, status, assigned_to, sort = 'created_at', order = 'desc', user_id, user_groups = [] } = {}) {
     const offset = (page - 1) * limit;
     const SORT_WHITELIST = ['title', 'value', 'probability', 'stage', 'status', 'created_at'];
     const sortCol = SORT_WHITELIST.includes(sort) ? sort : 'created_at';
@@ -61,6 +61,19 @@ const Lead = {
     if (stage) query = query.where('leads.stage', stage);
     if (status) query = query.where('leads.status', status);
     if (assigned_to) query = query.where('leads.assigned_to', assigned_to);
+
+    // Visibility: admins see all; non-admins see public + their groups + own leads
+    if (user_id) {
+      query = query.where((b) => {
+        b.where('leads.visibility', 'public');
+        if (user_groups.length > 0) {
+          b.orWhereIn('leads.id', db('lead_groups')
+            .whereIn('group_id', user_groups)
+            .select('lead_id'));
+        }
+        b.orWhere('leads.created_by', user_id);
+      });
+    }
 
     const [{ count }] = await query.clone().count('leads.id as count');
     const data = await query
@@ -107,6 +120,24 @@ const Lead = {
       conversion_rate: total.count > 0 ? ((won.count / total.count) * 100).toFixed(2) : 0,
       total_won_value: parseFloat(totalWonValue.total || 0),
     };
+  },
+
+  async addGroup(leadId, groupId) {
+    await db('lead_groups')
+      .insert({ lead_id: leadId, group_id: groupId })
+      .onConflict(['lead_id', 'group_id'])
+      .ignore();
+  },
+
+  async removeGroup(leadId, groupId) {
+    return db('lead_groups').where({ lead_id: leadId, group_id: groupId }).delete();
+  },
+
+  async getGroups(leadId) {
+    return db('lead_groups')
+      .join('groups', 'lead_groups.group_id', 'groups.id')
+      .where('lead_groups.lead_id', leadId)
+      .select('groups.id', 'groups.name', 'groups.description');
   },
 };
 

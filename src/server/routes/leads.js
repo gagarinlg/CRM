@@ -17,5 +17,9 @@ router.put('/:id', leadsController.update);
 router.delete('/:id', leadsController.delete);
 router.patch('/:id/stage', leadsController.moveStage);
 router.get('/:id/notes', leadsController.getNotes);
+router.get('/:id/groups', leadsController.getGroups);
+router.post('/:id/groups', leadsController.addGroup);
+router.delete('/:id/groups/:groupId', leadsController.removeGroup);
+router.post('/:id/convert', leadsController.convertToProject);
 
 module.exports = router;
