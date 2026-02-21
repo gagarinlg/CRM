@@ -1,10 +1,9 @@
 // @ts-check
 const { test, expect } = require('@playwright/test');
-const { loginAs } = require('./helpers');
+// Auth state is provided by auth.setup.js via playwright.config.js storageState
 
 test.describe('Projects page', () => {
   test.beforeEach(async ({ page }) => {
-    await loginAs(page);
     await page.goto('/projects');
   });
 

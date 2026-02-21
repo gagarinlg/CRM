@@ -1,10 +1,9 @@
 // @ts-check
 const { test, expect } = require('@playwright/test');
-const { loginAs } = require('./helpers');
+// Auth state is provided by auth.setup.js via playwright.config.js storageState
 
 test.describe('Calendar page', () => {
   test.beforeEach(async ({ page }) => {
-    await loginAs(page);
     await page.goto('/calendar');
   });
 
@@ -13,7 +12,6 @@ test.describe('Calendar page', () => {
   });
 
   test('has navigation buttons for month/week/day', async ({ page }) => {
-    // At least one view-switching button should exist
     const hasView = await page.getByRole('button', { name: /month|week|day/i }).count();
     expect(hasView).toBeGreaterThan(0);
   });
@@ -25,7 +23,6 @@ test.describe('Calendar page', () => {
 
 test.describe('Reports page', () => {
   test.beforeEach(async ({ page }) => {
-    await loginAs(page);
     await page.goto('/reports');
   });
 
@@ -36,7 +33,6 @@ test.describe('Reports page', () => {
 
 test.describe('Profile page', () => {
   test.beforeEach(async ({ page }) => {
-    await loginAs(page);
     await page.goto('/profile');
   });
 
@@ -54,7 +50,6 @@ test.describe('Profile page', () => {
   });
 
   test('shows language preference selector', async ({ page }) => {
-    // Look for the language section
     await expect(page.getByText(/interface language|language/i).first()).toBeVisible({ timeout: 8000 });
   });
 

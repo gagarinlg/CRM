@@ -1,44 +1,30 @@
 // @ts-check
 const { test, expect } = require('@playwright/test');
+// Auth state is provided by auth.setup.js via playwright.config.js storageState
 
-// These tests assume a logged-in session. Log in before each test.
 test.describe('Dashboard page', () => {
   test.beforeEach(async ({ page }) => {
-    // Perform login
-    await page.goto('/login');
-    await page.getByLabel(/email or username/i).fill('admin');
-    await page.getByLabel(/password/i).fill('Admin1234!');
-    await page.getByRole('button', { name: /sign in/i }).click();
-    // Wait for navigation away from the login page
-    await page.waitForURL(/(\/|dashboard|change-password)/, { timeout: 10000 });
-    // If force-change-password redirect, skip the test
-    if (page.url().includes('change-password')) {
-      test.skip();
-    }
+    await page.goto('/');
+    // Guard: must not be redirected to login
+    await expect(page).not.toHaveURL(/login/, { timeout: 8000 });
   });
 
-  test('dashboard page loads', async ({ page }) => {
-    await page.goto('/');
-    // The page should not show an error
+  test('dashboard page loads without error', async ({ page }) => {
     await expect(page.locator('body')).not.toContainText('Error');
-    // Should have a heading or content area
     await expect(page.locator('main, [role="main"], #root')).toBeVisible();
   });
 
   test('sidebar navigation is present', async ({ page }) => {
-    await page.goto('/');
-    // Check for common navigation links
     await expect(
       page.getByRole('link', { name: /companies/i })
         .or(page.getByRole('button', { name: /companies/i }))
         .or(page.getByText(/companies/i).first()),
-    ).toBeVisible({ timeout: 6000 });
+    ).toBeVisible({ timeout: 8000 });
   });
 
   test('navigates to Companies page', async ({ page }) => {
     await page.goto('/companies');
     await expect(page).toHaveURL(/companies/);
-    // Should not redirect to login
     await expect(page).not.toHaveURL(/login/);
   });
 

@@ -1,10 +1,9 @@
 // @ts-check
 const { test, expect } = require('@playwright/test');
-const { loginAs } = require('./helpers');
+// Auth state is provided by auth.setup.js via playwright.config.js storageState
 
 test.describe('Contacts page', () => {
   test.beforeEach(async ({ page }) => {
-    await loginAs(page);
     await page.goto('/contacts');
   });
 
@@ -19,7 +18,6 @@ test.describe('Contacts page', () => {
   test('opens the new contact form', async ({ page }) => {
     await page.getByRole('button', { name: /new contact|add contact/i }).click();
     await expect(page).toHaveURL(/contacts\/new/, { timeout: 5000 });
-    // First name and last name fields should be visible
     await expect(page.getByLabel(/first name/i)).toBeVisible();
     await expect(page.getByLabel(/last name/i)).toBeVisible();
   });

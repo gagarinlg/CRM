@@ -69,6 +69,8 @@ temp/
 # Test artifacts
 junit.xml
 test-results/
+playwright-report/
+tests/e2e/.auth.json
 
 # Secrets
 *.pem

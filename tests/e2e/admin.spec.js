@@ -1,10 +1,9 @@
 // @ts-check
 const { test, expect } = require('@playwright/test');
-const { loginAs } = require('./helpers');
+// Auth state is provided by auth.setup.js via playwright.config.js storageState
 
 test.describe('Admin - Users', () => {
   test.beforeEach(async ({ page }) => {
-    await loginAs(page);
     await page.goto('/admin/users');
   });
 
@@ -23,7 +22,6 @@ test.describe('Admin - Users', () => {
 
 test.describe('Admin - Roles', () => {
   test.beforeEach(async ({ page }) => {
-    await loginAs(page);
     await page.goto('/admin/roles');
   });
 
@@ -42,7 +40,6 @@ test.describe('Admin - Roles', () => {
 
 test.describe('Admin - Groups', () => {
   test.beforeEach(async ({ page }) => {
-    await loginAs(page);
     await page.goto('/admin/groups');
   });
 
@@ -61,7 +58,6 @@ test.describe('Admin - Groups', () => {
 
 test.describe('Admin - Translations', () => {
   test.beforeEach(async ({ page }) => {
-    await loginAs(page);
     await page.goto('/admin/translations');
   });
 
@@ -86,7 +82,6 @@ test.describe('Admin - Translations', () => {
 
 test.describe('Admin - Settings', () => {
   test.beforeEach(async ({ page }) => {
-    await loginAs(page);
     await page.goto('/admin/settings');
   });
 

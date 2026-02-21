@@ -1,10 +1,9 @@
 // @ts-check
 const { test, expect } = require('@playwright/test');
-const { loginAs } = require('./helpers');
+// Auth state is provided by auth.setup.js via playwright.config.js storageState
 
 test.describe('Leads page', () => {
   test.beforeEach(async ({ page }) => {
-    await loginAs(page);
     await page.goto('/leads');
   });
 
@@ -31,14 +30,11 @@ test.describe('Leads page', () => {
   test('has a Kanban/Board view button', async ({ page }) => {
     const kanbanBtn = page.getByRole('button', { name: /kanban|board/i });
     const count = await kanbanBtn.count();
-    // If the UI provides a kanban toggle, verify it works
     if (count > 0) {
       await kanbanBtn.click();
-      // After clicking, we expect some board/column UI to appear
       const boardIndicator = page.locator('[data-testid="kanban"], [class*="kanban"], [class*="board"]').first();
       await expect(boardIndicator).toBeVisible({ timeout: 5000 });
     }
-    // Test always passes — document that the feature may be inline or behind nav
     expect(true).toBe(true);
   });
 });
