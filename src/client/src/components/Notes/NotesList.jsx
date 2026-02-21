@@ -13,6 +13,7 @@ import TaskIcon from '@mui/icons-material/Task';
 import NoteIcon from '@mui/icons-material/Note';
 import api from '../../services/api.js';
 import { useTranslation } from '../../i18n/I18nContext.jsx';
+import { useAuth } from '../../store/AuthContext.jsx';
 import LoadingSpinner from '../common/LoadingSpinner.jsx';
 import ConfirmDialog from '../common/ConfirmDialog.jsx';
 import NoteForm from '../../pages/Notes/NoteForm.jsx';
@@ -41,6 +42,7 @@ function authorInitials(name) {
 
 export default function NotesList({ entityType, entityId }) {
   const { t } = useTranslation();
+  const { user, hasPermission, isAdminUser } = useAuth();
   const [notes, setNotes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -92,11 +94,13 @@ export default function NotesList({ entityType, entityId }) {
         <Typography variant="subtitle2" color="text.secondary">
           {t('notes.title')} ({notes.length})
         </Typography>
-        <Tooltip title={t('notes.addNote')}>
-          <IconButton size="small" color="primary" onClick={() => { setShowForm(s => !s); setEditNote(null); }}>
-            <AddIcon />
-          </IconButton>
-        </Tooltip>
+        {hasPermission('notes.write') && (
+          <Tooltip title={t('notes.addNote')}>
+            <IconButton size="small" color="primary" onClick={() => { setShowForm(s => !s); setEditNote(null); }}>
+              <AddIcon />
+            </IconButton>
+          </Tooltip>
+        )}
       </Box>
 
       <Collapse in={showForm && !editNote}>
@@ -166,16 +170,20 @@ export default function NotesList({ entityType, entityId }) {
                           />
                         </Stack>
                         <Box display="flex" gap={0.5}>
-                          <Tooltip title={t('common.edit')}>
-                            <IconButton size="small" onClick={() => { setEditNote(note); setShowForm(false); }}>
-                              <EditIcon sx={{ fontSize: 14 }} />
-                            </IconButton>
-                          </Tooltip>
-                          <Tooltip title={t('common.delete')}>
-                            <IconButton size="small" color="error" onClick={() => setDeleteId(note.id)}>
-                              <DeleteIcon sx={{ fontSize: 14 }} />
-                            </IconButton>
-                          </Tooltip>
+                          {(hasPermission('notes.write') && (note.created_by === user?.id || isAdminUser)) && (
+                            <Tooltip title={t('common.edit')}>
+                              <IconButton size="small" onClick={() => { setEditNote(note); setShowForm(false); }}>
+                                <EditIcon sx={{ fontSize: 14 }} />
+                              </IconButton>
+                            </Tooltip>
+                          )}
+                          {(hasPermission('notes.delete') && (note.created_by === user?.id || isAdminUser)) && (
+                            <Tooltip title={t('common.delete')}>
+                              <IconButton size="small" color="error" onClick={() => setDeleteId(note.id)}>
+                                <DeleteIcon sx={{ fontSize: 14 }} />
+                              </IconButton>
+                            </Tooltip>
+                          )}
                         </Box>
                       </Box>
                       {/* Content */}

@@ -13,6 +13,7 @@ import ViewListIcon from '@mui/icons-material/ViewList';
 import ViewKanbanIcon from '@mui/icons-material/ViewKanban';
 import api from '../../services/api.js';
 import { useTranslation } from '../../i18n/I18nContext.jsx';
+import { useAuth } from '../../store/AuthContext.jsx';
 import PageHeader from '../../components/common/PageHeader.jsx';
 import SearchBar from '../../components/common/SearchBar.jsx';
 import LoadingSpinner from '../../components/common/LoadingSpinner.jsx';
@@ -28,6 +29,7 @@ const STAGE_COLORS = {
 export default function LeadsList() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { hasPermission } = useAuth();
   const [leads, setLeads] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -75,9 +77,11 @@ export default function LeadsList() {
       <PageHeader
         title={t('leads.title')}
         actions={
-          <Button variant="contained" startIcon={<AddIcon />} onClick={() => navigate('/leads/new')}>
-            {t('leads.new')}
-          </Button>
+          hasPermission('leads.write') && (
+            <Button variant="contained" startIcon={<AddIcon />} onClick={() => navigate('/leads/new')}>
+              {t('leads.new')}
+            </Button>
+          )
         }
       />
       {error && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError('')}>{error}</Alert>}
@@ -143,12 +147,16 @@ export default function LeadsList() {
                       <Tooltip title={t('common.view')}>
                         <IconButton size="small" onClick={e => { e.stopPropagation(); navigate(`/leads/${l.id}`); }}><VisibilityIcon fontSize="small" /></IconButton>
                       </Tooltip>
-                      <Tooltip title={t('common.edit')}>
-                        <IconButton size="small" onClick={e => { e.stopPropagation(); navigate(`/leads/${l.id}/edit`); }}><EditIcon fontSize="small" /></IconButton>
-                      </Tooltip>
-                      <Tooltip title={t('common.delete')}>
-                        <IconButton size="small" color="error" onClick={e => { e.stopPropagation(); setDeleteId(l.id); }}><DeleteIcon fontSize="small" /></IconButton>
-                      </Tooltip>
+                      {hasPermission('leads.write') && (
+                        <Tooltip title={t('common.edit')}>
+                          <IconButton size="small" onClick={e => { e.stopPropagation(); navigate(`/leads/${l.id}/edit`); }}><EditIcon fontSize="small" /></IconButton>
+                        </Tooltip>
+                      )}
+                      {hasPermission('leads.delete') && (
+                        <Tooltip title={t('common.delete')}>
+                          <IconButton size="small" color="error" onClick={e => { e.stopPropagation(); setDeleteId(l.id); }}><DeleteIcon fontSize="small" /></IconButton>
+                        </Tooltip>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}

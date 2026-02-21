@@ -103,15 +103,13 @@ describe('PUT /api/v1/notes/:id', () => {
     expect(res.body.data.content).toBe('Updated content');
   });
 
-  test('returns 403 when note is owned by another user (non-admin)', async () => {
-    // Override user to non-admin
-    const { verifyToken } = require('../../../src/server/middleware/auth');
-    // The mock always sets admin role, so this test works via the controller logic
-    // which checks req.user.roles.includes('admin')
+  test('admin (role "Admin" — capitalised, as seeded) can update a note they do not own', async () => {
+    // The DB stores role name as "Admin" (capital A). The old check
+    // req.user.roles.includes('admin') would have failed here.
+    // After the fix (case-insensitive), this must succeed.
     Note.findById.mockResolvedValue({ ...SAMPLE_NOTE, created_by: 'other-user-id' });
     Note.update.mockResolvedValue(SAMPLE_NOTE);
 
-    // With our mock user as admin, update should succeed
     const res = await request(app)
       .put('/api/v1/notes/note-uuid-9999')
       .send({ content: 'Admin can update' });

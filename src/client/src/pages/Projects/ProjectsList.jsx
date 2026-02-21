@@ -15,6 +15,7 @@ import ViewListIcon from '@mui/icons-material/ViewList';
 import ViewKanbanIcon from '@mui/icons-material/ViewKanban';
 import api from '../../services/api.js';
 import { useTranslation } from '../../i18n/I18nContext.jsx';
+import { useAuth } from '../../store/AuthContext.jsx';
 import PageHeader from '../../components/common/PageHeader.jsx';
 import SearchBar from '../../components/common/SearchBar.jsx';
 import LoadingSpinner from '../../components/common/LoadingSpinner.jsx';
@@ -30,6 +31,7 @@ const STATUS_COLORS = {
 export default function ProjectsList() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { hasPermission } = useAuth();
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -77,9 +79,11 @@ export default function ProjectsList() {
       <PageHeader
         title={t('projects.title')}
         actions={
-          <Button variant="contained" startIcon={<AddIcon />} onClick={() => navigate('/projects/new')}>
-            {t('projects.new')}
-          </Button>
+          hasPermission('projects.write') && (
+            <Button variant="contained" startIcon={<AddIcon />} onClick={() => navigate('/projects/new')}>
+              {t('projects.new')}
+            </Button>
+          )
         }
       />
       {error && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError('')}>{error}</Alert>}
@@ -143,12 +147,16 @@ export default function ProjectsList() {
                     <Tooltip title={t('common.view')}>
                       <IconButton size="small" onClick={e => { e.stopPropagation(); navigate(`/projects/${p.id}`); }}><VisibilityIcon fontSize="small" /></IconButton>
                     </Tooltip>
-                    <Tooltip title={t('common.edit')}>
-                      <IconButton size="small" onClick={e => { e.stopPropagation(); navigate(`/projects/${p.id}/edit`); }}><EditIcon fontSize="small" /></IconButton>
-                    </Tooltip>
-                    <Tooltip title={t('common.delete')}>
-                      <IconButton size="small" color="error" onClick={e => { e.stopPropagation(); setDeleteId(p.id); }}><DeleteIcon fontSize="small" /></IconButton>
-                    </Tooltip>
+                    {hasPermission('projects.write') && (
+                      <Tooltip title={t('common.edit')}>
+                        <IconButton size="small" onClick={e => { e.stopPropagation(); navigate(`/projects/${p.id}/edit`); }}><EditIcon fontSize="small" /></IconButton>
+                      </Tooltip>
+                    )}
+                    {hasPermission('projects.delete') && (
+                      <Tooltip title={t('common.delete')}>
+                        <IconButton size="small" color="error" onClick={e => { e.stopPropagation(); setDeleteId(p.id); }}><DeleteIcon fontSize="small" /></IconButton>
+                      </Tooltip>
+                    )}
                   </TableCell>
                 </TableRow>
               ))}

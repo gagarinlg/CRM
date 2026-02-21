@@ -24,12 +24,12 @@ import { useTranslation } from '../../i18n/I18nContext.jsx';
 
 const NAV_ITEMS = [
   { key: 'dashboard', label: 'nav.dashboard', icon: <DashboardIcon />, path: '/' },
-  { key: 'companies', label: 'nav.companies', icon: <BusinessIcon />, path: '/companies' },
-  { key: 'contacts', label: 'nav.contacts', icon: <PeopleIcon />, path: '/contacts' },
-  { key: 'projects', label: 'nav.projects', icon: <FolderIcon />, path: '/projects' },
-  { key: 'leads', label: 'nav.leads', icon: <TrendingUpIcon />, path: '/leads' },
-  { key: 'calendar', label: 'nav.calendar', icon: <CalendarTodayIcon />, path: '/calendar' },
-  { key: 'reports', label: 'nav.reports', icon: <AssessmentIcon />, path: '/reports' },
+  { key: 'companies', label: 'nav.companies', icon: <BusinessIcon />, path: '/companies', permission: 'companies.read' },
+  { key: 'contacts', label: 'nav.contacts', icon: <PeopleIcon />, path: '/contacts', permission: 'contacts.read' },
+  { key: 'projects', label: 'nav.projects', icon: <FolderIcon />, path: '/projects', permission: 'projects.read' },
+  { key: 'leads', label: 'nav.leads', icon: <TrendingUpIcon />, path: '/leads', permission: 'leads.read' },
+  { key: 'calendar', label: 'nav.calendar', icon: <CalendarTodayIcon />, path: '/calendar', permission: 'calendar.read' },
+  { key: 'reports', label: 'nav.reports', icon: <AssessmentIcon />, path: '/reports', permission: 'reports.read' },
 ];
 
 const ADMIN_ITEMS = [
@@ -69,7 +69,7 @@ function NavItem({ item, selected, onClick }) {
 export default function Sidebar({ drawerWidth, mobileOpen, onClose, isMobile }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { isAdminUser } = useAuth();
+  const { isAdminUser, hasPermission } = useAuth();
   const { t } = useTranslation();
   const [adminOpen, setAdminOpen] = React.useState(() => location.pathname.startsWith('/admin'));
 
@@ -96,7 +96,7 @@ export default function Sidebar({ drawerWidth, mobileOpen, onClose, isMobile }) 
       </Box>
       <Divider />
       <List sx={{ flexGrow: 1, pt: 1 }}>
-        {NAV_ITEMS.map(item => (
+        {NAV_ITEMS.filter(item => !item.permission || hasPermission(item.permission)).map(item => (
           <NavItem
             key={item.key}
             item={item}

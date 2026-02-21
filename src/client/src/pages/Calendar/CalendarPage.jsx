@@ -5,8 +5,10 @@ import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
+import listPlugin from '@fullcalendar/list';
 import api from '../../services/api.js';
 import { useTranslation } from '../../i18n/I18nContext.jsx';
+import { useAuth } from '../../store/AuthContext.jsx';
 import PageHeader from '../../components/common/PageHeader.jsx';
 import EventForm from './EventForm.jsx';
 import ConfirmDialog from '../../components/common/ConfirmDialog.jsx';
@@ -21,12 +23,20 @@ const TYPE_COLORS = {
 
 export default function CalendarPage() {
   const { t } = useTranslation();
+  const { user, hasPermission, isAdminUser, isManagerUser } = useAuth();
   const [events, setEvents] = useState([]);
   const [error, setError] = useState('');
   const [formOpen, setFormOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [deleteId, setDeleteId] = useState(null);
-  const [dateRange, setDateRange] = useState(null);
+
+  const canWrite = hasPermission('calendar.write');
+  const canDelete = hasPermission('calendar.delete');
+
+  const canEditEvent = (evt) =>
+    canWrite && (evt?.created_by === user?.id || isAdminUser || isManagerUser);
+  const canDeleteEvent = (evt) =>
+    canDelete && (evt?.created_by === user?.id || isAdminUser || isManagerUser);
 
   const fetchEvents = async (start, end) => {
     try {
@@ -41,9 +51,15 @@ export default function CalendarPage() {
         title: e.title,
         start: e.start_datetime,
         end: e.end_datetime,
+        allDay: e.is_all_day || false,
         backgroundColor: TYPE_COLORS[e.type] || '#1976d2',
         borderColor: TYPE_COLORS[e.type] || '#1976d2',
-        extendedProps: { description: e.description, location: e.location, type: e.type },
+        extendedProps: {
+          description: e.description,
+          location: e.location,
+          type: e.type,
+          created_by: e.created_by,
+        },
       })));
     } catch {
       setError(t('errors.fetchFailed'));
@@ -57,19 +73,61 @@ export default function CalendarPage() {
   };
 
   const handleEventClick = (info) => {
-    setSelectedEvent({
+    const evt = {
       id: info.event.id,
       title: info.event.title,
       start: info.event.startStr,
       end: info.event.endStr,
+      allDay: info.event.allDay,
       ...info.event.extendedProps,
-    });
+    };
+    setSelectedEvent(evt);
     setFormOpen(true);
   };
 
   const handleDateSelect = (info) => {
-    setSelectedEvent({ startDate: info.startStr, endDate: info.endStr });
+    if (!canWrite) return;
+    setSelectedEvent({ startDate: info.startStr, endDate: info.endStr, allDay: info.allDay });
     setFormOpen(true);
+  };
+
+  // Drag-and-drop: user moved an event to a new time
+  const handleEventDrop = async (info) => {
+    const evt = {
+      id: info.event.id,
+      created_by: info.event.extendedProps.created_by,
+    };
+    if (!canEditEvent(evt)) { info.revert(); return; }
+    try {
+      await api.put(`/calendar/${info.event.id}`, {
+        start_datetime: info.event.startStr,
+        end_datetime: info.event.endStr,
+        is_all_day: info.event.allDay,
+      });
+      fetchEvents();
+    } catch {
+      info.revert();
+      setError(t('errors.saveFailed'));
+    }
+  };
+
+  // Resize: user changed event duration
+  const handleEventResize = async (info) => {
+    const evt = {
+      id: info.event.id,
+      created_by: info.event.extendedProps.created_by,
+    };
+    if (!canEditEvent(evt)) { info.revert(); return; }
+    try {
+      await api.put(`/calendar/${info.event.id}`, {
+        start_datetime: info.event.startStr,
+        end_datetime: info.event.endStr,
+      });
+      fetchEvents();
+    } catch {
+      info.revert();
+      setError(t('errors.saveFailed'));
+    }
   };
 
   const handleDelete = async () => {
@@ -77,6 +135,7 @@ export default function CalendarPage() {
       await api.delete(`/calendar/${deleteId}`);
       setDeleteId(null);
       setFormOpen(false);
+      setSelectedEvent(null);
       fetchEvents();
     } catch {
       setError(t('errors.deleteFailed'));
@@ -89,29 +148,41 @@ export default function CalendarPage() {
       <PageHeader
         title={t('calendar.title')}
         actions={
-          <Button variant="contained" startIcon={<AddIcon />} onClick={() => { setSelectedEvent(null); setFormOpen(true); }}>
-            {t('calendar.newEvent')}
-          </Button>
+          canWrite && (
+            <Button variant="contained" startIcon={<AddIcon />} onClick={() => { setSelectedEvent(null); setFormOpen(true); }}>
+              {t('calendar.newEvent')}
+            </Button>
+          )
         }
       />
       {error && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError('')}>{error}</Alert>}
 
       <Paper sx={{ p: 2 }}>
         <FullCalendar
-          plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+          plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
           initialView="dayGridMonth"
           headerToolbar={{
             left: 'prev,next today',
             center: 'title',
-            right: 'dayGridMonth,timeGridWeek,timeGridDay',
+            right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek',
+          }}
+          buttonText={{
+            today: t('calendar.today', 'Today'),
+            month: t('calendar.month', 'Month'),
+            week: t('calendar.week', 'Week'),
+            day: t('calendar.day', 'Day'),
+            list: t('calendar.agenda', 'Agenda'),
           }}
           events={events}
-          selectable
+          selectable={canWrite}
           selectMirror
+          editable={canWrite}
           dayMaxEvents
           datesSet={handleDatesSet}
           select={handleDateSelect}
           eventClick={handleEventClick}
+          eventDrop={handleEventDrop}
+          eventResize={handleEventResize}
           height="auto"
         />
       </Paper>
@@ -121,6 +192,9 @@ export default function CalendarPage() {
         onClose={() => { setFormOpen(false); setSelectedEvent(null); }}
         onSaved={() => fetchEvents()}
         event={selectedEvent}
+        canEdit={canEditEvent(selectedEvent)}
+        canDelete={canDeleteEvent(selectedEvent)}
+        onDeleteRequest={(id) => setDeleteId(id)}
       />
 
       <ConfirmDialog
