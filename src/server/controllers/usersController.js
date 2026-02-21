@@ -12,8 +12,8 @@ const createValidation = [
 ];
 
 const updateValidation = [
-  body('email').optional().isEmail().normalizeEmail(),
-  body('username').optional().isLength({ min: 3 }),
+  body('email').optional().isEmail().normalizeEmail().withMessage('Valid email is required.'),
+  body('username').optional().isLength({ min: 3 }).withMessage('Username must be at least 3 characters.'),
 ];
 
 const usersController = {

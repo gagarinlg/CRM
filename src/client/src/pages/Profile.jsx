@@ -20,6 +20,12 @@ const passwordSchema = yup.object({
   confirmPassword: yup.string().oneOf([yup.ref('newPassword')], 'Passwords must match').required(),
 });
 
+const profileSchema = yup.object({
+  firstName: yup.string().required('First name is required'),
+  lastName: yup.string().required('Last name is required'),
+  email: yup.string().email('Invalid email address').required('Email is required'),
+});
+
 export default function Profile() {
   const { user, loadUser } = useAuth();
   const { t, languages, changeLocale, locale } = useTranslation();
@@ -39,7 +45,8 @@ export default function Profile() {
   const [totpError, setTotpError] = useState('');
   const [totpLoading, setTotpLoading] = useState(false);
 
-  const { register: registerProfile, handleSubmit: handleProfile } = useForm({
+  const { register: registerProfile, handleSubmit: handleProfile, formState: { errors: profileErrors } } = useForm({
+    resolver: yupResolver(profileSchema),
     defaultValues: { firstName: user?.firstName || '', lastName: user?.lastName || '', email: user?.email || '' },
   });
 
@@ -177,13 +184,13 @@ export default function Profile() {
               <Box component="form" onSubmit={handleProfile(onProfileSubmit)}>
                 <Grid container spacing={2}>
                   <Grid item xs={12} sm={6}>
-                    <TextField {...registerProfile('firstName')} label={t('users.firstName')} fullWidth />
+                    <TextField {...registerProfile('firstName')} label={t('users.firstName')} fullWidth required error={!!profileErrors.firstName} helperText={profileErrors.firstName?.message} />
                   </Grid>
                   <Grid item xs={12} sm={6}>
-                    <TextField {...registerProfile('lastName')} label={t('users.lastName')} fullWidth />
+                    <TextField {...registerProfile('lastName')} label={t('users.lastName')} fullWidth required error={!!profileErrors.lastName} helperText={profileErrors.lastName?.message} />
                   </Grid>
                   <Grid item xs={12}>
-                    <TextField {...registerProfile('email')} label={t('users.email')} type="email" fullWidth />
+                    <TextField {...registerProfile('email')} label={t('users.email')} type="email" fullWidth required error={!!profileErrors.email} helperText={profileErrors.email?.message} />
                   </Grid>
                 </Grid>
                 <Button type="submit" variant="contained" disabled={profileSaving} sx={{ mt: 2 }}>

@@ -10,8 +10,8 @@ const MAX_EXPORT_ROWS = 10000;
 
 const createValidation = [
   body('name').notEmpty().withMessage('Project name is required.'),
-  body('status').optional({ checkFalsy: true }).isIn(['planning', 'active', 'on_hold', 'completed', 'cancelled']),
-  body('budget').optional({ checkFalsy: true }).isFloat({ min: 0 }),
+  body('status').optional({ checkFalsy: true }).isIn(['planning', 'active', 'on_hold', 'completed', 'cancelled']).withMessage('Status must be one of: planning, active, on_hold, completed, cancelled.'),
+  body('budget').optional({ checkFalsy: true }).isFloat({ min: 0 }).withMessage('Budget must be a non-negative number.'),
 ];
 
 function hasAdminRole(user) {

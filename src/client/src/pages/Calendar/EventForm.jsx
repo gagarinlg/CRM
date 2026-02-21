@@ -5,16 +5,24 @@ import {
   InputLabel, DialogActions,
 } from '@mui/material';
 import { useForm, Controller } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
+import * as yup from 'yup';
 import api from '../../services/api.js';
 import { useTranslation } from '../../i18n/I18nContext.jsx';
+
+const eventSchema = yup.object({
+  title: yup.string().required('Event title is required'),
+});
 
 export default function EventForm({ open, onClose, onSaved, event }) {
   const { t } = useTranslation();
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState([]);
   const isEdit = Boolean(event?.id);
 
   const { register, handleSubmit, control, reset, formState: { errors } } = useForm({
+    resolver: yupResolver(eventSchema),
     defaultValues: {
       title: '',
       type: 'meeting',
@@ -38,11 +46,13 @@ export default function EventForm({ open, onClose, onSaved, event }) {
     } else {
       reset({ title: '', type: 'meeting', startDate: '', endDate: '', description: '', location: '' });
     }
+    setFieldErrors([]);
   }, [event, open]);
 
   const onSubmit = async (data) => {
     setSaving(true);
     setError('');
+    setFieldErrors([]);
     try {
       const payload = {
         title: data.title,
@@ -57,7 +67,13 @@ export default function EventForm({ open, onClose, onSaved, event }) {
       onSaved?.();
       onClose();
     } catch (err) {
-      setError(err.response?.data?.message || t('errors.saveFailed'));
+      const apiErrors = err.response?.data?.errors;
+      if (apiErrors?.length) {
+        setFieldErrors(apiErrors);
+        setError(err.response.data.message);
+      } else {
+        setError(err.response?.data?.message || t('errors.saveFailed'));
+      }
     } finally {
       setSaving(false);
     }
@@ -69,13 +85,21 @@ export default function EventForm({ open, onClose, onSaved, event }) {
       <Box component="form" onSubmit={handleSubmit(onSubmit)}>
         <DialogContent>
           {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+          {fieldErrors.length > 0 && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              <ul style={{ margin: 0, paddingLeft: 20 }}>
+                {fieldErrors.map((e, i) => <li key={i}>{e.message}</li>)}
+              </ul>
+            </Alert>
+          )}
           <Stack spacing={2}>
             <TextField
-              {...register('title', { required: true })}
+              {...register('title')}
               label={t('calendar.eventTitle')}
               fullWidth
               required
               error={!!errors.title}
+              helperText={errors.title?.message}
             />
             <Controller
               name="type"

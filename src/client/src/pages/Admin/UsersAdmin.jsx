@@ -9,6 +9,8 @@ import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { useForm, Controller } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
+import * as yup from 'yup';
 import api from '../../services/api.js';
 import { useTranslation } from '../../i18n/I18nContext.jsx';
 import PageHeader from '../../components/common/PageHeader.jsx';
@@ -17,18 +19,30 @@ import ConfirmDialog from '../../components/common/ConfirmDialog.jsx';
 import SearchBar from '../../components/common/SearchBar.jsx';
 import useDebounce from '../../hooks/useDebounce.js';
 
+const userSchema = (isEdit) => yup.object({
+  firstName: yup.string().required('First name is required'),
+  lastName: yup.string().required('Last name is required'),
+  email: yup.string().email('Invalid email address').required('Email is required'),
+  password: isEdit
+    ? yup.string().optional()
+    : yup.string().min(8, 'Password must be at least 8 characters').required('Password is required'),
+});
+
 function UserDialog({ open, onClose, user, roles, onSaved }) {
   const { t } = useTranslation();
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState([]);
   const isEdit = Boolean(user?.id);
 
   const { register, handleSubmit, reset, control, formState: { errors } } = useForm({
+    resolver: yupResolver(userSchema(isEdit)),
     defaultValues: { firstName: '', lastName: '', email: '', password: '', role: 'user' },
   });
 
   useEffect(() => {
     if (open) {
+      setFieldErrors([]);
       // Normalize API snake_case fields to camelCase for the form
       const normalized = user ? {
         firstName: user.firstName || user.first_name || '',
@@ -44,6 +58,7 @@ function UserDialog({ open, onClose, user, roles, onSaved }) {
   const onSubmit = async (data) => {
     setSaving(true);
     setError('');
+    setFieldErrors([]);
     try {
       const payload = { ...data };
       if (isEdit && !payload.password) delete payload.password;
@@ -52,7 +67,13 @@ function UserDialog({ open, onClose, user, roles, onSaved }) {
       onSaved();
       onClose();
     } catch (err) {
-      setError(err.response?.data?.message || t('errors.saveFailed'));
+      const apiErrors = err.response?.data?.errors;
+      if (apiErrors?.length) {
+        setFieldErrors(apiErrors);
+        setError(err.response.data.message);
+      } else {
+        setError(err.response?.data?.message || t('errors.saveFailed'));
+      }
     } finally {
       setSaving(false);
     }
@@ -64,18 +85,25 @@ function UserDialog({ open, onClose, user, roles, onSaved }) {
       <Box component="form" onSubmit={handleSubmit(onSubmit)}>
         <DialogContent>
           {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+          {fieldErrors.length > 0 && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              <ul style={{ margin: 0, paddingLeft: 20 }}>
+                {fieldErrors.map((e, i) => <li key={i}>{e.message}</li>)}
+              </ul>
+            </Alert>
+          )}
           <Grid container spacing={2}>
             <Grid item xs={12} sm={6}>
-              <TextField {...register('firstName', { required: true })} label={t('users.firstName')} fullWidth required error={!!errors.firstName} />
+              <TextField {...register('firstName')} label={t('users.firstName')} fullWidth required error={!!errors.firstName} helperText={errors.firstName?.message} />
             </Grid>
             <Grid item xs={12} sm={6}>
-              <TextField {...register('lastName', { required: true })} label={t('users.lastName')} fullWidth required error={!!errors.lastName} />
+              <TextField {...register('lastName')} label={t('users.lastName')} fullWidth required error={!!errors.lastName} helperText={errors.lastName?.message} />
             </Grid>
             <Grid item xs={12}>
-              <TextField {...register('email', { required: true })} label={t('users.email')} type="email" fullWidth required error={!!errors.email} />
+              <TextField {...register('email')} label={t('users.email')} type="email" fullWidth required error={!!errors.email} helperText={errors.email?.message} />
             </Grid>
             <Grid item xs={12}>
-              <TextField {...register('password')} label={isEdit ? t('users.newPassword') : t('users.password')} type="password" fullWidth required={!isEdit} />
+              <TextField {...register('password')} label={isEdit ? t('users.newPassword') : t('users.password')} type="password" fullWidth required={!isEdit} error={!!errors.password} helperText={errors.password?.message} />
             </Grid>
             <Grid item xs={12}>
               <Controller
