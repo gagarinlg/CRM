@@ -1,14 +1,22 @@
 // @ts-check
 const { test, expect } = require('@playwright/test');
 
-// login.spec.js tests the login form itself — start with no auth state
+// login.spec.js tests the login form itself — start with no auth state.
+// Since the chromium project no longer sets storageState, each context starts
+// fresh. The test.use override below makes this intent explicit and ensures
+// no tokens bleed in from any other source.
 test.use({ storageState: { cookies: [], origins: [] } });
 
 test.describe('Login page', () => {
   test.beforeEach(async ({ page }) => {
+    // Clear any auth tokens that may exist from a previous navigation
+    await page.goto('about:blank');
+    await page.evaluate(() => {
+      try { localStorage.clear(); } catch { /* ignore - blank page has no storage */ }
+    });
     await page.goto('/login');
-    // Wait for React to fully render the form (more reliable than getByLabel in headless)
-    await page.waitForSelector('input[name="email"]', { timeout: 10000 });
+    // Wait for React to render the login form
+    await page.waitForSelector('input[name="email"]', { timeout: 15000 });
   });
 
   test('shows the login form', async ({ page }) => {

@@ -4,7 +4,7 @@ const { test, expect } = require('./fixtures');
 test.describe('Projects page', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/projects', { waitUntil: 'load' });
-    await expect(page).not.toHaveURL(/login/);
+    await expect(page.locator('main')).toBeVisible({ timeout: 20000 });
   });
 
   test('shows the projects list page', async ({ page }) => {
@@ -22,6 +22,7 @@ test.describe('Projects page', () => {
 
   test('shows validation error when submitting empty form', async ({ page }) => {
     await page.goto('/projects/new', { waitUntil: 'load' });
+    await expect(page.locator('main')).toBeVisible({ timeout: 20000 });
     await page.getByRole('button', { name: /save/i }).click();
     await expect(page.getByText(/required/i)).toBeVisible({ timeout: 8000 });
   });

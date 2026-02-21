@@ -5,8 +5,8 @@ const { test, expect } = require('./fixtures');
 test.describe('Dashboard page', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/', { waitUntil: 'load' });
-    // Guard: must not be redirected to login (React is fully loaded at this point)
-    await expect(page).not.toHaveURL(/login/);
+    // Wait for the authenticated layout — proves /auth/me completed and ProtectedRoute rendered
+    await expect(page.locator('main')).toBeVisible({ timeout: 20000 });
   });
 
   test('dashboard page loads without error', async ({ page }) => {

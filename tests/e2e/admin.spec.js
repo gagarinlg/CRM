@@ -4,7 +4,8 @@ const { test, expect } = require('./fixtures');
 test.describe('Admin - Users', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/admin/users', { waitUntil: 'load' });
-    await expect(page).not.toHaveURL(/login/);
+    // Wait for the authenticated layout to render (proves ProtectedRoute + /auth/me completed)
+    await expect(page.locator('main')).toBeVisible({ timeout: 20000 });
   });
 
   test('shows the users admin page', async ({ page }) => {
@@ -25,7 +26,7 @@ test.describe('Admin - Users', () => {
 test.describe('Admin - Roles', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/admin/roles', { waitUntil: 'load' });
-    await expect(page).not.toHaveURL(/login/);
+    await expect(page.locator('main')).toBeVisible({ timeout: 20000 });
   });
 
   test('shows the roles admin page', async ({ page }) => {
@@ -40,7 +41,7 @@ test.describe('Admin - Roles', () => {
 test.describe('Admin - Groups', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/admin/groups', { waitUntil: 'load' });
-    await expect(page).not.toHaveURL(/login/);
+    await expect(page.locator('main')).toBeVisible({ timeout: 20000 });
   });
 
   test('shows the groups admin page', async ({ page }) => {
@@ -55,7 +56,7 @@ test.describe('Admin - Groups', () => {
 test.describe('Admin - Translations', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/admin/translations', { waitUntil: 'load' });
-    await expect(page).not.toHaveURL(/login/);
+    await expect(page.locator('main')).toBeVisible({ timeout: 20000 });
   });
 
   test('shows the translations admin page', async ({ page }) => {
@@ -79,7 +80,7 @@ test.describe('Admin - Translations', () => {
 test.describe('Admin - Settings', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/admin/settings', { waitUntil: 'load' });
-    await expect(page).not.toHaveURL(/login/);
+    await expect(page.locator('main')).toBeVisible({ timeout: 20000 });
   });
 
   test('shows the settings admin page', async ({ page }) => {

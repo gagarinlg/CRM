@@ -4,7 +4,7 @@ const { test, expect } = require('./fixtures');
 test.describe('Contacts page', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/contacts', { waitUntil: 'load' });
-    await expect(page).not.toHaveURL(/login/);
+    await expect(page.locator('main')).toBeVisible({ timeout: 20000 });
   });
 
   test('shows the contacts list page', async ({ page }) => {
@@ -22,12 +22,14 @@ test.describe('Contacts page', () => {
 
   test('contact form requires fields', async ({ page }) => {
     await page.goto('/contacts/new', { waitUntil: 'load' });
+    await expect(page.locator('main')).toBeVisible({ timeout: 20000 });
     await page.getByRole('button', { name: /save/i }).click();
     await expect(page.getByText(/required/i)).toBeVisible({ timeout: 8000 });
   });
 
   test('contact form has add phone number button', async ({ page }) => {
     await page.goto('/contacts/new', { waitUntil: 'load' });
+    await expect(page.locator('main')).toBeVisible({ timeout: 20000 });
     await expect(page.getByRole('button', { name: /add phone/i })).toBeVisible({ timeout: 8000 });
   });
 });
