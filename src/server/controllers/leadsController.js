@@ -472,8 +472,8 @@ const leadsController = {
       const leadInfo = [
         lead.stage ? `${stageLabel}: ${lead.stage}` : null,
         lead.source ? `${sourceLabel}: ${lead.source}` : null,
-        lead.probability != null ? `${probabilityLabel}: ${lead.probability}%` : null,
-        lead.value != null ? `${valueLabel}: ${lead.value}` : null,
+        lead.probability !== null ? `${probabilityLabel}: ${lead.probability}%` : null,
+        lead.value !== null ? `${valueLabel}: ${lead.value}` : null,
       ].filter(Boolean).join('\n');
       if (leadInfo) {
         await db('notes').insert({

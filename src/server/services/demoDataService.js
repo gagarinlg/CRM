@@ -11,7 +11,7 @@ const demoDataService = {
 
     return db.transaction(async (trx) => {
       // Tags
-      const [hotLead, vip, followUp, strategic] = await trx('tags')
+      const [hotLead, vip, _followUp, strategic] = await trx('tags')
         .insert([
           { name: 'Hot Lead', color: '#ef4444' },
           { name: 'VIP', color: '#f59e0b' },
@@ -60,7 +60,7 @@ const demoDataService = {
       ]);
 
       // Projects
-      const [erpProject, mobileApp, supplyChain] = await trx('projects')
+      const [erpProject, mobileApp, _supplyChain] = await trx('projects')
         .insert([
           { name: 'ERP System Rollout', description: 'Full ERP implementation for Acme Corporation including data migration and training.', status: 'active', start_date: '2024-01-15', end_date: '2024-12-31', budget: 250000, company_id: acme.id, progress: 45, visibility: 'public', created_by: userId },
           { name: 'Mobile App Development', description: 'Customer-facing mobile application for Sunrise Ventures.', status: 'planning', start_date: '2024-03-01', end_date: '2024-09-30', budget: 80000, company_id: sunrise.id, progress: 0, visibility: 'restricted', created_by: userId },
