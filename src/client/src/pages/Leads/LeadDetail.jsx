@@ -11,6 +11,7 @@ import { useTranslation } from '../../i18n/I18nContext.jsx';
 import PageHeader from '../../components/common/PageHeader.jsx';
 import LoadingSpinner from '../../components/common/LoadingSpinner.jsx';
 import NotesList from '../../components/Notes/NotesList.jsx';
+import FilesList from '../../components/Files/FilesList.jsx';
 import dayjs from 'dayjs';
 
 function InfoRow({ label, value }) {
@@ -80,6 +81,7 @@ export default function LeadDetail() {
       <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
         <Tab label={t('common.info')} />
         <Tab label={t('notes.title')} />
+        <Tab label={t('files.title', 'Files')} />
       </Tabs>
 
       <TabPanel value={tab} index={0}>
@@ -148,6 +150,10 @@ export default function LeadDetail() {
 
       <TabPanel value={tab} index={1}>
         <NotesList entityType="lead" entityId={id} />
+      </TabPanel>
+
+      <TabPanel value={tab} index={2}>
+        <FilesList entityType="lead" entityId={id} />
       </TabPanel>
     </Box>
   );

@@ -12,6 +12,7 @@ import { useTranslation } from '../../i18n/I18nContext.jsx';
 import PageHeader from '../../components/common/PageHeader.jsx';
 import LoadingSpinner from '../../components/common/LoadingSpinner.jsx';
 import NotesList from '../../components/Notes/NotesList.jsx';
+import FilesList from '../../components/Files/FilesList.jsx';
 import dayjs from 'dayjs';
 
 function InfoRow({ label, value }) {
@@ -81,6 +82,7 @@ export default function ProjectDetail() {
         <Tab label={`${t('nav.contacts')} (${contacts.length})`} />
         <Tab label={`${t('projects.members')} (${members.length})`} />
         <Tab label={t('notes.title')} />
+        <Tab label={t('files.title', 'Files')} />
         {isRestricted && <Tab icon={<LockIcon sx={{ fontSize: 16 }} />} iconPosition="start" label={`${t('projects.groups')} (${groups.length})`} />}
       </Tabs>
 
@@ -153,8 +155,12 @@ export default function ProjectDetail() {
         <NotesList entityType="project" entityId={id} />
       </TabPanel>
 
+      <TabPanel value={tab} index={4}>
+        <FilesList entityType="project" entityId={id} />
+      </TabPanel>
+
       {isRestricted && (
-        <TabPanel value={tab} index={4}>
+        <TabPanel value={tab} index={5}>
           {groups.length === 0 ? (
             <Typography color="text.secondary">{t('common.noResults')}</Typography>
           ) : groups.map(g => (

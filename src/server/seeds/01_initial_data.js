@@ -88,7 +88,8 @@ const TRANSLATIONS = {
       dashboard: 'Dashboard', companies: 'Companies', contacts: 'Contacts',
       projects: 'Projects', leads: 'Leads', notes: 'Notes',
       calendar: 'Calendar', reports: 'Reports', settings: 'Settings',
-      users: 'Users', admin: 'Admin', profile: 'Profile', help: 'Help',
+      users: 'Users', roles: 'Roles', groups: 'Groups',
+      admin: 'Admin', profile: 'Profile', help: 'Help',
     },
     common: {
       save: 'Save', cancel: 'Cancel', delete: 'Delete', edit: 'Edit',
@@ -189,6 +190,12 @@ const TRANSLATIONS = {
       projectStatus: 'Project Status', contactActivity: 'Contact Activity',
       userActivity: 'User Activity', noData: 'No report data available.',
     },
+    files: {
+      title: 'Files', upload: 'Upload File', download: 'Download',
+      noFiles: 'No files attached yet.',
+      deleteTitle: 'Delete File',
+      deleteMessage: 'Are you sure you want to delete this file? This cannot be undone.',
+    },
     settings: {
       title: 'Settings', saved: 'Settings saved.',
       system: 'System Settings', smtp: 'Email (SMTP)',
@@ -257,7 +264,8 @@ const TRANSLATIONS = {
       dashboard: 'Dashboard', companies: 'Unternehmen', contacts: 'Kontakte',
       projects: 'Projekte', leads: 'Leads', notes: 'Notizen',
       calendar: 'Kalender', reports: 'Berichte', settings: 'Einstellungen',
-      users: 'Benutzer', admin: 'Administration', profile: 'Profil', help: 'Hilfe',
+      users: 'Benutzer', roles: 'Rollen', groups: 'Gruppen',
+      admin: 'Administration', profile: 'Profil', help: 'Hilfe',
     },
     common: {
       save: 'Speichern', cancel: 'Abbrechen', delete: 'Löschen', edit: 'Bearbeiten',
@@ -358,6 +366,12 @@ const TRANSLATIONS = {
       projectStatus: 'Projektstatus', contactActivity: 'Kontaktaktivität',
       userActivity: 'Benutzeraktivität', noData: 'Keine Berichtsdaten verfügbar.',
     },
+    files: {
+      title: 'Dateien', upload: 'Datei hochladen', download: 'Herunterladen',
+      noFiles: 'Noch keine Dateien angehängt.',
+      deleteTitle: 'Datei löschen',
+      deleteMessage: 'Sind Sie sicher, dass Sie diese Datei löschen möchten? Dies kann nicht rückgängig gemacht werden.',
+    },
     settings: {
       title: 'Einstellungen', saved: 'Einstellungen gespeichert.',
       system: 'Systemeinstellungen', smtp: 'E-Mail (SMTP)',
@@ -427,7 +441,8 @@ const TRANSLATIONS = {
       dashboard: 'Přehled', companies: 'Společnosti', contacts: 'Kontakty',
       projects: 'Projekty', leads: 'Leady', notes: 'Poznámky',
       calendar: 'Kalendář', reports: 'Přehledy', settings: 'Nastavení',
-      users: 'Uživatelé', admin: 'Administrace', profile: 'Profil', help: 'Nápověda',
+      users: 'Uživatelé', roles: 'Role', groups: 'Skupiny',
+      admin: 'Administrace', profile: 'Profil', help: 'Nápověda',
     },
     common: {
       save: 'Uložit', cancel: 'Zrušit', delete: 'Smazat', edit: 'Upravit',
@@ -527,6 +542,12 @@ const TRANSLATIONS = {
       sales: 'Zpráva o prodeji', leadPipeline: 'Přehled leadů',
       projectStatus: 'Stav projektů', contactActivity: 'Aktivita kontaktů',
       userActivity: 'Aktivita uživatelů', noData: 'Žádná data zprávy.',
+    },
+    files: {
+      title: 'Soubory', upload: 'Nahrát soubor', download: 'Stáhnout',
+      noFiles: 'Zatím nejsou přiloženy žádné soubory.',
+      deleteTitle: 'Smazat soubor',
+      deleteMessage: 'Opravdu chcete tento soubor smazat? Tuto akci nelze vrátit.',
     },
     settings: {
       title: 'Nastavení', saved: 'Nastavení uloženo.',

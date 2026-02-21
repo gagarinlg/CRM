@@ -50,7 +50,11 @@ export default function ProjectForm() {
       api.get(`/projects/${id}`),
       api.get(`/projects/${id}/groups`),
     ]).then(([projRes, grpRes]) => {
-      reset(projRes.data.data || projRes.data);
+      const proj = projRes.data.data || projRes.data;
+      // HTML date inputs need YYYY-MM-DD; DB may return full ISO strings
+      if (proj.start_date) proj.start_date = proj.start_date.slice(0, 10);
+      if (proj.end_date) proj.end_date = proj.end_date.slice(0, 10);
+      reset(proj);
       const grps = grpRes.data.data || grpRes.data;
       setSelectedGroups(Array.isArray(grps) ? grps.map(g => g.id) : []);
     }).catch(() => setError(t('errors.fetchFailed')))

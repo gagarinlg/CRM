@@ -26,4 +26,27 @@ test.describe('Leads page', () => {
     await page.getByRole('button', { name: /save/i }).click();
     await expect(page.getByText(/required/i).first()).toBeVisible({ timeout: 8000 });
   });
+
+  test('can create and edit a lead', async ({ page }) => {
+    await page.goto('/leads/new', { waitUntil: 'load' });
+    await expect(page.locator('main')).toBeVisible({ timeout: 20000 });
+    await page.locator('input[name="title"]').fill('E2E Test Lead');
+    await page.getByRole('button', { name: /save/i }).click();
+    await expect(page).toHaveURL(/\/leads/, { timeout: 10000 });
+    // Find and navigate to lead
+    const row = page.getByText('E2E Test Lead').first();
+    await expect(row).toBeVisible({ timeout: 10000 });
+    await row.click();
+    await expect(page).toHaveURL(/\/leads\/[^/]+$/, { timeout: 8000 });
+    // Click edit
+    await page.getByRole('button', { name: /edit/i }).first().click();
+    await expect(page).toHaveURL(/\/leads\/[^/]+\/edit/, { timeout: 8000 });
+    // Verify pre-fill
+    await expect(page.locator('input[name="title"]')).toHaveValue('E2E Test Lead', { timeout: 8000 });
+    // Update
+    await page.locator('input[name="title"]').fill('E2E Test Lead Updated');
+    await page.getByRole('button', { name: /save/i }).click();
+    await expect(page).toHaveURL(/\/leads/, { timeout: 10000 });
+  });
 });
+

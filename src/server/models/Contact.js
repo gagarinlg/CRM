@@ -120,8 +120,13 @@ const Contact = {
 
   async getNotes(contactId) {
     return db('notes')
-      .where({ entity_type: 'contact', entity_id: contactId })
-      .orderBy('created_at', 'desc');
+      .leftJoin('users', 'notes.created_by', 'users.id')
+      .where({ 'notes.entity_type': 'contact', 'notes.entity_id': contactId })
+      .select(
+        'notes.*',
+        db.raw("CONCAT(users.first_name, ' ', users.last_name) as created_by_name"),
+      )
+      .orderBy('notes.created_at', 'desc');
   },
 
   async getProjects(contactId) {

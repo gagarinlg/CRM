@@ -19,6 +19,12 @@ test.describe('Calendar page', () => {
   test('has a New Event button', async ({ page }) => {
     await expect(page.getByRole('button', { name: /new event|add event/i })).toBeVisible({ timeout: 10000 });
   });
+
+  test('can open new event dialog', async ({ page }) => {
+    await page.getByRole('button', { name: /new event|add event/i }).click();
+    // The event dialog should appear with a title field
+    await expect(page.locator('input[name="title"]').or(page.locator('[role="dialog"]')).first()).toBeVisible({ timeout: 10000 });
+  });
 });
 
 test.describe('Reports page', () => {
@@ -57,3 +63,4 @@ test.describe('Profile page', () => {
     ).toBeVisible({ timeout: 10000 });
   });
 });
+
