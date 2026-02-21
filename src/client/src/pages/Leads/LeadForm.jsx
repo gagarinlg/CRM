@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   Box, Button, TextField, Grid, Alert, CircularProgress, Stack,
@@ -13,10 +13,6 @@ import { useTranslation } from '../../i18n/I18nContext.jsx';
 import PageHeader from '../../components/common/PageHeader.jsx';
 import LoadingSpinner from '../../components/common/LoadingSpinner.jsx';
 
-const schema = yup.object({
-  title: yup.string().required('Title is required'),
-});
-
 export default function LeadForm() {
   const { id } = useParams();
   const isEdit = Boolean(id);
@@ -30,6 +26,10 @@ export default function LeadForm() {
   const [contacts, setContacts] = useState([]);
   const [allGroups, setAllGroups] = useState([]);
   const [selectedGroups, setSelectedGroups] = useState([]);
+
+  const schema = useMemo(() => yup.object({
+    title: yup.string().required(t('validation.titleRequired')),
+  }), [t]);
 
   const { register, handleSubmit, reset, control, watch, formState: { errors } } = useForm({
     resolver: yupResolver(schema),

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   Box, Button, TextField, Grid, Alert, CircularProgress, Stack,
@@ -13,10 +13,6 @@ import { useTranslation } from '../../i18n/I18nContext.jsx';
 import PageHeader from '../../components/common/PageHeader.jsx';
 import LoadingSpinner from '../../components/common/LoadingSpinner.jsx';
 
-const schema = yup.object({
-  name: yup.string().required('Name is required'),
-});
-
 export default function ProjectForm() {
   const { id } = useParams();
   const isEdit = Boolean(id);
@@ -28,6 +24,10 @@ export default function ProjectForm() {
   const [fieldErrors, setFieldErrors] = useState([]);
   const [allGroups, setAllGroups] = useState([]);
   const [selectedGroups, setSelectedGroups] = useState([]);
+
+  const schema = useMemo(() => yup.object({
+    name: yup.string().required(t('validation.nameRequired')),
+  }), [t]);
 
   const { register, handleSubmit, reset, control, watch, formState: { errors } } = useForm({
     resolver: yupResolver(schema),

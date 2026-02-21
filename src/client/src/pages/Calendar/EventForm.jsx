@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Box, Button, Dialog, DialogTitle, DialogContent, TextField,
   Alert, CircularProgress, Stack, MenuItem, Select, FormControl,
@@ -10,10 +10,6 @@ import * as yup from 'yup';
 import api from '../../services/api.js';
 import { useTranslation } from '../../i18n/I18nContext.jsx';
 
-const eventSchema = yup.object({
-  title: yup.string().required('Event title is required'),
-});
-
 export default function EventForm({ open, onClose, onSaved, event }) {
   const { t } = useTranslation();
   const [saving, setSaving] = useState(false);
@@ -21,8 +17,12 @@ export default function EventForm({ open, onClose, onSaved, event }) {
   const [fieldErrors, setFieldErrors] = useState([]);
   const isEdit = Boolean(event?.id);
 
+  const schema = useMemo(() => yup.object({
+    title: yup.string().required(t('validation.eventTitleRequired')),
+  }), [t]);
+
   const { register, handleSubmit, control, reset, formState: { errors } } = useForm({
-    resolver: yupResolver(eventSchema),
+    resolver: yupResolver(schema),
     defaultValues: {
       title: '',
       type: 'meeting',

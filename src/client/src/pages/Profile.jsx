@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Box, Card, CardContent, TextField, Button, Alert, CircularProgress,
   Grid, Typography, Divider, Avatar, Stack, Chip,
@@ -13,18 +13,6 @@ import { useTranslation } from '../i18n/I18nContext.jsx';
 import { LANGUAGE_FLAGS } from '../i18n/languages.js';
 import PageHeader from '../components/common/PageHeader.jsx';
 import api from '../services/api.js';
-
-const passwordSchema = yup.object({
-  currentPassword: yup.string().required('Current password is required'),
-  newPassword: yup.string().min(8, 'Minimum 8 characters').required('New password is required'),
-  confirmPassword: yup.string().oneOf([yup.ref('newPassword')], 'Passwords must match').required(),
-});
-
-const profileSchema = yup.object({
-  firstName: yup.string().required('First name is required'),
-  lastName: yup.string().required('Last name is required'),
-  email: yup.string().email('Invalid email address').required('Email is required'),
-});
 
 export default function Profile() {
   const { user, loadUser } = useAuth();
@@ -44,6 +32,18 @@ export default function Profile() {
   const [disablePassword, setDisablePassword] = useState('');
   const [totpError, setTotpError] = useState('');
   const [totpLoading, setTotpLoading] = useState(false);
+
+  const profileSchema = useMemo(() => yup.object({
+    firstName: yup.string().required(t('validation.firstNameRequired')),
+    lastName: yup.string().required(t('validation.lastNameRequired')),
+    email: yup.string().email(t('validation.emailInvalid')).required(t('validation.emailRequired')),
+  }), [t]);
+
+  const passwordSchema = useMemo(() => yup.object({
+    currentPassword: yup.string().required(t('validation.currentPasswordRequired')),
+    newPassword: yup.string().min(8, t('auth.minPassword')).required(t('validation.newPasswordRequired')),
+    confirmPassword: yup.string().oneOf([yup.ref('newPassword')], t('auth.passwordsMustMatch')).required(t('validation.confirmPasswordRequired')),
+  }), [t]);
 
   const { register: registerProfile, handleSubmit: handleProfile, formState: { errors: profileErrors } } = useForm({
     resolver: yupResolver(profileSchema),

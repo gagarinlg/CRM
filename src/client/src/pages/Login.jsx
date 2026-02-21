@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box, Card, CardContent, TextField, Button, Typography,
@@ -14,15 +14,6 @@ import LockIcon from '@mui/icons-material/Lock';
 import { useAuth } from '../store/AuthContext.jsx';
 import { useTranslation } from '../i18n/I18nContext.jsx';
 
-const credSchema = yup.object({
-  email: yup.string().required('Email or username is required'),
-  password: yup.string().required('Password is required'),
-});
-
-const totpSchema = yup.object({
-  totp_token: yup.string().required('Authentication code is required'),
-});
-
 export default function Login() {
   const { login, verifyTotp } = useAuth();
   const { t } = useTranslation();
@@ -33,6 +24,15 @@ export default function Login() {
   // TOTP step state
   const [totpPending, setTotpPending] = useState(false);
   const [preAuthToken, setPreAuthToken] = useState('');
+
+  const credSchema = useMemo(() => yup.object({
+    email: yup.string().required(t('validation.identifierRequired')),
+    password: yup.string().required(t('validation.passwordRequired')),
+  }), [t]);
+
+  const totpSchema = useMemo(() => yup.object({
+    totp_token: yup.string().required(t('validation.totpRequired')),
+  }), [t]);
 
   const credForm = useForm({ resolver: yupResolver(credSchema) });
   const totpForm = useForm({ resolver: yupResolver(totpSchema) });

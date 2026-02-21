@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   Box, Button, TextField, Grid, Alert, CircularProgress, Stack, MenuItem,
@@ -16,18 +16,6 @@ import LoadingSpinner from '../../components/common/LoadingSpinner.jsx';
 
 const PHONE_LABELS = ['mobile', 'work', 'home', 'fax', 'other'];
 
-const schema = yup.object({
-  first_name: yup.string().required('First name is required'),
-  last_name: yup.string().required('Last name is required'),
-  email: yup.string().email('Invalid email address').required('Email address is required'),
-  phones: yup.array().of(
-    yup.object({
-      phone_number: yup.string(),
-      label: yup.string().oneOf(PHONE_LABELS).default('work'),
-    }),
-  ),
-});
-
 export default function ContactForm() {
   const { id } = useParams();
   const isEdit = Boolean(id);
@@ -38,6 +26,18 @@ export default function ContactForm() {
   const [error, setError] = useState('');
   const [fieldErrors, setFieldErrors] = useState([]);
   const [companies, setCompanies] = useState([]);
+
+  const schema = useMemo(() => yup.object({
+    first_name: yup.string().required(t('validation.firstNameRequired')),
+    last_name: yup.string().required(t('validation.lastNameRequired')),
+    email: yup.string().email(t('validation.emailInvalid')).required(t('validation.emailRequired')),
+    phones: yup.array().of(
+      yup.object({
+        phone_number: yup.string(),
+        label: yup.string().oneOf(PHONE_LABELS).default('work'),
+      }),
+    ),
+  }), [t]);
 
   const { register, handleSubmit, reset, control, formState: { errors } } = useForm({
     resolver: yupResolver(schema),

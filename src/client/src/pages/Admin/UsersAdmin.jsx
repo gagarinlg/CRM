@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Box, Button, Table, TableBody, TableCell, TableContainer, TableHead,
   TableRow, Paper, IconButton, Chip, Alert, Tooltip, Dialog, DialogTitle,
@@ -19,15 +19,6 @@ import ConfirmDialog from '../../components/common/ConfirmDialog.jsx';
 import SearchBar from '../../components/common/SearchBar.jsx';
 import useDebounce from '../../hooks/useDebounce.js';
 
-const userSchema = (isEdit) => yup.object({
-  firstName: yup.string().required('First name is required'),
-  lastName: yup.string().required('Last name is required'),
-  email: yup.string().email('Invalid email address').required('Email is required'),
-  password: isEdit
-    ? yup.string().optional()
-    : yup.string().min(8, 'Password must be at least 8 characters').required('Password is required'),
-});
-
 function UserDialog({ open, onClose, user, roles, onSaved }) {
   const { t } = useTranslation();
   const [saving, setSaving] = useState(false);
@@ -35,8 +26,17 @@ function UserDialog({ open, onClose, user, roles, onSaved }) {
   const [fieldErrors, setFieldErrors] = useState([]);
   const isEdit = Boolean(user?.id);
 
+  const schema = useMemo(() => yup.object({
+    firstName: yup.string().required(t('validation.firstNameRequired')),
+    lastName: yup.string().required(t('validation.lastNameRequired')),
+    email: yup.string().email(t('validation.emailInvalid')).required(t('validation.emailRequired')),
+    password: isEdit
+      ? yup.string().optional()
+      : yup.string().min(8, t('validation.passwordMinLength')).required(t('validation.passwordRequired')),
+  }), [t, isEdit]);
+
   const { register, handleSubmit, reset, control, formState: { errors } } = useForm({
-    resolver: yupResolver(userSchema(isEdit)),
+    resolver: yupResolver(schema),
     defaultValues: { firstName: '', lastName: '', email: '', password: '', role: 'user' },
   });
 

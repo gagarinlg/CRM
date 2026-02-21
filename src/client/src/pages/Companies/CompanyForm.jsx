@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   Box, Button, TextField, Grid, Alert, CircularProgress, Stack,
@@ -11,12 +11,6 @@ import { useTranslation } from '../../i18n/I18nContext.jsx';
 import PageHeader from '../../components/common/PageHeader.jsx';
 import LoadingSpinner from '../../components/common/LoadingSpinner.jsx';
 
-const schema = yup.object({
-  name: yup.string().required('Name is required'),
-  email: yup.string().email('Invalid email').nullable(),
-  website: yup.string().nullable().transform(v => v === '' ? null : v).url('Invalid URL'),
-});
-
 export default function CompanyForm() {
   const { id } = useParams();
   const isEdit = Boolean(id);
@@ -26,6 +20,12 @@ export default function CompanyForm() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [fieldErrors, setFieldErrors] = useState([]);
+
+  const schema = useMemo(() => yup.object({
+    name: yup.string().required(t('validation.nameRequired')),
+    email: yup.string().email(t('validation.emailInvalid')).nullable(),
+    website: yup.string().nullable().transform(v => v === '' ? null : v).url(t('validation.websiteInvalid')),
+  }), [t]);
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm({
     resolver: yupResolver(schema),
