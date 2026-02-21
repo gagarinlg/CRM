@@ -16,5 +16,6 @@ router.post('/', leadsController.createValidation, validate, leadsController.cre
 router.put('/:id', leadsController.update);
 router.delete('/:id', leadsController.delete);
 router.patch('/:id/stage', leadsController.moveStage);
+router.get('/:id/notes', leadsController.getNotes);
 
 module.exports = router;

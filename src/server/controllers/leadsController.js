@@ -136,6 +136,18 @@ const leadsController = {
       return next(err);
     }
   },
+
+  async getNotes(req, res, next) {
+    try {
+      const lead = await Lead.findById(req.params.id);
+      if (!lead) return notFound(res, 'Lead not found.');
+      const Note = require('../models/Note');
+      const notes = await Note.listByEntity('lead', req.params.id);
+      return success(res, notes);
+    } catch (err) {
+      return next(err);
+    }
+  },
 };
 
 module.exports = leadsController;

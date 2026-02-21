@@ -8,7 +8,7 @@ const Project = {
   },
 
   async create(data, createdBy) {
-    const allowed = ['name', 'description', 'status', 'start_date', 'end_date', 'budget', 'company_id', 'progress'];
+    const allowed = ['name', 'description', 'status', 'start_date', 'end_date', 'budget', 'company_id', 'progress', 'visibility'];
     const fields = Object.fromEntries(Object.entries(data).filter(([k]) => allowed.includes(k)));
     const [project] = await db('projects')
       .insert({ ...fields, created_by: createdBy })
@@ -17,7 +17,7 @@ const Project = {
   },
 
   async update(id, data) {
-    const allowed = ['name', 'description', 'status', 'start_date', 'end_date', 'budget', 'company_id', 'progress'];
+    const allowed = ['name', 'description', 'status', 'start_date', 'end_date', 'budget', 'company_id', 'progress', 'visibility'];
     const fields = Object.fromEntries(Object.entries(data).filter(([k]) => allowed.includes(k)));
     fields.updated_at = db.fn.now();
     const [project] = await db('projects').where({ id, deleted_at: null }).update(fields).returning('*');
@@ -28,7 +28,7 @@ const Project = {
     return db('projects').where({ id }).update({ deleted_at: db.fn.now() });
   },
 
-  async list({ page = 1, limit = 20, search, status, company_id, sort = 'created_at', order = 'desc' } = {}) {
+  async list({ page = 1, limit = 20, search, status, company_id, sort = 'created_at', order = 'desc', user_id, user_groups = [] } = {}) {
     const offset = (page - 1) * limit;
     const SORT_WHITELIST = ['name', 'status', 'start_date', 'end_date', 'budget', 'created_at'];
     const sortCol = SORT_WHITELIST.includes(sort) ? sort : 'created_at';
@@ -46,6 +46,21 @@ const Project = {
     }
     if (status) query = query.where('projects.status', status);
     if (company_id) query = query.where('projects.company_id', company_id);
+
+    // Visibility filter: show public projects + restricted projects the user has access to
+    // Admins/managers (no user_id restriction) see all
+    if (user_id) {
+      query = query.where((b) => {
+        b.where('projects.visibility', 'public');
+        if (user_groups.length > 0) {
+          b.orWhereIn('projects.id', db('project_groups')
+            .whereIn('group_id', user_groups)
+            .select('project_id'));
+        }
+        // Creator always sees their own projects
+        b.orWhere('projects.created_by', user_id);
+      });
+    }
 
     const [{ count }] = await query.clone().count('projects.id as count');
     const data = await query
@@ -99,8 +114,31 @@ const Project = {
 
   async getNotes(projectId) {
     return db('notes')
-      .where({ entity_type: 'project', entity_id: projectId })
-      .orderBy('created_at', 'desc');
+      .leftJoin('users', 'notes.created_by', 'users.id')
+      .where({ 'notes.entity_type': 'project', 'notes.entity_id': projectId })
+      .select(
+        'notes.*',
+        db.raw("CONCAT(users.first_name, ' ', users.last_name) as created_by_name"),
+      )
+      .orderBy('notes.created_at', 'desc');
+  },
+
+  async addGroup(projectId, groupId) {
+    await db('project_groups')
+      .insert({ project_id: projectId, group_id: groupId })
+      .onConflict(['project_id', 'group_id'])
+      .ignore();
+  },
+
+  async removeGroup(projectId, groupId) {
+    return db('project_groups').where({ project_id: projectId, group_id: groupId }).delete();
+  },
+
+  async getGroups(projectId) {
+    return db('project_groups')
+      .join('groups', 'project_groups.group_id', 'groups.id')
+      .where('project_groups.project_id', projectId)
+      .select('groups.id', 'groups.name', 'groups.description');
   },
 };
 

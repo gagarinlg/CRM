@@ -22,4 +22,8 @@ router.delete('/:id/members/:userId', projectsController.removeMember);
 
 router.get('/:id/notes', projectsController.getNotes);
 
+router.get('/:id/groups', projectsController.getGroups);
+router.post('/:id/groups', projectsController.addGroup);
+router.delete('/:id/groups/:groupId', projectsController.removeGroup);
+
 module.exports = router;

@@ -167,3 +167,45 @@ describe('GET /api/v1/projects/:id/notes', () => {
     expect(res.status).toBe(404);
   });
 });
+
+describe('GET /api/v1/projects/:id/groups', () => {
+  test('returns groups for project', async () => {
+    Project.findById.mockResolvedValue(SAMPLE_PROJECT);
+    Project.getGroups.mockResolvedValue([{ id: 'grp-1', name: 'Sales' }]);
+    const res = await request(app).get('/api/v1/projects/proj-uuid-1/groups');
+    expect(res.status).toBe(200);
+    expect(res.body.data[0].name).toBe('Sales');
+  });
+
+  test('returns 404 when project not found', async () => {
+    Project.findById.mockResolvedValue(null);
+    const res = await request(app).get('/api/v1/projects/bad-id/groups');
+    expect(res.status).toBe(404);
+  });
+});
+
+describe('POST /api/v1/projects/:id/groups', () => {
+  test('adds group to project', async () => {
+    Project.addGroup.mockResolvedValue(undefined);
+    const res = await request(app)
+      .post('/api/v1/projects/proj-uuid-1/groups')
+      .send({ group_id: 'grp-1' });
+    expect(res.status).toBe(200);
+  });
+
+  test('returns 400 when group_id is missing', async () => {
+    const res = await request(app)
+      .post('/api/v1/projects/proj-uuid-1/groups')
+      .send({});
+    expect(res.status).toBe(400);
+  });
+});
+
+describe('DELETE /api/v1/projects/:id/groups/:groupId', () => {
+  test('removes group from project', async () => {
+    Project.removeGroup.mockResolvedValue(1);
+    const res = await request(app)
+      .delete('/api/v1/projects/proj-uuid-1/groups/grp-1');
+    expect(res.status).toBe(200);
+  });
+});

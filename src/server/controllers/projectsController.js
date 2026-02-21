@@ -17,6 +17,15 @@ const projectsController = {
   async list(req, res, next) {
     try {
       const { page = 1, limit = 20, search, status, company_id, sort, order } = req.query;
+      const isAdmin = req.user.roles && req.user.roles.some(r => ['admin', 'manager'].includes((r.name || r).toLowerCase()));
+      // Non-admins get filtered by group visibility
+      let user_groups = [];
+      if (!isAdmin) {
+        const rows = await require('../config/database').db('group_members')
+          .where({ user_id: req.user.id })
+          .pluck('group_id');
+        user_groups = rows;
+      }
       const result = await Project.list({
         page: parseInt(page, 10),
         limit: parseInt(limit, 10),
@@ -25,6 +34,8 @@ const projectsController = {
         company_id,
         sort,
         order,
+        user_id: isAdmin ? null : req.user.id,
+        user_groups,
       });
       return paginated(res, result.data, result.total, parseInt(page, 10), parseInt(limit, 10));
     } catch (err) {
@@ -147,6 +158,37 @@ const projectsController = {
       if (!project) return notFound(res, 'Project not found.');
       const notes = await Project.getNotes(req.params.id);
       return success(res, notes);
+    } catch (err) {
+      return next(err);
+    }
+  },
+
+  async getGroups(req, res, next) {
+    try {
+      const project = await Project.findById(req.params.id);
+      if (!project) return notFound(res, 'Project not found.');
+      const groups = await Project.getGroups(req.params.id);
+      return success(res, groups);
+    } catch (err) {
+      return next(err);
+    }
+  },
+
+  async addGroup(req, res, next) {
+    try {
+      const { group_id } = req.body;
+      if (!group_id) return error(res, 'group_id is required.', 400);
+      await Project.addGroup(req.params.id, group_id);
+      return success(res, null, 'Group added to project.');
+    } catch (err) {
+      return next(err);
+    }
+  },
+
+  async removeGroup(req, res, next) {
+    try {
+      await Project.removeGroup(req.params.id, req.params.groupId);
+      return success(res, null, 'Group removed from project.');
     } catch (err) {
       return next(err);
     }

@@ -26,4 +26,11 @@ test.describe('Projects page', () => {
     await page.getByRole('button', { name: /save/i }).click();
     await expect(page.getByText(/required/i).first()).toBeVisible({ timeout: 8000 });
   });
+
+  test('new project form has visibility selector', async ({ page }) => {
+    await page.goto('/projects/new', { waitUntil: 'load' });
+    await expect(page.locator('main')).toBeVisible({ timeout: 20000 });
+    // Visibility field should exist (public/restricted)
+    await expect(page.locator('label').filter({ hasText: /visibility/i })).toBeVisible({ timeout: 8000 });
+  });
 });
