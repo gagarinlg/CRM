@@ -548,10 +548,16 @@ const TRANSLATIONS = {
 exports.seed = async function (knex) {
   try {
     // ── Admin user ──────────────────────────────────────────────────────────
+    // Allow CI/test overrides via environment variables:
+    //   SEED_ADMIN_PASSWORD      – plaintext password to hash (default: 'changeme')
+    //   SEED_FORCE_PASSWORD_CHANGE – 'false' to skip force-change (default: 'true')
+    const adminPassword = process.env.SEED_ADMIN_PASSWORD || 'changeme';
+    const forcePasswordChange = process.env.SEED_FORCE_PASSWORD_CHANGE !== 'false';
+
     let adminId;
     const existingAdmin = await knex('users').where({ email: 'admin@crm.local' }).first();
     if (!existingAdmin) {
-      const passwordHash = await bcrypt.hash('changeme', 12);
+      const passwordHash = await bcrypt.hash(adminPassword, 12);
       adminId = uuidv4();
       await knex('users').insert({
         id: adminId,
@@ -561,7 +567,7 @@ exports.seed = async function (knex) {
         first_name: 'Admin',
         last_name: 'User',
         is_active: true,
-        force_password_change: true,
+        force_password_change: forcePasswordChange,
       });
     } else {
       adminId = existingAdmin.id;

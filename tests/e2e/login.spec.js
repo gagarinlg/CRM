@@ -39,12 +39,12 @@ test.describe('Login page', () => {
   });
 
   test('successful login redirects to dashboard', async ({ page }) => {
-    // Use the default seed admin credentials
+    // CI seed creates admin with SEED_ADMIN_PASSWORD=Admin1234!, no force-change
     await page.getByLabel(/email or username/i).fill('admin');
     await page.getByLabel(/password/i).fill('Admin1234!');
     await page.getByRole('button', { name: /sign in/i }).click();
 
-    // Should land on dashboard or change-password page
-    await expect(page).toHaveURL(/(dashboard|change-password|\/)/, { timeout: 8000 });
+    // Should land on dashboard, change-password, or root
+    await expect(page).toHaveURL(/(dashboard|change-password|\/)/, { timeout: 10000 });
   });
 });

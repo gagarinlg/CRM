@@ -108,12 +108,17 @@ jobs:
           DB_NAME: crm_db
           DB_USER: crm_user
           DB_PASSWORD: crm_password
+          # Use a known password with no force-change so Playwright tests can login directly
+          SEED_ADMIN_PASSWORD: Admin1234!
+          SEED_FORCE_PASSWORD_CHANGE: "false"
 
       - name: Build frontend
         working-directory: src/client
         run: npm run build
 
       - name: Start backend server
+        # Express serves the built frontend at / (SPA catch-all in app.js)
+        # so we do NOT need a separate static-file server.
         run: node src/server/index.js &
         env:
           NODE_ENV: production
@@ -125,7 +130,8 @@ jobs:
           DB_PASSWORD: crm_password
           JWT_SECRET: ci-e2e-secret-access-key-32chars!!
           JWT_REFRESH_SECRET: ci-e2e-secret-refresh-key-32chars!
-          FRONTEND_URL: http://localhost:5173
+          # Origin the browser will send when loading from port 3000
+          FRONTEND_URL: http://localhost:3000
 
       - name: Wait for backend to be ready
         run: |
@@ -134,18 +140,11 @@ jobs:
             sleep 2
           done
 
-      - name: Serve frontend (static)
-        run: npx serve src/client/dist -p 5173 &
-        env:
-          NODE_ENV: production
-
-      - name: Wait for frontend
-        run: sleep 5
-
       - name: Run Playwright tests
         run: npm run test:e2e -- --reporter=github
         env:
-          PLAYWRIGHT_BASE_URL: http://localhost:5173
+          # Point Playwright directly at Express (which also serves the frontend)
+          PLAYWRIGHT_BASE_URL: http://localhost:3000
           SKIP_SERVER_START: "true"
           CI: "true"
 

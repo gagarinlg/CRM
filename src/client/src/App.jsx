@@ -36,7 +36,7 @@ const ProtectedRoute = ({ children, requireAdmin }) => {
   const { user, loading, isAdmin } = useAuth();
   if (loading) return <LoadingSpinner fullScreen />;
   if (!user) return <Navigate to="/login" replace />;
-  if (user.mustChangePassword) return <Navigate to="/change-password" replace />;
+  if (user.mustChangePassword || user.force_password_change) return <Navigate to="/change-password" replace />;
   if (requireAdmin && !isAdmin()) return <Navigate to="/" replace />;
   return children;
 };
