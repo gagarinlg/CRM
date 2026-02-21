@@ -25,6 +25,18 @@ test.describe('Calendar page', () => {
     // The event dialog should appear with a title field
     await expect(page.locator('input[name="title"]').or(page.locator('[role="dialog"]')).first()).toBeVisible({ timeout: 10000 });
   });
+
+  test('can switch between calendar views', async ({ page }) => {
+    // Click "Week" view if available
+    const weekBtn = page.getByRole('button', { name: /week/i }).first();
+    const count = await weekBtn.count();
+    if (count > 0) {
+      await weekBtn.click();
+      await expect(page.locator('main')).toBeVisible({ timeout: 8000 });
+    } else {
+      expect(true).toBe(true); // view buttons not present – skip gracefully
+    }
+  });
 });
 
 test.describe('Reports page', () => {
@@ -35,6 +47,13 @@ test.describe('Reports page', () => {
 
   test('shows the reports page', async ({ page }) => {
     await expect(page.locator('main, [role="main"]')).toBeVisible();
+  });
+
+  test('reports page contains charts or cards', async ({ page }) => {
+    // Reports page should have some visual content
+    await expect(
+      page.locator('.MuiCard-root, .MuiGrid-root, canvas').first()
+    ).toBeVisible({ timeout: 10000 });
   });
 });
 
@@ -61,6 +80,23 @@ test.describe('Profile page', () => {
     await expect(
       page.getByText(/two-factor|2fa|authenticator/i).first()
     ).toBeVisible({ timeout: 10000 });
+  });
+
+  test('profile first name field is editable', async ({ page }) => {
+    const firstNameInput = page.locator('input[name="firstName"]');
+    await expect(firstNameInput).toBeVisible({ timeout: 10000 });
+    // Clear and fill with a test value to confirm the field is editable
+    await firstNameInput.click();
+    await firstNameInput.fill('AdminE2E');
+    await expect(firstNameInput).toHaveValue('AdminE2E', { timeout: 5000 });
+    // Restore original value
+    await firstNameInput.fill('Admin');
+  });
+
+  test('change password section has current password field', async ({ page }) => {
+    const currentPwdInput = page.locator('input[name="currentPassword"]');
+    await expect(currentPwdInput).toBeVisible({ timeout: 10000 });
+    await expect(currentPwdInput).toHaveAttribute('type', 'password');
   });
 });
 

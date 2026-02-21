@@ -16,6 +16,7 @@ import PageHeader from '../../components/common/PageHeader.jsx';
 import LoadingSpinner from '../../components/common/LoadingSpinner.jsx';
 import NotesList from '../../components/Notes/NotesList.jsx';
 import FilesList from '../../components/Files/FilesList.jsx';
+import EntityTags from '../../components/common/EntityTags.jsx';
 import EntityPickerDialog from '../../components/common/EntityPickerDialog.jsx';
 import dayjs from 'dayjs';
 
@@ -66,7 +67,7 @@ export default function ProjectDetail() {
       setMembers(p.members || []);
       const grpData = grpRes.data.data || grpRes.data;
       setGroups(Array.isArray(grpData) ? grpData : []);
-    }).catch(() => setError(t('errors.fetchFailed')))
+    }).catch((err) => setError(err?.response?.status === 404 ? t('projects.notFound') : t('errors.fetchFailed')))
       .finally(() => setLoading(false));
   }, [id, t]);
 
@@ -148,6 +149,10 @@ export default function ProjectDetail() {
                 <InfoRow label={t('projects.startDate')} value={project.start_date ? dayjs(project.start_date).format('DD MMM YYYY') : null} />
                 <InfoRow label={t('projects.endDate')} value={project.end_date ? dayjs(project.end_date).format('DD MMM YYYY') : null} />
                 <InfoRow label={t('projects.budget')} value={project.budget != null ? `€${Number(project.budget).toLocaleString()}` : null} />
+                <Box mt={2}>
+                  <Typography variant="caption" color="text.secondary" display="block" mb={0.5}>{t('tags.title', 'Tags')}</Typography>
+                  <EntityTags entityType="project" entityId={id} />
+                </Box>
               </CardContent>
             </Card>
           </Grid>

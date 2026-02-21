@@ -12,6 +12,7 @@ import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import LockIcon from '@mui/icons-material/Lock';
 import { useAuth } from '../store/AuthContext.jsx';
+import { useTranslation } from '../i18n/I18nContext.jsx';
 
 const credSchema = yup.object({
   email: yup.string().required('Email or username is required'),
@@ -24,6 +25,7 @@ const totpSchema = yup.object({
 
 export default function Login() {
   const { login, verifyTotp } = useAuth();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
@@ -49,7 +51,7 @@ export default function Login() {
         navigate('/');
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Login failed. Please check your credentials.');
+      setError(err.response?.data?.message || t('auth.loginFailed'));
     } finally {
       setLoading(false);
     }
@@ -66,7 +68,7 @@ export default function Login() {
         navigate('/');
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Invalid authentication code. Please try again.');
+      setError(err.response?.data?.message || t('auth.totpInvalid'));
     } finally {
       setLoading(false);
     }
@@ -89,7 +91,7 @@ export default function Login() {
               <Typography variant="h4" fontWeight={700} color="primary">CRM</Typography>
             </Box>
             <Typography variant="body2" color="text.secondary">
-              {totpPending ? 'Two-factor authentication' : 'Sign in to your account'}
+              {totpPending ? t('auth.totpTitle') : t('auth.signInTitle')}
             </Typography>
           </Box>
 
@@ -100,7 +102,7 @@ export default function Login() {
             <Box component="form" onSubmit={credForm.handleSubmit(onCredSubmit)} noValidate>
               <TextField
                 {...credForm.register('email')}
-                label="Email or username"
+                label={t('auth.emailOrUsername')}
                 fullWidth
                 margin="normal"
                 error={!!credForm.formState.errors.email}
@@ -110,7 +112,7 @@ export default function Login() {
               />
               <TextField
                 {...credForm.register('password')}
-                label="Password"
+                label={t('auth.password')}
                 type={showPassword ? 'text' : 'password'}
                 fullWidth
                 margin="normal"
@@ -135,7 +137,7 @@ export default function Login() {
                 disabled={loading}
                 sx={{ mt: 3, mb: 1 }}
               >
-                {loading ? <CircularProgress size={24} color="inherit" /> : 'Sign In'}
+                {loading ? <CircularProgress size={24} color="inherit" /> : t('auth.signIn')}
               </Button>
             </Box>
           ) : (
@@ -145,11 +147,11 @@ export default function Login() {
                 <LockIcon sx={{ fontSize: 48, color: 'primary.main' }} />
               </Box>
               <Typography variant="body2" color="text.secondary" textAlign="center" mb={2}>
-                Enter the 6-digit code from your authenticator app, or one of your backup codes.
+                {t('auth.totpCodeHint')}
               </Typography>
               <TextField
                 {...totpForm.register('totp_token')}
-                label="Authentication code"
+                label={t('auth.totpCode')}
                 fullWidth
                 margin="normal"
                 inputProps={{ maxLength: 20, inputMode: 'numeric', pattern: '[0-9A-Z-]*' }}
@@ -166,7 +168,7 @@ export default function Login() {
                 disabled={loading}
                 sx={{ mt: 3, mb: 1 }}
               >
-                {loading ? <CircularProgress size={24} color="inherit" /> : 'Verify'}
+                {loading ? <CircularProgress size={24} color="inherit" /> : t('auth.verify')}
               </Button>
               <Divider sx={{ my: 1 }} />
               <Button
@@ -175,7 +177,7 @@ export default function Login() {
                 size="small"
                 onClick={() => { setTotpPending(false); setError(''); setPreAuthToken(''); }}
               >
-                ← Back to login
+                {t('auth.backToLogin')}
               </Button>
             </Box>
           )}

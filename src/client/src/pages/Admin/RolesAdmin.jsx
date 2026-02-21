@@ -118,7 +118,10 @@ function PermissionsDialog({ open, onClose, role }) {
             {permissions.map(p => (
               <ListItem key={p.id} dense button onClick={() => toggle(p.id)} disabled={saving}>
                 <Checkbox edge="start" checked={rolePerms.includes(p.id)} tabIndex={-1} disableRipple />
-                <ListItemText primary={p.name} secondary={p.description} />
+                <ListItemText
+                  primary={t(`permissions.${p.name}`, p.name)}
+                  secondary={p.description}
+                />
               </ListItem>
             ))}
           </List>

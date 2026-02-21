@@ -96,6 +96,7 @@ export default function CompaniesList() {
               <TableRow>
                 <TableCell>{t('companies.name')}</TableCell>
                 <TableCell>{t('companies.industry')}</TableCell>
+                <TableCell>{t('tags.title', 'Tags')}</TableCell>
                 <TableCell>{t('companies.phone')}</TableCell>
                 <TableCell>{t('companies.email')}</TableCell>
                 <TableCell>{t('companies.website')}</TableCell>
@@ -104,14 +105,21 @@ export default function CompaniesList() {
             </TableHead>
             <TableBody>
               {loading ? (
-                <TableRow><TableCell colSpan={6}><LoadingSpinner /></TableCell></TableRow>
+                <TableRow><TableCell colSpan={7}><LoadingSpinner /></TableCell></TableRow>
               ) : companies.length === 0 ? (
-                <TableRow><TableCell colSpan={6} align="center">{t('common.noResults')}</TableCell></TableRow>
+                <TableRow><TableCell colSpan={7} align="center">{t('common.noResults')}</TableCell></TableRow>
               ) : companies.map(c => (
                 <TableRow key={c.id} hover onClick={() => navigate(`/companies/${c.id}`)} sx={{ cursor: 'pointer' }}>
                   <TableCell sx={{ fontWeight: 500 }}>{c.name}</TableCell>
                   <TableCell>
                     {c.industry && <Chip label={c.industry} size="small" variant="outlined" />}
+                  </TableCell>
+                  <TableCell>
+                    <Box display="flex" flexWrap="wrap" gap={0.5}>
+                      {(c.tags || []).map(tag => (
+                        <Chip key={tag.id} label={tag.name} size="small" sx={{ bgcolor: tag.color || '#6b7280', color: '#fff', fontSize: 11, height: 20 }} />
+                      ))}
+                    </Box>
                   </TableCell>
                   <TableCell>{c.phone}</TableCell>
                   <TableCell>{c.email}</TableCell>

@@ -104,32 +104,33 @@ export default function Sidebar({ drawerWidth, mobileOpen, onClose, isMobile }) 
             onClick={handleNav}
           />
         ))}
-        {/* Always in DOM; hidden via CSS so Firefox compositor doesn't miss repaint */}
-        <Box sx={{ display: isAdminUser ? 'block' : 'none' }}>
-          <Divider sx={{ my: 1 }} />
-          <ListItem disablePadding>
-            <ListItemButton
-              onClick={() => setAdminOpen(o => !o)}
-              sx={{ borderRadius: 1, mx: 1, mb: 0.5 }}
-            >
-              <ListItemIcon sx={{ minWidth: 36 }}><AdminPanelSettingsIcon /></ListItemIcon>
-              <ListItemText primary={t('nav.admin')} primaryTypographyProps={{ fontSize: 14 }} />
-              {adminOpen ? <ExpandLess /> : <ExpandMore />}
-            </ListItemButton>
-          </ListItem>
-          <Collapse in={adminOpen} timeout="auto" unmountOnExit>
-            <List disablePadding sx={{ pl: 1 }}>
-              {ADMIN_ITEMS.map(item => (
-                <NavItem
-                  key={item.key}
-                  item={item}
-                  selected={isSelected(item.path)}
-                  onClick={handleNav}
-                />
-              ))}
-            </List>
-          </Collapse>
-        </Box>
+        {isAdminUser && (
+          <>
+            <Divider sx={{ my: 1 }} />
+            <ListItem disablePadding>
+              <ListItemButton
+                onClick={() => setAdminOpen(o => !o)}
+                sx={{ borderRadius: 1, mx: 1, mb: 0.5 }}
+              >
+                <ListItemIcon sx={{ minWidth: 36 }}><AdminPanelSettingsIcon /></ListItemIcon>
+                <ListItemText primary={t('nav.admin')} primaryTypographyProps={{ fontSize: 14 }} />
+                {adminOpen ? <ExpandLess /> : <ExpandMore />}
+              </ListItemButton>
+            </ListItem>
+            <Collapse in={adminOpen} timeout="auto" unmountOnExit>
+              <List disablePadding sx={{ pl: 1 }}>
+                {ADMIN_ITEMS.map(item => (
+                  <NavItem
+                    key={item.key}
+                    item={item}
+                    selected={isSelected(item.path)}
+                    onClick={handleNav}
+                  />
+                ))}
+              </List>
+            </Collapse>
+          </>
+        )}
       </List>
     </Box>
   );

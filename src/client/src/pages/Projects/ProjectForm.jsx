@@ -134,11 +134,11 @@ export default function ProjectForm() {
                 <FormControl fullWidth>
                   <InputLabel>{t('projects.status')}</InputLabel>
                   <Select {...field} label={t('projects.status')}>
-                    <MenuItem value="planning">Planning</MenuItem>
-                    <MenuItem value="active">Active</MenuItem>
-                    <MenuItem value="on_hold">On Hold</MenuItem>
-                    <MenuItem value="completed">Completed</MenuItem>
-                    <MenuItem value="cancelled">Cancelled</MenuItem>
+                    <MenuItem value="planning">{t('projects.statusPlanning')}</MenuItem>
+                    <MenuItem value="active">{t('projects.statusActive')}</MenuItem>
+                    <MenuItem value="on_hold">{t('projects.statusOnHold')}</MenuItem>
+                    <MenuItem value="completed">{t('projects.statusCompleted')}</MenuItem>
+                    <MenuItem value="cancelled">{t('projects.statusCancelled')}</MenuItem>
                   </Select>
                 </FormControl>
               )}

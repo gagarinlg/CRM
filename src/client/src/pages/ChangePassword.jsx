@@ -10,6 +10,7 @@ import * as yup from 'yup';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import { useAuth } from '../store/AuthContext.jsx';
+import { useTranslation } from '../i18n/I18nContext.jsx';
 
 const schema = yup.object({
   currentPassword: yup.string().required('Current password is required'),
@@ -21,6 +22,7 @@ const schema = yup.object({
 
 export default function ChangePassword() {
   const { changePassword, logout } = useAuth();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
@@ -38,7 +40,7 @@ export default function ChangePassword() {
       await changePassword(data.currentPassword, data.newPassword);
       navigate('/');
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to change password.');
+      setError(err.response?.data?.message || t('auth.passwordChangeFailed'));
     } finally {
       setLoading(false);
     }
@@ -48,9 +50,9 @@ export default function ChangePassword() {
     <Box display="flex" alignItems="center" justifyContent="center" minHeight="100vh" bgcolor="background.default" p={2}>
       <Card sx={{ width: '100%', maxWidth: 420 }}>
         <CardContent sx={{ p: 4 }}>
-          <Typography variant="h5" fontWeight={600} mb={1}>Change Password</Typography>
+          <Typography variant="h5" fontWeight={600} mb={1}>{t('profile.changePassword')}</Typography>
           <Typography variant="body2" color="text.secondary" mb={3}>
-            You must change your password before continuing.
+            {t('auth.mustChangePassword')}
           </Typography>
 
           {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
@@ -58,7 +60,7 @@ export default function ChangePassword() {
           <Box component="form" onSubmit={handleSubmit(onSubmit)}>
             <TextField
               {...register('currentPassword')}
-              label="Current Password"
+              label={t('profile.currentPassword')}
               type={showCurrent ? 'text' : 'password'}
               fullWidth
               margin="normal"
@@ -76,7 +78,7 @@ export default function ChangePassword() {
             />
             <TextField
               {...register('newPassword')}
-              label="New Password"
+              label={t('profile.newPassword')}
               type={showNew ? 'text' : 'password'}
               fullWidth
               margin="normal"
@@ -94,7 +96,7 @@ export default function ChangePassword() {
             />
             <TextField
               {...register('confirmPassword')}
-              label="Confirm New Password"
+              label={t('profile.confirmPassword')}
               type="password"
               fullWidth
               margin="normal"
@@ -102,9 +104,9 @@ export default function ChangePassword() {
               helperText={errors.confirmPassword?.message}
             />
             <Button type="submit" fullWidth variant="contained" size="large" disabled={loading} sx={{ mt: 3, mb: 1 }}>
-              {loading ? <CircularProgress size={24} color="inherit" /> : 'Change Password'}
+              {loading ? <CircularProgress size={24} color="inherit" /> : t('profile.changePassword')}
             </Button>
-            <Button fullWidth variant="text" onClick={logout}>Sign out</Button>
+            <Button fullWidth variant="text" onClick={logout}>{t('auth.logout')}</Button>
           </Box>
         </CardContent>
       </Card>

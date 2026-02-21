@@ -144,7 +144,7 @@ export default function LeadForm() {
                   <InputLabel>{t('leads.stage')}</InputLabel>
                   <Select {...field} label={t('leads.stage')}>
                     {['new', 'contacted', 'qualified', 'proposal', 'negotiation', 'won', 'lost'].map(s => (
-                      <MenuItem key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</MenuItem>
+                      <MenuItem key={s} value={s}>{t(`leads.stage${s.charAt(0).toUpperCase() + s.slice(1)}`)}</MenuItem>
                     ))}
                   </Select>
                 </FormControl>

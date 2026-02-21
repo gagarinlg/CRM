@@ -7,6 +7,9 @@ const AuditLog = require('../models/AuditLog');
 const Attachment = require('../models/Attachment');
 const Note = require('../models/Note');
 const { success, error, paginated, notFound } = require('../utils/response');
+const { db } = require('../config/database');
+
+const MAX_EXPORT_ROWS = 10000;
 
 const createValidation = [
   body('title').notEmpty().withMessage('Lead title is required.'),
@@ -22,6 +25,25 @@ function hasAdminRole(user) {
   );
 }
 
+async function checkLeadAccess(user, lead) {
+  if (lead.visibility !== 'restricted') return true;
+  if (hasAdminRole(user)) return true;
+  if (lead.created_by === user.id) return true;
+  if (lead.assigned_to === user.id) return true;
+  const userGroups = await db('group_members').where({ user_id: user.id }).pluck('group_id');
+  if (userGroups.length > 0) {
+    const matched = await db('lead_groups')
+      .where('lead_id', lead.id)
+      .whereIn('group_id', userGroups)
+      .first();
+    if (matched) return true;
+  }
+  const isMember = await db('lead_members')
+    .where({ lead_id: lead.id, user_id: user.id })
+    .first();
+  return !!isMember;
+}
+
 const leadsController = {
   createValidation,
 
@@ -31,7 +53,7 @@ const leadsController = {
       const isAdmin = hasAdminRole(req.user);
       let user_groups = [];
       if (!isAdmin) {
-        user_groups = await require('../config/database').db('group_members')
+        user_groups = await db('group_members')
           .where({ user_id: req.user.id })
           .pluck('group_id');
       }
@@ -57,6 +79,8 @@ const leadsController = {
     try {
       const lead = await Lead.findById(req.params.id);
       if (!lead) return notFound(res, 'Lead not found.');
+      if (!(await checkLeadAccess(req.user, lead))) return notFound(res, 'Lead not found.');
+
       return success(res, lead);
     } catch (err) {
       return next(err);
@@ -84,6 +108,7 @@ const leadsController = {
     try {
       const existing = await Lead.findById(req.params.id);
       if (!existing) return notFound(res, 'Lead not found.');
+      if (!(await checkLeadAccess(req.user, existing))) return notFound(res, 'Lead not found.');
       const lead = await Lead.update(req.params.id, req.body);
       await AuditLog.create({
         user_id: req.user.id,
@@ -104,6 +129,7 @@ const leadsController = {
     try {
       const existing = await Lead.findById(req.params.id);
       if (!existing) return notFound(res, 'Lead not found.');
+      if (!(await checkLeadAccess(req.user, existing))) return notFound(res, 'Lead not found.');
       await Lead.softDelete(req.params.id);
       await AuditLog.create({
         user_id: req.user.id,
@@ -122,6 +148,9 @@ const leadsController = {
     try {
       const { stage } = req.body;
       if (!stage) return error(res, 'stage is required.', 400);
+      const existing = await Lead.findById(req.params.id);
+      if (!existing) return notFound(res, 'Lead not found.');
+      if (!(await checkLeadAccess(req.user, existing))) return notFound(res, 'Lead not found.');
       const lead = await Lead.moveStage(req.params.id, stage);
       if (!lead) return notFound(res, 'Lead not found.');
       await AuditLog.create({
@@ -160,6 +189,7 @@ const leadsController = {
     try {
       const lead = await Lead.findById(req.params.id);
       if (!lead) return notFound(res, 'Lead not found.');
+      if (!(await checkLeadAccess(req.user, lead))) return notFound(res, 'Lead not found.');
       const notes = await Note.listByEntity('lead', req.params.id);
       return success(res, notes);
     } catch (err) {
@@ -171,6 +201,7 @@ const leadsController = {
     try {
       const lead = await Lead.findById(req.params.id);
       if (!lead) return notFound(res, 'Lead not found.');
+      if (!(await checkLeadAccess(req.user, lead))) return notFound(res, 'Lead not found.');
       const groups = await Lead.getGroups(req.params.id);
       return success(res, groups);
     } catch (err) {
@@ -184,6 +215,7 @@ const leadsController = {
       if (!group_id) return error(res, 'group_id is required.', 400);
       const lead = await Lead.findById(req.params.id);
       if (!lead) return notFound(res, 'Lead not found.');
+      if (!(await checkLeadAccess(req.user, lead))) return notFound(res, 'Lead not found.');
       await Lead.addGroup(req.params.id, group_id);
       return success(res, null, 'Group added.');
     } catch (err) {
@@ -195,6 +227,7 @@ const leadsController = {
     try {
       const lead = await Lead.findById(req.params.id);
       if (!lead) return notFound(res, 'Lead not found.');
+      if (!(await checkLeadAccess(req.user, lead))) return notFound(res, 'Lead not found.');
       await Lead.removeGroup(req.params.id, req.params.groupId);
       return success(res, null, 'Group removed.');
     } catch (err) {
@@ -206,6 +239,7 @@ const leadsController = {
     try {
       const lead = await Lead.findById(req.params.id);
       if (!lead) return notFound(res, 'Lead not found.');
+      if (!(await checkLeadAccess(req.user, lead))) return notFound(res, 'Lead not found.');
       const contacts = await Lead.getContacts(req.params.id);
       return success(res, contacts);
     } catch (err) {
@@ -219,6 +253,7 @@ const leadsController = {
       if (!contact_id) return error(res, 'contact_id is required.', 400);
       const lead = await Lead.findById(req.params.id);
       if (!lead) return notFound(res, 'Lead not found.');
+      if (!(await checkLeadAccess(req.user, lead))) return notFound(res, 'Lead not found.');
       await Lead.addContact(req.params.id, contact_id);
       return success(res, null, 'Contact added.');
     } catch (err) {
@@ -230,6 +265,7 @@ const leadsController = {
     try {
       const lead = await Lead.findById(req.params.id);
       if (!lead) return notFound(res, 'Lead not found.');
+      if (!(await checkLeadAccess(req.user, lead))) return notFound(res, 'Lead not found.');
       await Lead.removeContact(req.params.id, req.params.contactId);
       return success(res, null, 'Contact removed.');
     } catch (err) {
@@ -241,6 +277,7 @@ const leadsController = {
     try {
       const lead = await Lead.findById(req.params.id);
       if (!lead) return notFound(res, 'Lead not found.');
+      if (!(await checkLeadAccess(req.user, lead))) return notFound(res, 'Lead not found.');
       const members = await Lead.getMembers(req.params.id);
       return success(res, members);
     } catch (err) {
@@ -254,6 +291,7 @@ const leadsController = {
       if (!user_id) return error(res, 'user_id is required.', 400);
       const lead = await Lead.findById(req.params.id);
       if (!lead) return notFound(res, 'Lead not found.');
+      if (!(await checkLeadAccess(req.user, lead))) return notFound(res, 'Lead not found.');
       await Lead.addMember(req.params.id, user_id, role);
       return success(res, null, 'Member added.');
     } catch (err) {
@@ -265,8 +303,72 @@ const leadsController = {
     try {
       const lead = await Lead.findById(req.params.id);
       if (!lead) return notFound(res, 'Lead not found.');
+      if (!(await checkLeadAccess(req.user, lead))) return notFound(res, 'Lead not found.');
       await Lead.removeMember(req.params.id, req.params.userId);
       return success(res, null, 'Member removed.');
+    } catch (err) {
+      return next(err);
+    }
+  },
+
+  async getActivity(req, res, next) {
+    try {
+      const lead = await Lead.findById(req.params.id);
+      if (!lead) return notFound(res, 'Lead not found.');
+      if (!(await checkLeadAccess(req.user, lead))) return notFound(res, 'Lead not found.');
+      const { page = 1, limit = 20 } = req.query;
+      const result = await AuditLog.list({
+        entity_type: 'lead',
+        entity_id: req.params.id,
+        page: parseInt(page, 10),
+        limit: parseInt(limit, 10),
+      });
+      return paginated(res, result.data, result.total, parseInt(page, 10), parseInt(limit, 10));
+    } catch (err) {
+      return next(err);
+    }
+  },
+
+  async bulkDelete(req, res, next) {
+    try {
+      const { ids } = req.body;
+      if (!Array.isArray(ids) || ids.length === 0) return error(res, 'ids array is required.', 400);
+      await db('leads').whereIn('id', ids).update({ deleted_at: db.fn.now() });
+      await AuditLog.create({
+        user_id: req.user.id,
+        action: 'bulk_delete_leads',
+        entity_type: 'lead',
+        new_values: { ids },
+        ip_address: req.ip,
+      });
+      return success(res, null, `${ids.length} lead(s) deleted.`);
+    } catch (err) {
+      return next(err);
+    }
+  },
+
+  async exportCsv(req, res, next) {
+    try {
+      const isAdmin = hasAdminRole(req.user);
+      let user_groups = [];
+      if (!isAdmin) {
+        user_groups = await db('group_members').where({ user_id: req.user.id }).pluck('group_id');
+      }
+      const result = await Lead.list({
+        page: 1,
+        limit: MAX_EXPORT_ROWS,
+        user_id: isAdmin ? null : req.user.id,
+        user_groups,
+      });
+      const rows = result.data;
+      const headers = ['id', 'title', 'value', 'probability', 'stage', 'status', 'visibility', 'source', 'company_name', 'contact_name', 'assigned_to_name', 'created_at'];
+      const csv = [
+        headers.join(','),
+        ...rows.map(r => headers.map(h => JSON.stringify(r[h] ?? '')).join(',')),
+      ].join('\n');
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', 'attachment; filename="leads.csv"');
+      return res.send(csv);
     } catch (err) {
       return next(err);
     }
@@ -276,6 +378,7 @@ const leadsController = {
     try {
       const lead = await Lead.findById(req.params.id);
       if (!lead) return notFound(res, 'Lead not found.');
+      if (!(await checkLeadAccess(req.user, lead))) return notFound(res, 'Lead not found.');
       if (lead.status === 'won' || lead.status === 'lost') {
         return error(res, 'Cannot convert a lead that is already won or lost.', 400);
       }
@@ -308,6 +411,11 @@ const leadsController = {
         await Project.addMember(project.id, m.id, m.role).catch(() => {});
       }
 
+      // Copy assigned_to as project member if not already added
+      if (lead.assigned_to && !leadMembers.find(m => String(m.id) === String(lead.assigned_to))) {
+        await Project.addMember(project.id, lead.assigned_to, 'member').catch(() => {});
+      }
+
       // Copy lead groups to project
       const leadGroups = await Lead.getGroups(lead.id);
       for (const g of leadGroups) {
@@ -331,12 +439,49 @@ const leadsController = {
       // Copy lead notes to project
       const leadNotes = await Note.listByEntity('lead', lead.id);
       for (const n of leadNotes) {
-        await require('../config/database').db('notes').insert({
+        await db('notes').insert({
           entity_type: 'project',
           entity_id: project.id,
           content: n.content,
           type: n.type || 'general',
           created_by: n.created_by,
+        }).catch(() => {});
+      }
+
+      // Create an informational note with the lead's pipeline details,
+      // labelled in the converting user's preferred language.
+      // Labels are looked up from the shared translations table so that
+      // adding a new language via the admin UI automatically covers this note too.
+      const convertingUser = await db('users').where({ id: req.user.id }).first();
+      const lang = convertingUser?.preferred_language || 'en';
+      const lookupLabel = async (key) => {
+        if (lang !== 'en') {
+          const row = await db('translations').where({ language_code: lang, key }).first();
+          if (row?.value) return row.value;
+        }
+        const row = await db('translations').where({ language_code: 'en', key }).first();
+        return row?.value || key;
+      };
+      const [convertedFromLabel, stageLabel, sourceLabel, probabilityLabel, valueLabel] = await Promise.all([
+        lookupLabel('leads.convertedFrom'),
+        lookupLabel('leads.stage'),
+        lookupLabel('leads.source'),
+        lookupLabel('leads.probability'),
+        lookupLabel('leads.value'),
+      ]);
+      const leadInfo = [
+        lead.stage ? `${stageLabel}: ${lead.stage}` : null,
+        lead.source ? `${sourceLabel}: ${lead.source}` : null,
+        lead.probability != null ? `${probabilityLabel}: ${lead.probability}%` : null,
+        lead.value != null ? `${valueLabel}: ${lead.value}` : null,
+      ].filter(Boolean).join('\n');
+      if (leadInfo) {
+        await db('notes').insert({
+          entity_type: 'project',
+          entity_id: project.id,
+          content: `${convertedFromLabel}:\n${leadInfo}`,
+          type: 'general',
+          created_by: req.user.id,
         }).catch(() => {});
       }
 

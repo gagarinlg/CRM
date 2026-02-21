@@ -81,8 +81,8 @@ export default function ContactsList() {
           <InputLabel>{t('contacts.status')}</InputLabel>
           <Select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} label={t('contacts.status')}>
             <MenuItem value="">{t('common.all')}</MenuItem>
-            <MenuItem value="active">Active</MenuItem>
-            <MenuItem value="inactive">Inactive</MenuItem>
+            <MenuItem value="active">{t('common.active')}</MenuItem>
+            <MenuItem value="inactive">{t('common.inactive')}</MenuItem>
           </Select>
         </FormControl>
       </Stack>
@@ -95,6 +95,7 @@ export default function ContactsList() {
                 <TableCell>{t('contacts.name')}</TableCell>
                 <TableCell>{t('contacts.company')}</TableCell>
                 <TableCell>{t('contacts.jobTitle')}</TableCell>
+                <TableCell>{t('tags.title', 'Tags')}</TableCell>
                 <TableCell>{t('contacts.email')}</TableCell>
                 <TableCell>{t('contacts.phone')}</TableCell>
                 <TableCell align="right">{t('common.actions')}</TableCell>
@@ -102,9 +103,9 @@ export default function ContactsList() {
             </TableHead>
             <TableBody>
               {loading ? (
-                <TableRow><TableCell colSpan={6}><LoadingSpinner /></TableCell></TableRow>
+                <TableRow><TableCell colSpan={7}><LoadingSpinner /></TableCell></TableRow>
               ) : contacts.length === 0 ? (
-                <TableRow><TableCell colSpan={6} align="center">{t('common.noResults')}</TableCell></TableRow>
+                <TableRow><TableCell colSpan={7} align="center">{t('common.noResults')}</TableCell></TableRow>
               ) : contacts.map(c => (
                 <TableRow key={c.id} hover onClick={() => navigate(`/contacts/${c.id}`)} sx={{ cursor: 'pointer' }}>
                   <TableCell>
@@ -115,6 +116,13 @@ export default function ContactsList() {
                   </TableCell>
                   <TableCell>{c.companyName || c.company?.name}</TableCell>
                   <TableCell>{c.jobTitle}</TableCell>
+                  <TableCell>
+                    <Box display="flex" flexWrap="wrap" gap={0.5}>
+                      {(c.tags || []).map(tag => (
+                        <Chip key={tag.id} label={tag.name} size="small" sx={{ bgcolor: tag.color || '#6b7280', color: '#fff', fontSize: 11, height: 20 }} />
+                      ))}
+                    </Box>
+                  </TableCell>
                   <TableCell>{c.email}</TableCell>
                   <TableCell>{c.primary_phone || c.phone || '—'}</TableCell>
                   <TableCell align="right">

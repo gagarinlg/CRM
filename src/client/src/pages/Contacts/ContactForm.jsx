@@ -206,7 +206,7 @@ export default function ContactForm() {
                 />
                 <TextField
                   {...register(`phones.${index}.phone_number`)}
-                  label="Phone number"
+                  label={t('contacts.phone')}
                   size="small"
                   sx={{ flex: 1 }}
                   error={!!errors.phones?.[index]?.phone_number}
@@ -218,7 +218,7 @@ export default function ContactForm() {
                   disabled={phoneFields.length === 1}
                   size="small"
                   color="error"
-                  title="Remove phone"
+                  title={t('contacts.removePhone')}
                 >
                   <DeleteIcon fontSize="small" />
                 </IconButton>

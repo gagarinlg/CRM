@@ -4,8 +4,10 @@ import {
   Button, TextField, List, ListItem, ListItemButton,
   ListItemText, ListItemAvatar, Avatar, Typography, CircularProgress,
 } from '@mui/material';
+import { useTranslation } from '../../i18n/I18nContext.jsx';
 
 export default function EntityPickerDialog({ open, onClose, onSelect, title, fetchItems, getLabel, getSubLabel, getInitials }) {
+  const { t } = useTranslation();
   const [search, setSearch] = useState('');
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -35,7 +37,7 @@ export default function EntityPickerDialog({ open, onClose, onSelect, title, fet
           autoFocus
           fullWidth
           size="small"
-          placeholder="Search..."
+          placeholder={t('common.searchDots')}
           value={search}
           onChange={e => setSearch(e.target.value)}
           sx={{ mb: 1 }}
