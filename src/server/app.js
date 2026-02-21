@@ -54,25 +54,38 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
-const globalLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 500,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { status: 'error', message: 'Too many requests, please try again later.' },
-});
-app.use(globalLimiter);
+// Rate limiting is disabled in CI / test environments to avoid 429 errors
+// during automated test runs.  In production both limiters are active.
+const isTestEnv = process.env.CI === 'true' || process.env.NODE_ENV === 'test';
+
+const globalLimiter = isTestEnv
+  ? (_req, _res, next) => next()   // no-op in CI/test
+  : rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 500,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { status: 'error', message: 'Too many requests, please try again later.' },
+  });
+
+// Apply global limiter to API routes only – static assets must not be rate-limited
+// because each page load fetches many JS/CSS chunks, which would quickly exhaust
+// the per-IP counter and cause 429 responses on legitimate browser navigation.
+app.use('/api/v1', globalLimiter);
+app.use('/caldav', globalLimiter);
+app.use('/carddav', globalLimiter);
 
 // Strict rate-limiter for authentication *attempt* endpoints only (login, 2FA,
-// token refresh). Read-only endpoints like GET /auth/me are not covered here –
-// they fall under the global 500 req/15min limiter.
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 20,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { status: 'error', message: 'Too many authentication attempts, please try again later.' },
-});
+// token refresh). Read-only endpoints like GET /auth/me are not covered here.
+const authLimiter = isTestEnv
+  ? (_req, _res, next) => next()   // no-op in CI/test
+  : rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 20,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { status: 'error', message: 'Too many authentication attempts, please try again later.' },
+  });
 
 // ── Body parsing ─────────────────────────────────────────────────────────────
 app.use(express.json({ limit: '10mb' }));
