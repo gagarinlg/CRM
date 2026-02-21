@@ -30,25 +30,32 @@
 7. [Projects](#7-projects)
    - 7.1 [Viewing Projects](#71-viewing-projects)
    - 7.2 [Creating a Project](#72-creating-a-project)
-   - 7.3 [Managing Project Members & Contacts](#73-managing-project-members--contacts)
+   - 7.3 [Project Visibility](#73-project-visibility)
+   - 7.4 [Managing Project Members & Contacts](#74-managing-project-members--contacts)
 8. [Leads](#8-leads)
    - 8.1 [Viewing Leads](#81-viewing-leads)
    - 8.2 [Creating a Lead](#82-creating-a-lead)
-   - 8.3 [Moving a Lead Through the Sales Funnel](#83-moving-a-lead-through-the-sales-funnel)
-   - 8.4 [Lead Statistics](#84-lead-statistics)
-9. [Notes](#9-notes)
-   - 9.1 [Adding a Note](#91-adding-a-note)
-   - 9.2 [Editing and Deleting Notes](#92-editing-and-deleting-notes)
-10. [Calendar](#10-calendar)
-    - 10.1 [Views (Month / Week / Day)](#101-views-month--week--day)
-    - 10.2 [Creating an Event](#102-creating-an-event)
-    - 10.3 [Editing and Deleting Events](#103-editing-and-deleting-events)
-    - 10.4 [Recurring Events](#104-recurring-events)
-11. [Contact Reminders](#11-contact-reminders)
-12. [Reports](#12-reports)
-13. [Searching & Filtering](#13-searching--filtering)
-14. [Keyboard Shortcuts](#14-keyboard-shortcuts)
-15. [Frequently Asked Questions](#15-frequently-asked-questions)
+   - 8.3 [Lead Visibility](#83-lead-visibility)
+   - 8.4 [Moving a Lead Through the Sales Funnel](#84-moving-a-lead-through-the-sales-funnel)
+   - 8.5 [Converting a Lead to a Project](#85-converting-a-lead-to-a-project)
+   - 8.6 [Lead Statistics](#86-lead-statistics)
+9. [Tags / Labels](#9-tags--labels)
+10. [File Attachments](#10-file-attachments)
+11. [Notes](#11-notes)
+    - 11.1 [Adding a Note](#111-adding-a-note)
+    - 11.2 [Editing and Deleting Notes](#112-editing-and-deleting-notes)
+12. [Calendar](#12-calendar)
+    - 12.1 [Views (Month / Week / Day)](#121-views-month--week--day)
+    - 12.2 [Creating an Event](#122-creating-an-event)
+    - 12.3 [Editing and Deleting Events](#123-editing-and-deleting-events)
+    - 12.4 [Recurring Events](#124-recurring-events)
+13. [Contact Reminders](#13-contact-reminders)
+14. [Reports & CSV Export](#14-reports--csv-export)
+15. [Global Search](#15-global-search)
+16. [Searching & Filtering](#16-searching--filtering)
+17. [Bulk Delete](#17-bulk-delete)
+18. [Keyboard Shortcuts](#18-keyboard-shortcuts)
+19. [Frequently Asked Questions](#19-frequently-asked-questions)
 
 ---
 
@@ -270,6 +277,7 @@ Project statuses: *Planning* → *In Progress* → *On Hold* → *Completed* →
    | **Name** | Yes | |
    | **Description** | No | |
    | **Status** | Yes | Default: *Planning* |
+   | **Visibility** | Yes | *Public* or *Restricted* (see below) |
    | **Company** | No | Link to a customer company |
    | **Start Date** | No | |
    | **End Date** | No | |
@@ -277,7 +285,18 @@ Project statuses: *Planning* → *In Progress* → *On Hold* → *Completed* →
 
 3. Click **Save**.
 
-### 7.3 Managing Project Members & Contacts
+### 7.3 Project Visibility
+
+| Setting | Who can see the project |
+|---------|------------------------|
+| **Public** | All users with `projects.read` permission |
+| **Restricted** | Only members of the selected groups, direct project members, and Admins/Managers |
+
+To restrict a project, set **Visibility** to *Restricted* and choose one or more **Groups** from the multi-select. Only members of those groups will be able to find and open the project.
+
+> Restricted projects do not appear in lists for users without access — they return "not found" rather than "forbidden" to avoid revealing the existence of confidential projects.
+
+### 7.4 Managing Project Members & Contacts
 
 On the project detail page:
 
@@ -309,12 +328,17 @@ Click **Leads** in the sidebar. Switch between:
    | **Value** | No | Estimated deal value |
    | **Probability** | No | 0–100% |
    | **Stage** | Yes | Default: *New* |
+   | **Visibility** | Yes | *Public* or *Restricted* (see below) |
    | **Source** | No | Where the lead came from |
    | **Assigned To** | No | User responsible |
 
 3. Click **Save**.
 
-### 8.3 Moving a Lead Through the Sales Funnel
+### 8.3 Lead Visibility
+
+Leads support the same visibility model as projects. Set **Visibility** to *Restricted* and select **Groups** to limit who can see the lead.
+
+### 8.4 Moving a Lead Through the Sales Funnel
 
 **Lead stages** (in order):
 
@@ -325,7 +349,18 @@ New → Qualified → Proposal → Negotiation → Won / Lost
 **In List view:** Open the lead → change the **Stage** dropdown → Save.  
 **In Kanban view:** Drag the lead card to the target column.
 
-### 8.4 Lead Statistics
+### 8.5 Converting a Lead to a Project
+
+When a lead is won, you can convert it directly into a project:
+
+1. Open the lead's detail page.
+2. Click **Convert to Project**.
+3. The system creates a new project pre-filled with the lead's name, company, contacts, team members, and notes.
+4. The lead is marked as **Won** and linked to the new project.
+
+> The original lead is preserved — it is not deleted after conversion.
+
+### 8.6 Lead Statistics
 
 On the **Leads** page, click the **Pipeline Stats** or **Conversion Stats** tab to see:
 - Pipeline value broken down by stage
@@ -334,7 +369,49 @@ On the **Leads** page, click the **Pipeline Stats** or **Conversion Stats** tab 
 
 ---
 
-## 9. Notes
+## 9. Tags / Labels
+
+Tags are colour-coded labels you can attach to companies, contacts, projects, and leads to help categorise and filter records.
+
+### Adding tags to a record
+
+1. Open any company, contact, project, or lead detail page.
+2. Scroll to the **Tags** section (or look for the tag chip row near the top).
+3. Click the tag input, type to search existing tags, or type a new name and press Enter to create it.
+4. Tags are saved immediately.
+
+### Removing a tag
+
+Click the **×** on a tag chip to remove it from the record.
+
+### Filtering by tag
+
+On list pages, use the **Tags** filter to show only records with a specific tag.
+
+---
+
+## 10. File Attachments
+
+You can attach files to companies, contacts, projects, and leads (e.g. contracts, proposals, scans).
+
+### Uploading a file
+
+1. Open the detail page of any company, contact, project, or lead.
+2. Scroll to the **Attachments** section.
+3. Click **Upload File** (or drag and drop a file onto the upload area).
+4. The file is saved and listed immediately.
+
+### Downloading a file
+
+Click the file name or the **Download** icon next to it.
+
+### Deleting a file
+
+Click the **Delete** (trash) icon next to the file. Confirm in the dialog. Only the uploader and Admins can delete files.
+
+---
+
+## 11. Notes
 
 Notes can be attached to **Companies**, **Contacts**, **Projects**, and **Leads**.
 
