@@ -27,9 +27,12 @@ export const I18nProvider = ({ children }) => {
 
   // When the user's preferred_language is available (after login), apply it
   // only if the user has never explicitly chosen a language in this browser.
+  // Guard with accessToken check: only call /auth/me when a token exists to
+  // avoid triggering the 401 interceptor on the login page (unauthenticated).
   useEffect(() => {
     const syncUserLang = async () => {
       try {
+        if (!localStorage.getItem('accessToken')) return;
         const hasExplicitChoice = localStorage.getItem('locale_explicit');
         if (hasExplicitChoice) return;
         const res = await api.get('/auth/me');

@@ -34,8 +34,10 @@ const processQueue = (error, token = null) => {
 // Auth endpoints should never trigger a token-refresh / page-redirect loop.
 // If /auth/login itself returns 401 (wrong credentials) we must let the error
 // propagate to the caller (Login.jsx) so it can display the error message.
-// Attempting a refresh on the login endpoint would cause an infinite redirect.
-const AUTH_SKIP_REFRESH = ['/auth/login', '/auth/refresh', '/auth/2fa'];
+// /auth/me is called by I18nContext on every mount (including the login page
+// when unauthenticated); intercepting its 401 with a page redirect would cause
+// an infinite reload loop on the login page.
+const AUTH_SKIP_REFRESH = ['/auth/login', '/auth/refresh', '/auth/2fa', '/auth/me'];
 
 api.interceptors.response.use(
   res => res,
