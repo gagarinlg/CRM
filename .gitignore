@@ -3,6 +3,9 @@ node_modules/
 .npm/
 .yarn/
 yarn.lock
+# Workspace sub-lockfiles (only root package-lock.json is canonical)
+src/client/package-lock.json
+src/server/package-lock.json
 
 # Build output
 dist/
