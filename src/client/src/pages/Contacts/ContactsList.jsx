@@ -11,6 +11,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import api from '../../services/api.js';
 import { useTranslation } from '../../i18n/I18nContext.jsx';
+import { useAuth } from '../../store/AuthContext.jsx';
 import PageHeader from '../../components/common/PageHeader.jsx';
 import SearchBar from '../../components/common/SearchBar.jsx';
 import LoadingSpinner from '../../components/common/LoadingSpinner.jsx';
@@ -20,6 +21,7 @@ import useDebounce from '../../hooks/useDebounce.js';
 export default function ContactsList() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { hasPermission } = useAuth();
   const [contacts, setContacts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -68,9 +70,11 @@ export default function ContactsList() {
       <PageHeader
         title={t('contacts.title')}
         actions={
-          <Button variant="contained" startIcon={<AddIcon />} onClick={() => navigate('/contacts/new')}>
-            {t('contacts.new')}
-          </Button>
+          hasPermission('contacts.write') && (
+            <Button variant="contained" startIcon={<AddIcon />} onClick={() => navigate('/contacts/new')}>
+              {t('contacts.new')}
+            </Button>
+          )
         }
       />
       {error && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError('')}>{error}</Alert>}
@@ -129,12 +133,16 @@ export default function ContactsList() {
                     <Tooltip title={t('common.view')}>
                       <IconButton size="small" onClick={e => { e.stopPropagation(); navigate(`/contacts/${c.id}`); }}><VisibilityIcon fontSize="small" /></IconButton>
                     </Tooltip>
-                    <Tooltip title={t('common.edit')}>
-                      <IconButton size="small" onClick={e => { e.stopPropagation(); navigate(`/contacts/${c.id}/edit`); }}><EditIcon fontSize="small" /></IconButton>
-                    </Tooltip>
-                    <Tooltip title={t('common.delete')}>
-                      <IconButton size="small" color="error" onClick={e => { e.stopPropagation(); setDeleteId(c.id); }}><DeleteIcon fontSize="small" /></IconButton>
-                    </Tooltip>
+                    {hasPermission('contacts.write') && (
+                      <Tooltip title={t('common.edit')}>
+                        <IconButton size="small" onClick={e => { e.stopPropagation(); navigate(`/contacts/${c.id}/edit`); }}><EditIcon fontSize="small" /></IconButton>
+                      </Tooltip>
+                    )}
+                    {hasPermission('contacts.delete') && (
+                      <Tooltip title={t('common.delete')}>
+                        <IconButton size="small" color="error" onClick={e => { e.stopPropagation(); setDeleteId(c.id); }}><DeleteIcon fontSize="small" /></IconButton>
+                      </Tooltip>
+                    )}
                   </TableCell>
                 </TableRow>
               ))}

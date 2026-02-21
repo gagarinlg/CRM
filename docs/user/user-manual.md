@@ -30,25 +30,32 @@
 7. [Projects](#7-projects)
    - 7.1 [Viewing Projects](#71-viewing-projects)
    - 7.2 [Creating a Project](#72-creating-a-project)
-   - 7.3 [Managing Project Members & Contacts](#73-managing-project-members--contacts)
+   - 7.3 [Project Visibility](#73-project-visibility)
+   - 7.4 [Managing Project Members & Contacts](#74-managing-project-members--contacts)
 8. [Leads](#8-leads)
    - 8.1 [Viewing Leads](#81-viewing-leads)
    - 8.2 [Creating a Lead](#82-creating-a-lead)
-   - 8.3 [Moving a Lead Through the Sales Funnel](#83-moving-a-lead-through-the-sales-funnel)
-   - 8.4 [Lead Statistics](#84-lead-statistics)
-9. [Notes](#9-notes)
-   - 9.1 [Adding a Note](#91-adding-a-note)
-   - 9.2 [Editing and Deleting Notes](#92-editing-and-deleting-notes)
-10. [Calendar](#10-calendar)
-    - 10.1 [Views (Month / Week / Day)](#101-views-month--week--day)
-    - 10.2 [Creating an Event](#102-creating-an-event)
-    - 10.3 [Editing and Deleting Events](#103-editing-and-deleting-events)
-    - 10.4 [Recurring Events](#104-recurring-events)
-11. [Contact Reminders](#11-contact-reminders)
-12. [Reports](#12-reports)
-13. [Searching & Filtering](#13-searching--filtering)
-14. [Keyboard Shortcuts](#14-keyboard-shortcuts)
-15. [Frequently Asked Questions](#15-frequently-asked-questions)
+   - 8.3 [Lead Visibility](#83-lead-visibility)
+   - 8.4 [Moving a Lead Through the Sales Funnel](#84-moving-a-lead-through-the-sales-funnel)
+   - 8.5 [Converting a Lead to a Project](#85-converting-a-lead-to-a-project)
+   - 8.6 [Lead Statistics](#86-lead-statistics)
+9. [Tags / Labels](#9-tags--labels)
+10. [File Attachments](#10-file-attachments)
+11. [Notes](#11-notes)
+    - 11.1 [Adding a Note](#111-adding-a-note)
+    - 11.2 [Editing and Deleting Notes](#112-editing-and-deleting-notes)
+12. [Calendar](#12-calendar)
+    - 12.1 [Views (Month / Week / Day)](#121-views-month--week--day)
+    - 12.2 [Creating an Event](#122-creating-an-event)
+    - 12.3 [Editing and Deleting Events](#123-editing-and-deleting-events)
+    - 12.4 [Recurring Events](#124-recurring-events)
+13. [Contact Reminders](#13-contact-reminders)
+14. [Reports & CSV Export](#14-reports--csv-export)
+15. [Global Search](#15-global-search)
+16. [Searching & Filtering](#16-searching--filtering)
+17. [Bulk Delete](#17-bulk-delete)
+18. [Keyboard Shortcuts](#18-keyboard-shortcuts)
+19. [Frequently Asked Questions](#19-frequently-asked-questions)
 
 ---
 
@@ -57,6 +64,8 @@
 1. Open the CRM URL in your browser (e.g. `https://crm.yourdomain.com`).
 2. Enter your **Username** or **Email** and your **Password**.
 3. Click **Sign In**.
+
+![Login page](screenshots/01-login.png)
 
 ### If Two-Factor Authentication is enabled on your account
 
@@ -113,6 +122,8 @@ Protect your account with a time-based one-time password (TOTP).
 
 The dashboard is the first page you see after logging in. It gives you a live overview of your business data.
 
+![Dashboard overview](screenshots/02-dashboard.png)
+
 ### 4.1 Understanding Widgets
 
 | Widget | What it shows |
@@ -143,6 +154,8 @@ Each user has their own dashboard layout — changes you make do not affect othe
 ### 5.1 Viewing Companies
 
 Click **Companies** in the left sidebar. The list shows all companies with search, filter, and sort options.
+
+![Companies list](screenshots/03-companies-list.png)
 
 - **Search:** Type in the search box to filter by name, email, or phone.
 - **Filter by industry:** Use the Industry dropdown.
@@ -190,6 +203,8 @@ The company detail page shows:
 
 Click on any item to navigate to it directly.
 
+![Company detail view](screenshots/04-company-detail.png)
+
 ---
 
 ## 6. Contacts
@@ -197,6 +212,8 @@ Click on any item to navigate to it directly.
 ### 6.1 Viewing Contacts
 
 Click **Contacts** in the sidebar. Search by name, email, or phone. Filter by company or sort by any column.
+
+![Contacts list](screenshots/05-contacts-list.png)
 
 ### 6.2 Creating a Contact
 
@@ -250,6 +267,8 @@ Shows:
 - Projects the contact is involved in
 - Last contact date
 
+![Contact detail view](screenshots/06-contact-detail.png)
+
 ---
 
 ## 7. Projects
@@ -259,6 +278,8 @@ Shows:
 Click **Projects** in the sidebar. Filter by **Status** or **Company**, or search by project name.
 
 Project statuses: *Planning* → *In Progress* → *On Hold* → *Completed* → *Cancelled*
+
+![Projects list](screenshots/07-projects-list.png)
 
 ### 7.2 Creating a Project
 
@@ -270,6 +291,7 @@ Project statuses: *Planning* → *In Progress* → *On Hold* → *Completed* →
    | **Name** | Yes | |
    | **Description** | No | |
    | **Status** | Yes | Default: *Planning* |
+   | **Visibility** | Yes | *Public* or *Restricted* (see below) |
    | **Company** | No | Link to a customer company |
    | **Start Date** | No | |
    | **End Date** | No | |
@@ -277,12 +299,25 @@ Project statuses: *Planning* → *In Progress* → *On Hold* → *Completed* →
 
 3. Click **Save**.
 
-### 7.3 Managing Project Members & Contacts
+### 7.3 Project Visibility
+
+| Setting | Who can see the project |
+|---------|------------------------|
+| **Public** | All users with `projects.read` permission |
+| **Restricted** | Only members of the selected groups, direct project members, and Admins/Managers |
+
+To restrict a project, set **Visibility** to *Restricted* and choose one or more **Groups** from the multi-select. Only members of those groups will be able to find and open the project.
+
+> Restricted projects do not appear in lists for users without access — they return "not found" rather than "forbidden" to avoid revealing the existence of confidential projects.
+
+### 7.4 Managing Project Members & Contacts
 
 On the project detail page:
 
 - **Team Members tab:** Click **Add Member** → select a user → choose their role on the project.
 - **Contacts tab:** Click **Add Contact** → search for and select a contact to link.
+
+![Project detail view](screenshots/08-project-detail.png)
 
 ---
 
@@ -295,6 +330,10 @@ Leads represent potential sales opportunities at various stages of the sales fun
 Click **Leads** in the sidebar. Switch between:
 - **List view** — sortable table of all leads
 - **Kanban view** — cards arranged by stage (drag to move)
+
+![Leads list view](screenshots/09-leads-list.png)
+
+![Leads Kanban view](screenshots/10-leads-kanban.png)
 
 ### 8.2 Creating a Lead
 
@@ -309,12 +348,17 @@ Click **Leads** in the sidebar. Switch between:
    | **Value** | No | Estimated deal value |
    | **Probability** | No | 0–100% |
    | **Stage** | Yes | Default: *New* |
+   | **Visibility** | Yes | *Public* or *Restricted* (see below) |
    | **Source** | No | Where the lead came from |
    | **Assigned To** | No | User responsible |
 
 3. Click **Save**.
 
-### 8.3 Moving a Lead Through the Sales Funnel
+### 8.3 Lead Visibility
+
+Leads support the same visibility model as projects. Set **Visibility** to *Restricted* and select **Groups** to limit who can see the lead.
+
+### 8.4 Moving a Lead Through the Sales Funnel
 
 **Lead stages** (in order):
 
@@ -325,20 +369,75 @@ New → Qualified → Proposal → Negotiation → Won / Lost
 **In List view:** Open the lead → change the **Stage** dropdown → Save.  
 **In Kanban view:** Drag the lead card to the target column.
 
-### 8.4 Lead Statistics
+### 8.5 Converting a Lead to a Project
+
+When a lead is won, you can convert it directly into a project:
+
+1. Open the lead's detail page.
+2. Click **Convert to Project**.
+3. The system creates a new project pre-filled with the lead's name, company, contacts, team members, and notes.
+4. The lead is marked as **Won** and linked to the new project.
+
+> The original lead is preserved — it is not deleted after conversion.
+
+### 8.6 Lead Statistics
 
 On the **Leads** page, click the **Pipeline Stats** or **Conversion Stats** tab to see:
 - Pipeline value broken down by stage
 - Conversion rates between stages
 - Won vs. Lost ratio
 
+![Lead detail view](screenshots/11-lead-detail.png)
+
 ---
 
-## 9. Notes
+## 9. Tags / Labels
+
+Tags are colour-coded labels you can attach to companies, contacts, projects, and leads to help categorise and filter records.
+
+### Adding tags to a record
+
+1. Open any company, contact, project, or lead detail page.
+2. Scroll to the **Tags** section (or look for the tag chip row near the top).
+3. Click the tag input, type to search existing tags, or type a new name and press Enter to create it.
+4. Tags are saved immediately.
+
+### Removing a tag
+
+Click the **×** on a tag chip to remove it from the record.
+
+### Filtering by tag
+
+On list pages, use the **Tags** filter to show only records with a specific tag.
+
+---
+
+## 10. File Attachments
+
+You can attach files to companies, contacts, projects, and leads (e.g. contracts, proposals, scans).
+
+### Uploading a file
+
+1. Open the detail page of any company, contact, project, or lead.
+2. Scroll to the **Attachments** section.
+3. Click **Upload File** (or drag and drop a file onto the upload area).
+4. The file is saved and listed immediately.
+
+### Downloading a file
+
+Click the file name or the **Download** icon next to it.
+
+### Deleting a file
+
+Click the **Delete** (trash) icon next to the file. Confirm in the dialog. Only the uploader and Admins can delete files.
+
+---
+
+## 11. Notes
 
 Notes can be attached to **Companies**, **Contacts**, **Projects**, and **Leads**.
 
-### 9.1 Adding a Note
+### 11.1 Adding a Note
 
 From any detail page (company, contact, project, or lead):
 1. Scroll to the **Notes** section.
@@ -348,22 +447,24 @@ From any detail page (company, contact, project, or lead):
 
 Notes are timestamped and show which user created them.
 
-### 9.2 Editing and Deleting Notes
+### 11.2 Editing and Deleting Notes
 
 - **Edit:** Click the pencil icon on a note. Only the note's author and admins can edit it.
 - **Delete:** Click the trash icon. Only the note's author and admins can delete it.
 
 ---
 
-## 10. Calendar
+## 12. Calendar
 
 The calendar shows all events linked to your account. Events can also be linked to contacts, companies, projects, or leads.
 
-### 10.1 Views (Month / Week / Day)
+![Calendar](screenshots/12-calendar.png)
+
+### 12.1 Views (Month / Week / Day)
 
 Use the **Month / Week / Day** buttons at the top of the calendar page to switch views. Use the **<** and **>** arrows to navigate to previous or next periods. Click **Today** to return to the current date.
 
-### 10.2 Creating an Event
+### 12.2 Creating an Event
 
 1. Click a time slot on the calendar, or click **+ New Event**.
 2. Fill in:
@@ -381,12 +482,12 @@ Use the **Month / Week / Day** buttons at the top of the calendar page to switch
 
 3. Click **Save**.
 
-### 10.3 Editing and Deleting Events
+### 12.3 Editing and Deleting Events
 
 - **Edit:** Click the event on the calendar, then click **Edit**.
 - **Delete:** Click the event → **Delete**, confirm in the dialog.
 
-### 10.4 Recurring Events
+### 12.4 Recurring Events
 
 When creating or editing an event, tick **Repeat** and choose a recurrence rule:
 - **Daily**, **Weekly**, **Monthly**, or **Yearly**
@@ -399,7 +500,7 @@ When deleting a recurring event you can choose to delete:
 
 ---
 
-## 11. Contact Reminders
+## 13. Contact Reminders
 
 The CRM tracks the **Last Contact Date** for each contact. When that date is older than your configured threshold, the system reminds you.
 
@@ -421,7 +522,7 @@ Open the contact → click **Update Last Contact**. The reminder clock resets.
 
 ---
 
-## 12. Reports
+## 14. Reports & CSV Export
 
 > **Requires:** `reports.read` permission (Manager or Admin role by default).  
 > **Exporting** requires `reports.generate`.
@@ -436,9 +537,27 @@ Open the contact → click **Update Last Contact**. The reminder clock resets.
 4. Click **Run Report** to view results in the browser.
 5. To export, click **Export CSV** or **Export PDF**.
 
+![Reports page](screenshots/13-reports.png)
+
+### Quick CSV export from list views
+
+The **Projects** and **Leads** list pages each have an **Export CSV** button in the toolbar. Clicking it downloads the current filtered list as a CSV file — no need to go to the Reports section.
+
 ---
 
-## 13. Searching & Filtering
+## 15. Global Search
+
+Click the **Search** icon (🔍) in the top navigation bar to open the global search dialog.
+
+- Type at least 2 characters to search across **all** entities simultaneously: companies, contacts, projects, and leads.
+- Results are grouped by entity type. Click any result to navigate directly to that record.
+- Press **Esc** or click outside the dialog to close it.
+
+![Global search dialog](screenshots/17-global-search.png)
+
+---
+
+## 16. Searching & Filtering
 
 Every list page (Companies, Contacts, Projects, Leads) has a search box at the top. Typing searches across the most relevant fields for that entity.
 
@@ -452,7 +571,19 @@ Click **Clear Filters** to reset all filters.
 
 ---
 
-## 14. Keyboard Shortcuts
+## 17. Bulk Delete
+
+All list views (Companies, Contacts, Projects, Leads) support selecting and deleting multiple records at once.
+
+1. Tick the checkbox next to each record you want to delete (or tick the header checkbox to select all visible records).
+2. A **Delete Selected** button appears in the toolbar above the list.
+3. Click it, then confirm in the dialog.
+
+> Bulk delete requires the same `delete` permission as single-record delete.
+
+---
+
+## 18. Keyboard Shortcuts
 
 | Shortcut | Action |
 |----------|--------|
@@ -469,7 +600,7 @@ Click **Clear Filters** to reset all filters.
 
 ---
 
-## 15. Frequently Asked Questions
+## 19. Frequently Asked Questions
 
 **Q: I cannot see the Admin menu.**  
 A: The Admin section is only visible to users with the **Admin** or **Manager** role. Contact your system administrator.

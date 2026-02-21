@@ -86,6 +86,37 @@ exports.down = async (knex) => {
 };
 ```
 
+### 2.5 Yup validation messages must also use `t()`
+
+Every validation message in a Yup schema **must** be a translated string, not a
+hard-coded English literal. Because Yup schemas need `t()` from the component
+context, define them **inside** the component with `useMemo`:
+
+```jsx
+// ✅ correct — schema defined inside component with t()
+import { useMemo } from 'react';
+import { useTranslation } from '../../i18n/I18nContext';
+import { yupResolver } from '@hookform/resolvers/yup';
+import * as yup from 'yup';
+
+export default function MyForm() {
+  const { t } = useTranslation();
+  const schema = useMemo(() => yup.object({
+    name: yup.string().required(t('validation.nameRequired')),
+    email: yup.string().email(t('validation.emailInvalid')).required(t('validation.emailRequired')),
+  }), [t]);
+  const { register, handleSubmit, formState: { errors } } = useForm({ resolver: yupResolver(schema) });
+  // ...
+}
+
+// ❌ wrong — module-level schema with hard-coded English
+const schema = yup.object({ name: yup.string().required('Name is required') });
+```
+
+Reuse existing keys where they already exist (e.g. `auth.minPassword`,
+`auth.passwordsMustMatch`, `errors.required`) before adding new ones. All new
+validation keys belong in the `validation` module.
+
 ### 2.4 Backend strings that end up in the UI
 
 When the backend creates text that the frontend displays (e.g. audit notes from

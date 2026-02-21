@@ -19,6 +19,7 @@ jest.mock('../../../src/server/middleware/auth', () => ({
 }));
 
 jest.mock('../../../src/server/models/User');
+jest.mock('../../../src/server/models/Role');
 jest.mock('../../../src/server/models/AuditLog', () => ({
   create: jest.fn().mockResolvedValue({ id: 'log-id' }),
 }));
@@ -26,6 +27,7 @@ jest.mock('../../../src/server/models/AuditLog', () => ({
 const request = require('supertest');
 const app = require('../../../src/server/app');
 const User = require('../../../src/server/models/User');
+const Role = require('../../../src/server/models/Role');
 
 const SAMPLE_USER = {
   id: 'user-uuid-1',
@@ -38,11 +40,13 @@ const SAMPLE_USER = {
 beforeEach(() => jest.clearAllMocks());
 
 describe('GET /api/v1/users', () => {
-  test('returns paginated user list', async () => {
+  test('returns paginated user list with roles', async () => {
     User.list.mockResolvedValue({ data: [SAMPLE_USER], total: 1 });
+    User.getUserRolesBatch.mockResolvedValue({ 'user-uuid-1': [{ id: 'role-1', name: 'Admin' }] });
     const res = await request(app).get('/api/v1/users');
     expect(res.status).toBe(200);
     expect(res.body.data[0].username).toBe('john');
+    expect(res.body.data[0].roles[0].name).toBe('Admin');
   });
 });
 
@@ -72,6 +76,18 @@ describe('POST /api/v1/users', () => {
     expect(res.status).toBe(201);
   });
 
+  test('assigns role when role name is provided on create', async () => {
+    User.create.mockResolvedValue(SAMPLE_USER);
+    Role.findByName.mockResolvedValue({ id: 'role-uuid-1', name: 'user' });
+    User.assignRole.mockResolvedValue(undefined);
+    const res = await request(app)
+      .post('/api/v1/users')
+      .send({ email: 'john@example.com', username: 'john', password: 'secret123', role: 'user' });
+    expect(res.status).toBe(201);
+    expect(Role.findByName).toHaveBeenCalledWith('user');
+    expect(User.assignRole).toHaveBeenCalledWith(SAMPLE_USER.id, 'role-uuid-1');
+  });
+
   test('returns 422 for invalid email', async () => {
     const res = await request(app)
       .post('/api/v1/users')
@@ -95,6 +111,21 @@ describe('PUT /api/v1/users/:id', () => {
       .put('/api/v1/users/user-uuid-1')
       .send({ username: 'johnny' });
     expect(res.status).toBe(200);
+  });
+
+  test('swaps role when role name is provided on update', async () => {
+    User.findById.mockResolvedValue(SAMPLE_USER);
+    User.update.mockResolvedValue(SAMPLE_USER);
+    Role.findByName.mockResolvedValue({ id: 'role-uuid-2', name: 'manager' });
+    User.getUserRoles.mockResolvedValue([{ id: 'role-uuid-1', name: 'user' }]);
+    User.removeRole.mockResolvedValue(undefined);
+    User.assignRole.mockResolvedValue(undefined);
+    const res = await request(app)
+      .put('/api/v1/users/user-uuid-1')
+      .send({ username: 'johnny', role: 'manager' });
+    expect(res.status).toBe(200);
+    expect(User.removeRole).toHaveBeenCalledWith('user-uuid-1', 'role-uuid-1');
+    expect(User.assignRole).toHaveBeenCalledWith('user-uuid-1', 'role-uuid-2');
   });
 
   test('returns 404 for non-existent user', async () => {

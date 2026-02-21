@@ -46,6 +46,11 @@ const calendarController = {
     try {
       const existing = await Event.findById(req.params.id);
       if (!existing) return notFound(res, 'Event not found.');
+      const userRolesLower = (req.user.roles || []).map((r) => (r.name || r).toLowerCase());
+      const isAdminOrManager = userRolesLower.some((r) => ['admin', 'manager'].includes(r));
+      if (existing.created_by !== req.user.id && !isAdminOrManager) {
+        return error(res, 'Not authorized to edit this event.', 403);
+      }
       const event = await Event.update(req.params.id, req.body);
       return success(res, event, 'Event updated.');
     } catch (err) {
@@ -57,6 +62,11 @@ const calendarController = {
     try {
       const existing = await Event.findById(req.params.id);
       if (!existing) return notFound(res, 'Event not found.');
+      const userRolesLower = (req.user.roles || []).map((r) => (r.name || r).toLowerCase());
+      const isAdminOrManager = userRolesLower.some((r) => ['admin', 'manager'].includes(r));
+      if (existing.created_by !== req.user.id && !isAdminOrManager) {
+        return error(res, 'Not authorized to delete this event.', 403);
+      }
       await Event.delete(req.params.id);
       return success(res, null, 'Event deleted.');
     } catch (err) {

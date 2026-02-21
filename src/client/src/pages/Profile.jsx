@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Box, Card, CardContent, TextField, Button, Alert, CircularProgress,
   Grid, Typography, Divider, Avatar, Stack, Chip,
-  MenuItem, Select, FormControl, InputLabel,
+  MenuItem, Select, FormControl, InputLabel, Switch, FormControlLabel,
 } from '@mui/material';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -14,12 +14,6 @@ import { LANGUAGE_FLAGS } from '../i18n/languages.js';
 import PageHeader from '../components/common/PageHeader.jsx';
 import api from '../services/api.js';
 
-const passwordSchema = yup.object({
-  currentPassword: yup.string().required('Current password is required'),
-  newPassword: yup.string().min(8, 'Minimum 8 characters').required('New password is required'),
-  confirmPassword: yup.string().oneOf([yup.ref('newPassword')], 'Passwords must match').required(),
-});
-
 export default function Profile() {
   const { user, loadUser } = useAuth();
   const { t, languages, changeLocale, locale } = useTranslation();
@@ -30,6 +24,12 @@ export default function Profile() {
   const [pwdError, setPwdError] = useState('');
   const [pwdSuccess, setPwdSuccess] = useState('');
   const [langSaving, setLangSaving] = useState(false);
+  // Calendar preferences state
+  const [calSaving, setCalSaving] = useState(false);
+  const [calError, setCalError] = useState('');
+  const [calSuccess, setCalSuccess] = useState('');
+  const [weekStart, setWeekStart] = useState(user?.week_start ?? '');
+  const [showWeekNumbers, setShowWeekNumbers] = useState(user?.show_week_numbers ?? false);
   // 2FA state
   const [totpStep, setTotpStep] = useState('idle'); // idle | setup | verify | done | disable
   const [totpData, setTotpData] = useState(null);   // { secret, qr_image, qr_url }
@@ -39,7 +39,20 @@ export default function Profile() {
   const [totpError, setTotpError] = useState('');
   const [totpLoading, setTotpLoading] = useState(false);
 
-  const { register: registerProfile, handleSubmit: handleProfile } = useForm({
+  const profileSchema = useMemo(() => yup.object({
+    firstName: yup.string().required(t('validation.firstNameRequired')),
+    lastName: yup.string().required(t('validation.lastNameRequired')),
+    email: yup.string().email(t('validation.emailInvalid')).required(t('validation.emailRequired')),
+  }), [t]);
+
+  const passwordSchema = useMemo(() => yup.object({
+    currentPassword: yup.string().required(t('validation.currentPasswordRequired')),
+    newPassword: yup.string().min(8, t('auth.minPassword')).required(t('validation.newPasswordRequired')),
+    confirmPassword: yup.string().oneOf([yup.ref('newPassword')], t('auth.passwordsMustMatch')).required(t('validation.confirmPasswordRequired')),
+  }), [t]);
+
+  const { register: registerProfile, handleSubmit: handleProfile, formState: { errors: profileErrors } } = useForm({
+    resolver: yupResolver(profileSchema),
     defaultValues: { firstName: user?.firstName || '', lastName: user?.lastName || '', email: user?.email || '' },
   });
 
@@ -77,14 +90,31 @@ export default function Profile() {
     }
   };
 
-  const handleLanguageChange = async (lang) => {
-    setLangSaving(true);
+  const handleLanguageChange = async (lang) => {    setLangSaving(true);
     changeLocale(lang);
     try {
       await api.put(`/users/${user.id}`, { preferred_language: lang });
       await loadUser();
     } catch { /* non-fatal */ } finally {
       setLangSaving(false);
+    }
+  };
+
+  const handleCalendarSave = async () => {
+    setCalSaving(true);
+    setCalError('');
+    setCalSuccess('');
+    try {
+      await api.put(`/users/${user.id}`, {
+        week_start: weekStart === '' ? null : parseInt(weekStart, 10),
+        show_week_numbers: showWeekNumbers,
+      });
+      await loadUser();
+      setCalSuccess(t('profile.saved'));
+    } catch (err) {
+      setCalError(err.response?.data?.message || t('errors.saveFailed'));
+    } finally {
+      setCalSaving(false);
     }
   };
 
@@ -177,13 +207,13 @@ export default function Profile() {
               <Box component="form" onSubmit={handleProfile(onProfileSubmit)}>
                 <Grid container spacing={2}>
                   <Grid item xs={12} sm={6}>
-                    <TextField {...registerProfile('firstName')} label={t('users.firstName')} fullWidth />
+                    <TextField {...registerProfile('firstName')} label={t('users.firstName')} fullWidth required error={!!profileErrors.firstName} helperText={profileErrors.firstName?.message} />
                   </Grid>
                   <Grid item xs={12} sm={6}>
-                    <TextField {...registerProfile('lastName')} label={t('users.lastName')} fullWidth />
+                    <TextField {...registerProfile('lastName')} label={t('users.lastName')} fullWidth required error={!!profileErrors.lastName} helperText={profileErrors.lastName?.message} />
                   </Grid>
                   <Grid item xs={12}>
-                    <TextField {...registerProfile('email')} label={t('users.email')} type="email" fullWidth />
+                    <TextField {...registerProfile('email')} label={t('users.email')} type="email" fullWidth required error={!!profileErrors.email} helperText={profileErrors.email?.message} />
                   </Grid>
                 </Grid>
                 <Button type="submit" variant="contained" disabled={profileSaving} sx={{ mt: 2 }}>
@@ -234,6 +264,35 @@ export default function Profile() {
               <Typography variant="caption" display="block" color="text.secondary" mt={1}>
                 {t('profile.languageHint')}
               </Typography>
+            </CardContent>
+          </Card>
+
+          {/* ── Calendar Preferences ── */}
+          <Card sx={{ mb: 3 }}>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>{t('profile.calendarPreferences')}</Typography>
+              <Divider sx={{ mb: 2 }} />
+              {calError && <Alert severity="error" sx={{ mb: 2 }}>{calError}</Alert>}
+              {calSuccess && <Alert severity="success" sx={{ mb: 2 }}>{calSuccess}</Alert>}
+              <Stack spacing={2}>
+                <FormControl size="small" fullWidth>
+                  <InputLabel>{t('calendar.weekStart')}</InputLabel>
+                  <Select value={weekStart} onChange={e => setWeekStart(e.target.value)} label={t('calendar.weekStart')}>
+                    <MenuItem value="">{t('calendar.weekStartSystem')}</MenuItem>
+                    <MenuItem value={0}>{t('calendar.weekStartSunday')}</MenuItem>
+                    <MenuItem value={1}>{t('calendar.weekStartMonday')}</MenuItem>
+                  </Select>
+                </FormControl>
+                <FormControlLabel
+                  control={<Switch checked={showWeekNumbers} onChange={e => setShowWeekNumbers(e.target.checked)} />}
+                  label={t('calendar.weekNumbers')}
+                />
+                <Box>
+                  <Button variant="contained" onClick={handleCalendarSave} disabled={calSaving}>
+                    {calSaving ? <CircularProgress size={18} color="inherit" /> : t('common.save')}
+                  </Button>
+                </Box>
+              </Stack>
             </CardContent>
           </Card>
 

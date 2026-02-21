@@ -4,6 +4,7 @@ const { body } = require('express-validator');
 const { db } = require('../config/database');
 const emailService = require('../services/emailService');
 const reminderService = require('../services/reminderService');
+const demoDataService = require('../services/demoDataService');
 const { success } = require('../utils/response');
 
 const smtpValidation = [
@@ -87,6 +88,56 @@ const settingsController = {
     try {
       const settings = await reminderService.updateSettings(req.user.id, req.body);
       return success(res, settings, 'Reminder settings saved.');
+    } catch (err) {
+      return next(err);
+    }
+  },
+
+  // ── Demo Data ──────────────────────────────────────────────────────────────
+
+  async loadDemoData(req, res, next) {
+    try {
+      const result = await demoDataService.load(req.user.id);
+      if (result.alreadyLoaded) {
+        return success(res, result, 'Demo data is already loaded.');
+      }
+      return success(res, result, 'Demo data loaded successfully.');
+    } catch (err) {
+      return next(err);
+    }
+  },
+
+  // ── Calendar Settings ──────────────────────────────────────────────────────
+
+  async getCalendarSettings(req, res, next) {
+    try {
+      const rows = await db('system_settings')
+        .whereIn('key', ['calendar_week_start', 'calendar_week_numbers'])
+        .select('key', 'value');
+      const settings = Object.fromEntries(rows.map(r => [r.key, r.value]));
+      return success(res, {
+        week_start: parseInt(settings.calendar_week_start ?? '1', 10),
+        week_numbers: settings.calendar_week_numbers === 'true',
+      });
+    } catch (err) {
+      return next(err);
+    }
+  },
+
+  async saveCalendarSettings(req, res, next) {
+    try {
+      const { week_start, week_numbers } = req.body;
+      if (week_start !== undefined) {
+        await db('system_settings')
+          .insert({ key: 'calendar_week_start', value: String(week_start), updated_at: db.fn.now() })
+          .onConflict('key').merge({ value: String(week_start), updated_at: db.fn.now() });
+      }
+      if (week_numbers !== undefined) {
+        await db('system_settings')
+          .insert({ key: 'calendar_week_numbers', value: String(week_numbers), updated_at: db.fn.now() })
+          .onConflict('key').merge({ value: String(week_numbers), updated_at: db.fn.now() });
+      }
+      return success(res, null, 'Calendar settings saved.');
     } catch (err) {
       return next(err);
     }

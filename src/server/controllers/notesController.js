@@ -19,7 +19,7 @@ const notesController = {
     try {
       const { entity_type, entity_id } = req.query;
       if (!entity_type || !entity_id) return error(res, 'entity_type and entity_id are required.', 400);
-      const notes = await Note.listByEntity(entity_type, entity_id);
+      const notes = await Note.listByEntity(entity_type, entity_id, req.user.id);
       return success(res, notes);
     } catch (err) {
       return next(err);
@@ -49,8 +49,8 @@ const notesController = {
     try {
       const existing = await Note.findById(req.params.id);
       if (!existing) return notFound(res, 'Note not found.');
-      // Only owner or admin can update
-      if (existing.created_by !== req.user.id && !req.user.roles.includes('admin')) {
+      const userRolesLower = (req.user.roles || []).map((r) => (r.name || r).toLowerCase());
+      if (existing.created_by !== req.user.id && !userRolesLower.includes('admin')) {
         return error(res, 'Not authorized to edit this note.', 403);
       }
       const note = await Note.update(req.params.id, req.body);
@@ -64,7 +64,8 @@ const notesController = {
     try {
       const existing = await Note.findById(req.params.id);
       if (!existing) return notFound(res, 'Note not found.');
-      if (existing.created_by !== req.user.id && !req.user.roles.includes('admin')) {
+      const userRolesLower = (req.user.roles || []).map((r) => (r.name || r).toLowerCase());
+      if (existing.created_by !== req.user.id && !userRolesLower.includes('admin')) {
         return error(res, 'Not authorized to delete this note.', 403);
       }
       await Note.delete(req.params.id);

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box, Card, CardContent, TextField, Button, Typography,
@@ -12,14 +12,6 @@ import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import { useAuth } from '../store/AuthContext.jsx';
 import { useTranslation } from '../i18n/I18nContext.jsx';
 
-const schema = yup.object({
-  currentPassword: yup.string().required('Current password is required'),
-  newPassword: yup.string().min(8, 'Minimum 8 characters').required('New password is required'),
-  confirmPassword: yup.string()
-    .oneOf([yup.ref('newPassword')], 'Passwords must match')
-    .required('Please confirm your password'),
-});
-
 export default function ChangePassword() {
   const { changePassword, logout } = useAuth();
   const { t } = useTranslation();
@@ -28,6 +20,14 @@ export default function ChangePassword() {
   const [showNew, setShowNew] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const schema = useMemo(() => yup.object({
+    currentPassword: yup.string().required(t('validation.currentPasswordRequired')),
+    newPassword: yup.string().min(8, t('auth.minPassword')).required(t('validation.newPasswordRequired')),
+    confirmPassword: yup.string()
+      .oneOf([yup.ref('newPassword')], t('auth.passwordsMustMatch'))
+      .required(t('validation.confirmPasswordRequired')),
+  }), [t]);
 
   const { register, handleSubmit, formState: { errors } } = useForm({
     resolver: yupResolver(schema),

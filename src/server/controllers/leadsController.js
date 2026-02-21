@@ -13,10 +13,10 @@ const MAX_EXPORT_ROWS = 10000;
 
 const createValidation = [
   body('title').notEmpty().withMessage('Lead title is required.'),
-  body('value').optional({ checkFalsy: true }).isFloat({ min: 0 }),
-  body('probability').optional({ checkFalsy: true }).isInt({ min: 0, max: 100 }),
-  body('status').optional({ checkFalsy: true }).isIn(['open', 'won', 'lost']),
-  body('visibility').optional({ checkFalsy: true }).isIn(['public', 'restricted']),
+  body('value').optional({ checkFalsy: true }).isFloat({ min: 0 }).withMessage('Value must be a non-negative number.'),
+  body('probability').optional({ checkFalsy: true }).isInt({ min: 0, max: 100 }).withMessage('Probability must be an integer between 0 and 100.'),
+  body('status').optional({ checkFalsy: true }).isIn(['open', 'won', 'lost']).withMessage('Status must be one of: open, won, lost.'),
+  body('visibility').optional({ checkFalsy: true }).isIn(['public', 'restricted']).withMessage('Visibility must be public or restricted.'),
 ];
 
 function hasAdminRole(user) {
@@ -472,8 +472,8 @@ const leadsController = {
       const leadInfo = [
         lead.stage ? `${stageLabel}: ${lead.stage}` : null,
         lead.source ? `${sourceLabel}: ${lead.source}` : null,
-        lead.probability != null ? `${probabilityLabel}: ${lead.probability}%` : null,
-        lead.value != null ? `${valueLabel}: ${lead.value}` : null,
+        lead.probability !== null ? `${probabilityLabel}: ${lead.probability}%` : null,
+        lead.value !== null ? `${valueLabel}: ${lead.value}` : null,
       ].filter(Boolean).join('\n');
       if (leadInfo) {
         await db('notes').insert({
@@ -485,8 +485,8 @@ const leadsController = {
         }).catch(() => {});
       }
 
-      // Mark lead as won
-      await Lead.update(lead.id, { status: 'won' });
+      // Mark lead as won (both status and stage so Kanban shows the correct column)
+      await Lead.update(lead.id, { status: 'won', stage: 'won' });
 
       await AuditLog.create({
         user_id: req.user.id,

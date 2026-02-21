@@ -2,6 +2,7 @@
 
 const { body } = require('express-validator');
 const User = require('../models/User');
+const Role = require('../models/Role');
 const AuditLog = require('../models/AuditLog');
 const { success, error, paginated, notFound } = require('../utils/response');
 
@@ -12,8 +13,8 @@ const createValidation = [
 ];
 
 const updateValidation = [
-  body('email').optional().isEmail().normalizeEmail(),
-  body('username').optional().isLength({ min: 3 }),
+  body('email').optional().isEmail().normalizeEmail().withMessage('Valid email is required.'),
+  body('username').optional().isLength({ min: 3 }).withMessage('Username must be at least 3 characters.'),
 ];
 
 const usersController = {
@@ -30,7 +31,10 @@ const usersController = {
         is_active: is_active !== undefined ? is_active === 'true' : undefined,
         role,
       });
-      return paginated(res, result.data, result.total, parseInt(page, 10), parseInt(limit, 10));
+      const userIds = result.data.map((u) => u.id);
+      const rolesMap = await User.getUserRolesBatch(userIds);
+      const data = result.data.map((u) => ({ ...u, roles: rolesMap[u.id] || [] }));
+      return paginated(res, data, result.total, parseInt(page, 10), parseInt(limit, 10));
     } catch (err) {
       return next(err);
     }
@@ -51,6 +55,13 @@ const usersController = {
   async create(req, res, next) {
     try {
       const user = await User.create(req.body);
+
+      // Assign the chosen role if provided
+      if (req.body.role) {
+        const role = await Role.findByName(req.body.role);
+        if (role) await User.assignRole(user.id, role.id);
+      }
+
       await AuditLog.create({
         user_id: req.user.id,
         action: 'create_user',
@@ -72,6 +83,17 @@ const usersController = {
       if (!existing) return notFound(res, 'User not found.');
 
       const user = await User.update(req.params.id, req.body);
+
+      // Swap roles when a new role is provided
+      if (req.body.role) {
+        const role = await Role.findByName(req.body.role);
+        if (role) {
+          const currentRoles = await User.getUserRoles(req.params.id);
+          await Promise.all(currentRoles.map((r) => User.removeRole(req.params.id, r.id)));
+          await User.assignRole(req.params.id, role.id);
+        }
+      }
+
       await AuditLog.create({
         user_id: req.user.id,
         action: 'update_user',

@@ -8,6 +8,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import api from '../../services/api.js';
 import { useTranslation } from '../../i18n/I18nContext.jsx';
+import { useAuth } from '../../store/AuthContext.jsx';
 import PageHeader from '../../components/common/PageHeader.jsx';
 import LoadingSpinner from '../../components/common/LoadingSpinner.jsx';
 import NotesList from '../../components/Notes/NotesList.jsx';
@@ -31,6 +32,7 @@ export default function ContactDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { hasPermission } = useAuth();
   const [contact, setContact] = useState(null);
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -68,9 +70,11 @@ export default function ContactDetail() {
         actions={
           <Stack direction="row" spacing={1}>
             <Button startIcon={<ArrowBackIcon />} onClick={() => navigate('/contacts')}>{t('common.back')}</Button>
-            <Button variant="contained" startIcon={<EditIcon />} onClick={() => navigate(`/contacts/${id}/edit`)}>
-              {t('common.edit')}
-            </Button>
+            {hasPermission('contacts.write') && (
+              <Button variant="contained" startIcon={<EditIcon />} onClick={() => navigate(`/contacts/${id}/edit`)}>
+                {t('common.edit')}
+              </Button>
+            )}
           </Stack>
         }
       />

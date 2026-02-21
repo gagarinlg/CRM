@@ -6,7 +6,7 @@ const { hashPassword, comparePassword } = require('../utils/password');
 const SAFE_FIELDS = [
   'id', 'email', 'username', 'first_name', 'last_name',
   'is_active', 'force_password_change', 'last_login', 'created_at', 'updated_at',
-  'preferred_language',
+  'preferred_language', 'week_start', 'show_week_numbers',
 ];
 
 const User = {
@@ -31,7 +31,7 @@ const User = {
   },
 
   async update(id, fields) {
-    const allowed = ['email', 'username', 'first_name', 'last_name', 'is_active', 'force_password_change', 'preferred_language'];
+    const allowed = ['email', 'username', 'first_name', 'last_name', 'is_active', 'force_password_change', 'preferred_language', 'week_start', 'show_week_numbers'];
     const data = Object.fromEntries(Object.entries(fields).filter(([k]) => allowed.includes(k)));
     data.updated_at = db.fn.now();
     const [user] = await db('users').where({ id }).whereNull('deleted_at').update(data).returning(SAFE_FIELDS);
@@ -87,6 +87,20 @@ const User = {
       .join('roles', 'user_roles.role_id', 'roles.id')
       .where('user_roles.user_id', userId)
       .select('roles.id', 'roles.name', 'roles.description');
+  },
+
+  async getUserRolesBatch(userIds) {
+    if (!userIds.length) return {};
+    const rows = await db('user_roles')
+      .join('roles', 'user_roles.role_id', 'roles.id')
+      .whereIn('user_roles.user_id', userIds)
+      .select('user_roles.user_id', 'roles.id', 'roles.name', 'roles.description');
+    const map = {};
+    for (const row of rows) {
+      if (!map[row.user_id]) map[row.user_id] = [];
+      map[row.user_id].push({ id: row.id, name: row.name, description: row.description });
+    }
+    return map;
   },
 
   async getUserPermissions(userId) {

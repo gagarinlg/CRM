@@ -7,13 +7,18 @@ A production-ready Customer Relationship Management system built with **Node.js*
 ## Features
 
 - **Companies & Contacts** — full CRUD, linked contacts with multiple phone numbers and required email
-- **Projects** — linked to companies, contacts, and team members
-- **Leads** — sales funnel with Kanban view and pipeline analytics
+- **Projects** — linked to companies, contacts, and team members; restricted visibility with group-based access control
+- **Leads** — sales funnel with Kanban view, pipeline analytics, and one-click conversion to projects
 - **Notes** — rich-text notes on companies, contacts, projects, and leads
+- **Tags / Labels** — colour-coded tags on any entity; filterable from list views
+- **File Attachments** — upload, download, and delete files on companies, contacts, projects, and leads
 - **Calendar** — month/week/day view with recurring events and CalDAV sync
 - **Dashboard** — configurable widgets with KPIs, charts, and activity feeds
+- **Global Search** — instant full-text search across companies, contacts, projects, and leads
 - **Reports** — PDF and CSV export (sales, pipeline, project status, contact activity)
-- **User & Group Management** — role-based access control (RBAC) with granular permissions
+- **Bulk Operations** — bulk delete on all list views
+- **CSV Export** — export filtered project and lead lists directly from the list view
+- **User & Group Management** — role-based access control (RBAC) with granular permissions; group-based visibility for projects and leads
 - **Two-Factor Authentication (TOTP)** — QR-code setup, backup codes, admin reset
 - **Internationalisation** — English, German, and Czech; translations editable in the browser
 - **Email system** — Nodemailer with SMTP configuration in the admin UI and email templates

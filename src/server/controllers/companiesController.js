@@ -7,8 +7,8 @@ const { success, paginated, notFound } = require('../utils/response');
 
 const createValidation = [
   body('name').notEmpty().withMessage('Company name is required.'),
-  body('email').optional({ checkFalsy: true }).isEmail().normalizeEmail(),
-  body('website').optional({ checkFalsy: true }).isURL(),
+  body('email').optional({ checkFalsy: true }).isEmail().normalizeEmail().withMessage('Invalid email address.'),
+  body('website').optional({ checkFalsy: true }).isURL().withMessage('Invalid website URL.'),
 ];
 
 const companiesController = {

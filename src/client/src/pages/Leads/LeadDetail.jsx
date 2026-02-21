@@ -15,6 +15,7 @@ import GroupAddIcon from '@mui/icons-material/GroupAdd';
 import DeleteIcon from '@mui/icons-material/Delete';
 import api from '../../services/api.js';
 import { useTranslation } from '../../i18n/I18nContext.jsx';
+import { useAuth } from '../../store/AuthContext.jsx';
 import PageHeader from '../../components/common/PageHeader.jsx';
 import LoadingSpinner from '../../components/common/LoadingSpinner.jsx';
 import NotesList from '../../components/Notes/NotesList.jsx';
@@ -43,6 +44,7 @@ export default function LeadDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { hasPermission } = useAuth();
   const [lead, setLead] = useState(null);
   const [groups, setGroups] = useState([]);
   const [contacts, setContacts] = useState([]);
@@ -174,9 +176,11 @@ export default function LeadDetail() {
                 {t('leads.convertToProject', 'Convert to Project')}
               </Button>
             )}
-            <Button variant="contained" startIcon={<EditIcon />} onClick={() => navigate(`/leads/${id}/edit`)}>
-              {t('common.edit')}
-            </Button>
+            {hasPermission('leads.write') && (
+              <Button variant="contained" startIcon={<EditIcon />} onClick={() => navigate(`/leads/${id}/edit`)}>
+                {t('common.edit')}
+              </Button>
+            )}
           </Stack>
         }
       />
@@ -266,9 +270,11 @@ export default function LeadDetail() {
 
       <TabPanel value={tab} index={TAB_CONTACTS}>
         <Box display="flex" justifyContent="flex-end" mb={1}>
-          <Tooltip title={t('leads.addContact', 'Add Contact')}>
-            <IconButton color="primary" onClick={() => setAddContactOpen(true)}><PersonAddIcon /></IconButton>
-          </Tooltip>
+          {hasPermission('leads.write') && (
+            <Tooltip title={t('leads.addContact', 'Add Contact')}>
+              <IconButton color="primary" onClick={() => setAddContactOpen(true)}><PersonAddIcon /></IconButton>
+            </Tooltip>
+          )}
         </Box>
         {contacts.length === 0 ? (
           <Typography color="text.secondary">{t('common.noResults')}</Typography>
@@ -279,9 +285,11 @@ export default function LeadDetail() {
                 <Typography variant="body1" fontWeight={500}>{c.first_name} {c.last_name}</Typography>
                 <Typography variant="body2" color="text.secondary">{c.position || c.email}</Typography>
               </Box>
-              <Tooltip title={t('leads.removeContact', 'Remove')}>
-                <IconButton size="small" color="error" onClick={() => handleRemoveContact(c.id)}><DeleteIcon fontSize="small" /></IconButton>
-              </Tooltip>
+              {hasPermission('leads.write') && (
+                <Tooltip title={t('leads.removeContact', 'Remove')}>
+                  <IconButton size="small" color="error" onClick={() => handleRemoveContact(c.id)}><DeleteIcon fontSize="small" /></IconButton>
+                </Tooltip>
+              )}
             </CardContent>
           </Card>
         ))}
@@ -289,9 +297,11 @@ export default function LeadDetail() {
 
       <TabPanel value={tab} index={TAB_MEMBERS}>
         <Box display="flex" justifyContent="flex-end" mb={1}>
-          <Tooltip title={t('leads.addMember', 'Add Member')}>
-            <IconButton color="primary" onClick={() => setAddMemberOpen(true)}><GroupAddIcon /></IconButton>
-          </Tooltip>
+          {hasPermission('leads.write') && (
+            <Tooltip title={t('leads.addMember', 'Add Member')}>
+              <IconButton color="primary" onClick={() => setAddMemberOpen(true)}><GroupAddIcon /></IconButton>
+            </Tooltip>
+          )}
         </Box>
         {members.length === 0 ? (
           <Typography color="text.secondary">{t('common.noResults')}</Typography>
@@ -306,9 +316,11 @@ export default function LeadDetail() {
                 <Typography variant="caption" color="text.secondary">{m.email}</Typography>
               </Box>
               {m.role && <Chip label={m.role} size="small" sx={{ mr: 1 }} />}
-              <Tooltip title={t('leads.removeMember', 'Remove')}>
-                <IconButton size="small" color="error" onClick={() => handleRemoveMember(m.id)}><DeleteIcon fontSize="small" /></IconButton>
-              </Tooltip>
+              {hasPermission('leads.write') && (
+                <Tooltip title={t('leads.removeMember', 'Remove')}>
+                  <IconButton size="small" color="error" onClick={() => handleRemoveMember(m.id)}><DeleteIcon fontSize="small" /></IconButton>
+                </Tooltip>
+              )}
             </CardContent>
           </Card>
         ))}

@@ -11,6 +11,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import api from '../../services/api.js';
 import { useTranslation } from '../../i18n/I18nContext.jsx';
+import { useAuth } from '../../store/AuthContext.jsx';
 import PageHeader from '../../components/common/PageHeader.jsx';
 import SearchBar from '../../components/common/SearchBar.jsx';
 import LoadingSpinner from '../../components/common/LoadingSpinner.jsx';
@@ -20,6 +21,7 @@ import useDebounce from '../../hooks/useDebounce.js';
 export default function CompaniesList() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { hasPermission } = useAuth();
   const [companies, setCompanies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -66,9 +68,11 @@ export default function CompaniesList() {
       <PageHeader
         title={t('companies.title')}
         actions={
-          <Button variant="contained" startIcon={<AddIcon />} onClick={() => navigate('/companies/new')}>
-            {t('companies.new')}
-          </Button>
+          hasPermission('companies.write') && (
+            <Button variant="contained" startIcon={<AddIcon />} onClick={() => navigate('/companies/new')}>
+              {t('companies.new')}
+            </Button>
+          )
         }
       />
       {error && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError('')}>{error}</Alert>}
@@ -134,12 +138,16 @@ export default function CompaniesList() {
                     <Tooltip title={t('common.view')}>
                       <IconButton size="small" onClick={e => { e.stopPropagation(); navigate(`/companies/${c.id}`); }}><VisibilityIcon fontSize="small" /></IconButton>
                     </Tooltip>
-                    <Tooltip title={t('common.edit')}>
-                      <IconButton size="small" onClick={e => { e.stopPropagation(); navigate(`/companies/${c.id}/edit`); }}><EditIcon fontSize="small" /></IconButton>
-                    </Tooltip>
-                    <Tooltip title={t('common.delete')}>
-                      <IconButton size="small" color="error" onClick={e => { e.stopPropagation(); setDeleteId(c.id); }}><DeleteIcon fontSize="small" /></IconButton>
-                    </Tooltip>
+                    {hasPermission('companies.write') && (
+                      <Tooltip title={t('common.edit')}>
+                        <IconButton size="small" onClick={e => { e.stopPropagation(); navigate(`/companies/${c.id}/edit`); }}><EditIcon fontSize="small" /></IconButton>
+                      </Tooltip>
+                    )}
+                    {hasPermission('companies.delete') && (
+                      <Tooltip title={t('common.delete')}>
+                        <IconButton size="small" color="error" onClick={e => { e.stopPropagation(); setDeleteId(c.id); }}><DeleteIcon fontSize="small" /></IconButton>
+                      </Tooltip>
+                    )}
                   </TableCell>
                 </TableRow>
               ))}

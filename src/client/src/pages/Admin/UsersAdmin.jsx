@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Box, Button, Table, TableBody, TableCell, TableContainer, TableHead,
   TableRow, Paper, IconButton, Chip, Alert, Tooltip, Dialog, DialogTitle,
@@ -9,6 +9,8 @@ import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { useForm, Controller } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
+import * as yup from 'yup';
 import api from '../../services/api.js';
 import { useTranslation } from '../../i18n/I18nContext.jsx';
 import PageHeader from '../../components/common/PageHeader.jsx';
@@ -21,22 +23,38 @@ function UserDialog({ open, onClose, user, roles, onSaved }) {
   const { t } = useTranslation();
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState([]);
   const isEdit = Boolean(user?.id);
 
+  const schema = useMemo(() => yup.object({
+    firstName: yup.string().required(t('validation.firstNameRequired')),
+    lastName: yup.string().required(t('validation.lastNameRequired')),
+    email: yup.string().email(t('validation.emailInvalid')).required(t('validation.emailRequired')),
+    username: isEdit
+      ? yup.string().min(3, t('validation.usernameMinLength')).optional()
+      : yup.string().min(3, t('validation.usernameMinLength')).required(t('validation.usernameRequired')),
+    password: isEdit
+      ? yup.string().optional()
+      : yup.string().min(8, t('validation.passwordMinLength')).required(t('validation.passwordRequired')),
+  }), [t, isEdit]);
+
   const { register, handleSubmit, reset, control, formState: { errors } } = useForm({
-    defaultValues: { firstName: '', lastName: '', email: '', password: '', role: 'user' },
+    resolver: yupResolver(schema),
+    defaultValues: { firstName: '', lastName: '', email: '', username: '', password: '', role: 'user' },
   });
 
   useEffect(() => {
     if (open) {
+      setFieldErrors([]);
       // Normalize API snake_case fields to camelCase for the form
       const normalized = user ? {
         firstName: user.firstName || user.first_name || '',
         lastName:  user.lastName  || user.last_name  || '',
         email:     user.email     || '',
+        username:  user.username  || '',
         password:  '',
         role:      (user.roles?.[0]?.name || user.roles?.[0] || 'user'),
-      } : { firstName: '', lastName: '', email: '', password: '', role: 'user' };
+      } : { firstName: '', lastName: '', email: '', username: '', password: '', role: 'user' };
       reset(normalized);
     }
   }, [open, user]);
@@ -44,15 +62,28 @@ function UserDialog({ open, onClose, user, roles, onSaved }) {
   const onSubmit = async (data) => {
     setSaving(true);
     setError('');
+    setFieldErrors([]);
     try {
-      const payload = { ...data };
-      if (isEdit && !payload.password) delete payload.password;
+      const payload = {
+        first_name: data.firstName,
+        last_name:  data.lastName,
+        email:      data.email,
+        username:   data.username,
+        role:       data.role,
+      };
+      if (data.password) payload.password = data.password;
       if (isEdit) await api.put(`/users/${user.id}`, payload);
       else await api.post('/users', payload);
       onSaved();
       onClose();
     } catch (err) {
-      setError(err.response?.data?.message || t('errors.saveFailed'));
+      const apiErrors = err.response?.data?.errors;
+      if (apiErrors?.length) {
+        setFieldErrors(apiErrors);
+        setError(err.response.data.message);
+      } else {
+        setError(err.response?.data?.message || t('errors.saveFailed'));
+      }
     } finally {
       setSaving(false);
     }
@@ -64,18 +95,28 @@ function UserDialog({ open, onClose, user, roles, onSaved }) {
       <Box component="form" onSubmit={handleSubmit(onSubmit)}>
         <DialogContent>
           {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+          {fieldErrors.length > 0 && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              <ul style={{ margin: 0, paddingLeft: 20 }}>
+                {fieldErrors.map((e, i) => <li key={i}>{e.message}</li>)}
+              </ul>
+            </Alert>
+          )}
           <Grid container spacing={2}>
             <Grid item xs={12} sm={6}>
-              <TextField {...register('firstName', { required: true })} label={t('users.firstName')} fullWidth required error={!!errors.firstName} />
+              <TextField {...register('firstName')} label={t('users.firstName')} fullWidth required error={!!errors.firstName} helperText={errors.firstName?.message} />
             </Grid>
             <Grid item xs={12} sm={6}>
-              <TextField {...register('lastName', { required: true })} label={t('users.lastName')} fullWidth required error={!!errors.lastName} />
+              <TextField {...register('lastName')} label={t('users.lastName')} fullWidth required error={!!errors.lastName} helperText={errors.lastName?.message} />
             </Grid>
             <Grid item xs={12}>
-              <TextField {...register('email', { required: true })} label={t('users.email')} type="email" fullWidth required error={!!errors.email} />
+              <TextField {...register('email')} label={t('users.email')} type="email" fullWidth required error={!!errors.email} helperText={errors.email?.message} />
             </Grid>
             <Grid item xs={12}>
-              <TextField {...register('password')} label={isEdit ? t('users.newPassword') : t('users.password')} type="password" fullWidth required={!isEdit} />
+              <TextField {...register('username')} label={t('users.username')} fullWidth required={!isEdit} error={!!errors.username} helperText={errors.username?.message} />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField {...register('password')} label={isEdit ? t('users.newPassword') : t('users.password')} type="password" fullWidth required={!isEdit} error={!!errors.password} helperText={errors.password?.message} />
             </Grid>
             <Grid item xs={12}>
               <Controller
